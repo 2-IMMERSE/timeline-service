@@ -37,12 +37,21 @@ class Timeline:
         self.dmappSpec = None
         self.dmappTimeline = None
         self.dmappId = None
+        self.layoutService = None
+        self.dmappComponents = {}
         # Do other cleanup
         
     def dump(self):
-        return dict(contextId=self.contextId, dmappSpec=self.dmappSpec, dmappTimeline=self.dmappTimeline, dmappId=self.dmappId)
+        return dict(
+            contextId=self.contextId, 
+            dmappSpec=self.dmappSpec, 
+            dmappTimeline=self.dmappTimeline, 
+            dmappId=self.dmappId,
+            layoutService=repr(self.layoutService),
+            dmappComponents=self.dmappComponents.keys(),
+            )
         
-    def loadDMAppTimeline(self, dmappSpec):
+    def loadDMAppTimeline(self, dmappSpec, layoutServiceId=None):
         if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, dmappSpec)
         pass
         assert self.dmappSpec is None
@@ -51,6 +60,10 @@ class Timeline:
         self.dmappSpec = dmappSpec
         self.dmappTimeline = "Here will be a document encoding the timeline"
         self.dmappId = "dmappid-42"
+        self.layoutService = ProxyLayoutService(layoutServiceId)
+        self.clockService = ProxyClockService()
+        self._populateTimeline()
+        self._updateTimeline()
         return {'dmappId':self.dmappId}
         
     def unloadDMAppTimeline(self, dmappId):
@@ -65,8 +78,11 @@ class Timeline:
         
     def dmappcStatus(self, dmappId, componentId, status):
         if DEBUG: print "Timeline(%s): dmappcStatus(%s, %s, %s)" % (self.contextId, dmappId, componentId, status)
-        pass
-        
+        assert dmappId == self.dmappId
+        c = self.dmappComponents[componentId]
+        c.statusReport(status)
+        self._updateTimeline()
+                
     def timelineEvent(self, eventId):
         if DEBUG: print "Timeline(%s): timelineEvent(%s)" % (self.contextId, eventId)
         pass
@@ -74,4 +90,83 @@ class Timeline:
     def clockChanged(self, *args, **kwargs):
         if DEBUG: print "Timeline(%s): clockChanged(%s, %s)" % (self.contextId, args, kwargs)
         pass
+        
+    def _populateTimeline(self):
+        """Create proxy objects, etc, using self.dmappTimeline"""
+        self.dmappComponents = dict(
+            masterVideo = ProxyDMAppComponent(self.clockService, self.layoutService, "masterVideo", 0, None),
+            hello = ProxyDMAppComponent(self.clockService, self.layoutService, "hello", 0, 10),
+            world = ProxyDMAppComponent(self.clockService, self.layoutService, "world", 0, None),
+            goodbye = ProxyDMAppComponent(self.clockService, self.layoutService, "goodbye", 10, None),
+            )
+     
+    def _updateTimeline(self):
+        # Initialize any components that can be initialized
+        for c in self.dmappComponents.values():
+            if c.shouldInitialize():
+                c.initComponent()
+        # Check whether all components that should have been initialized are so
+        for c in self.dmappComponents.values():
+            if c.shouldStart():
+                c.startComponent(c.startTime)
+        for c in self.dmappComponents.values():
+            if c.shouldStop():
+                c.stopComponent(c.stopTime)
+    
+class ProxyClockService:
+    def __init__(self):
+        self.epoch = 0
+        self.running = False
+        
+    def now(self):
+        if not self.running:
+            return self.epoch
+        return time.time() - self.epoch
+        
+    def start(self):
+        if not self.running:
+            self.epoch = time.time() - self.epoch
+            self.running = True
+            
+    def stop(self):
+        if self.running:
+            self.epoch = time.time() - self.epoch
+            self.running = False
+            
+class ProxyLayoutService:
+    def __init__(self, contactInfo):
+        self.contactInfo = contactInfo
+        
+class ProxyDMAppComponent:
+    def __init__(self, clockService, layoutService, dmappcId, startTime, stopTime):
+        self.clockService = clockService
+        self.layoutService = layoutService
+        self.dmappcId = dmappcId
+        self.startTime = startTime
+        self.stopTime = stopTime
+        self.status = None
+
+    def initComponent(self):
+        print "CALL", self.layoutService.contactInfo, "for", self.dmappcId, "verb", "initComponent"
+        self.status = "initRequested"
+        
+    def startComponent(self, timeSpec):
+        print "CALL", self.layoutService.contactInfo, "for", self.dmappcId, "verb", "startComponent", timeSpec
+        assert self.status == "initialized"
+        
+    def stopComponent(self, timeSpec):
+        print "CALL", self.layoutService.contactInfo, "for", self.dmappcId, "verb", "stopComponent", timeSpec
+        
+    def statusReport(self, status):
+        self.status = status
+        
+    def shouldInitialize(self):
+        return self.status == None
+        
+    def shouldStart(self):
+        return self.status == "initialized" and self.startTime >= self.clockService.now()
+        
+    def shouldStop(self):
+        return self.status == "running" and self.stopTime is not None and self.stopTime >= self.clockService.now()
+        
         
