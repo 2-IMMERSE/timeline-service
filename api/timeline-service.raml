@@ -1,0 +1,69 @@
+title: 2-IMMERSE Timeline Service
+version: v1
+baseUri: http://2immerse.eu/timeline/{version}
+documentation:
+  - title: Timeline Service
+    content: !include timeline-service.md
+
+/context:
+	post:
+		queryParameters:
+			contextId:
+				description: The ID of the context to be created
+		responses:
+			200:
+				body:
+					application/json:
+						example: |
+							{
+								"contextId" : "1234"
+							}
+	get:
+		responses:
+			200:
+				body:
+					application/json:
+						example: |
+							["1234"]
+	/{contextId}:
+		/dump:
+			get:
+		/loadDMAppTimeline:
+			put:
+				queryParameters:
+					timelineUrl:
+						description: Reference to document containing timeline service instructions
+						required: true
+				responses:
+					200:
+						body:
+							application/json:
+								example: |
+									{
+										"dmappId" : "dmappid-42"
+									}
+		/unloadDMAppTimeline:
+			put:
+				queryParameters:
+					dmappId:
+						description: The dmapp for which the timeline should be unloaded
+						required: true
+		/dmappcStatus:
+			put:
+				queryParameters:
+					dmappId:
+						description: The DMApp for which the timeline should be unloaded
+						required: true
+					componentId:
+						description: The DMApp Component for which the status is reported
+						required: true
+					status:
+						description: The status report
+		/timelineEvent:
+			put:
+				queryParameters:
+					eventId:
+						description: The timeline event that got triggered
+						required: true
+		/clockChanged:
+			put:

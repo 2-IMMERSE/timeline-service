@@ -1,4 +1,7 @@
+import requests
+
 DEBUG=True
+LAYOUTSERVICE=None
 
 class Timeline:
     ALL_CONTEXTS = {}
@@ -9,7 +12,7 @@ class Timeline:
         assert not contextId in cls.ALL_CONTEXTS
         new = cls(contextId)
         cls.ALL_CONTEXTS[contextId] = new
-        return contextId
+        return dict(contextId=contextId)
         
     @classmethod
     def get(cls, contextId):
@@ -20,11 +23,14 @@ class Timeline:
     def getAll(cls):
         return cls.ALL_CONTEXTS.keys()
         
-    def __init__(self, contextId):
+    def __init__(self, contextId, layoutServiceId=None):
         """Initializer, creates a new context and stores it for global reference"""
         if DEBUG: print "Timeline(%s): created with object %s" % (contextId, self)
+        if layoutServiceId is None:
+            layoutServiceId = LAYOUTSERVICE
+        assert LAYOUTSERVICE, 'No layoutService, override with --layoutService argument'
         self.contextId = contextId
-        self.dmappSpec = None
+        self.timelineUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         # Do other initialization
@@ -34,7 +40,7 @@ class Timeline:
         if DEBUG: print "Timeline(%s): destroyTimeline()" % self.contextId
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
-        self.dmappSpec = None
+        self.timelineUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         self.layoutService = None
@@ -44,23 +50,24 @@ class Timeline:
     def dump(self):
         return dict(
             contextId=self.contextId, 
-            dmappSpec=self.dmappSpec, 
+            timelineUrl=self.timelineUrl, 
             dmappTimeline=self.dmappTimeline, 
             dmappId=self.dmappId,
             layoutService=repr(self.layoutService),
             dmappComponents=self.dmappComponents.keys(),
             )
         
-    def loadDMAppTimeline(self, dmappSpec, layoutServiceId=None):
-        if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, dmappSpec)
+    def loadDMAppTimeline(self, timelineUrl, layoutServiceId=None):
+        if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineUrl)
         pass
-        assert self.dmappSpec is None
+        assert self.timelineUrl is None
         assert self.dmappTimeline is None
         assert self.dmappId is None
-        self.dmappSpec = dmappSpec
+        self.timelineUrl = timelineUrl
         self.dmappTimeline = "Here will be a document encoding the timeline"
         self.dmappId = "dmappid-42"
-        self.layoutService = ProxyLayoutService(layoutServiceId)
+            
+        self.layoutService = ProxyLayoutService(LAYOUTSERVICE, self.contextId, self.dmappId)
         self.clockService = ProxyClockService()
         self._populateTimeline()
         self._updateTimeline()
@@ -69,10 +76,10 @@ class Timeline:
     def unloadDMAppTimeline(self, dmappId):
         if DEBUG: print "Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId)
         pass
-        assert self.dmappSpec
+        assert self.timelineUrl
         assert self.dmappTimeline
         assert self.dmappId == dmappId
-        self.dmappSpec = None
+        self.timelineUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         
@@ -134,8 +141,13 @@ class ProxyClockService:
             self.running = False
             
 class ProxyLayoutService:
-    def __init__(self, contactInfo):
+    def __init__(self, contactInfo, contextId, dmappId):
         self.contactInfo = contactInfo
+        self.contextId = contextId
+        self.dmappId = dmappId
+        
+    def getContactInfo(self):
+        return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
         
 class ProxyDMAppComponent:
     def __init__(self, clockService, layoutService, dmappcId, startTime, stopTime):
@@ -146,17 +158,34 @@ class ProxyDMAppComponent:
         self.stopTime = stopTime
         self.status = None
 
+    def _getContactInfo(self):
+        contactInfo = self.layoutService.getContactInfo()
+        contactInfo += '/component/' + self.dmappcId
+        return contactInfo
+        
     def initComponent(self):
-        print "CALL", self.layoutService.contactInfo, "for", self.dmappcId, "verb", "initComponent"
+        entryPoint = self._getContactInfo()
+        entryPoint += '/actions/init'
+        print "CALL", entryPoint
+        r = requests.post(entryPoint)
+        print "RETURNED", r.json()
         self.status = "initRequested"
         
     def startComponent(self, timeSpec):
-        print "CALL", self.layoutService.contactInfo, "for", self.dmappcId, "verb", "startComponent", timeSpec
         assert self.status == "initialized"
+        entryPoint = self._getContactInfo()
+        entryPoint += '/actions/start'
+        print "CALL", entryPoint
+        r = requests.post(entryPoint)
+        print "RETURNED", r.json()
         
     def stopComponent(self, timeSpec):
-        print "CALL", self.layoutService.contactInfo, "for", self.dmappcId, "verb", "stopComponent", timeSpec
-        
+        entryPoint = self._getContactInfo()
+        entryPoint += '/actions/stop'
+        print "CALL", entryPoint
+        r = requests.post(entryPoint)
+        print "RETURNED", r.json()
+       
     def statusReport(self, status):
         self.status = status
         

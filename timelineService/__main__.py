@@ -2,11 +2,11 @@ import sys
 import web
 import timeline
 import json
+import argparse
 
 urls = (
-    '/timelineServer', 'timelineServerServer',
-    '/timelineServer/createTimeline', 'timelineServerServer',
-    '/timelineServer/(.*)/(.*)', 'timelineServer',
+    '/context', 'timelineServerServer',
+    '/context/(.*)/(.*)', 'timelineServer',
 )
 
 app = web.application(urls, globals())
@@ -69,4 +69,16 @@ class timelineServer:
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
-app.run()
+def main():
+    parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
+    parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
+    parser.add_argument('--debug', help="Enable all debug output")
+    args = parser.parse_args()
+    if args.debug:
+        timeline.DEBUG = True
+    if args.layoutService:
+        timeline.LAYOUTSERVICE = args.layoutService
+    del sys.argv[1:]
+    app.run()
+
+main()
