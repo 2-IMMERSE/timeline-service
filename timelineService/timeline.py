@@ -101,10 +101,10 @@ class Timeline:
     def _populateTimeline(self):
         """Create proxy objects, etc, using self.dmappTimeline"""
         self.dmappComponents = dict(
-            masterVideo = ProxyDMAppComponent(self.clockService, self.layoutService, "masterVideo", 0, None),
-            hello = ProxyDMAppComponent(self.clockService, self.layoutService, "hello", 0, 10),
-            world = ProxyDMAppComponent(self.clockService, self.layoutService, "world", 0, None),
-            goodbye = ProxyDMAppComponent(self.clockService, self.layoutService, "goodbye", 10, None),
+            masterVideo = ProxyDMAppComponent(self.clockService, self.layoutService, "masterVideo", "video", "http://example.com/masterVideo.mp4", 0, None),
+            hello = ProxyDMAppComponent(self.clockService, self.layoutService, "hello", "text", None, 0, 10),
+            world = ProxyDMAppComponent(self.clockService, self.layoutService, "world", "text", None, 0, None),
+            goodbye = ProxyDMAppComponent(self.clockService, self.layoutService, "goodbye", "text", None, 10, None),
             )
      
     def _updateTimeline(self):
@@ -150,10 +150,13 @@ class ProxyLayoutService:
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
         
 class ProxyDMAppComponent:
-    def __init__(self, clockService, layoutService, dmappcId, startTime, stopTime):
+    def __init__(self, clockService, layoutService, dmappcId, klass, url, startTime, stopTime):
         self.clockService = clockService
         self.layoutService = layoutService
         self.dmappcId = dmappcId
+        self.klass = klass
+        if not url: url = ""
+        self.url = url
         self.startTime = startTime
         self.stopTime = stopTime
         self.status = None
@@ -167,8 +170,9 @@ class ProxyDMAppComponent:
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/init'
         print "CALL", entryPoint
-        r = requests.post(entryPoint)
-        print "RETURNED", r.json()
+        r = requests.post(entryPoint, json={'class':self.klass, 'url':self.url})
+        r.raise_for_status()
+        print "RETURNED"
         self.status = "initRequested"
         
     def startComponent(self, timeSpec):
@@ -177,14 +181,16 @@ class ProxyDMAppComponent:
         entryPoint += '/actions/start'
         print "CALL", entryPoint
         r = requests.post(entryPoint)
-        print "RETURNED", r.json()
+        r.raise_for_status()
+        print "RETURNED"
         
     def stopComponent(self, timeSpec):
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
         print "CALL", entryPoint
         r = requests.post(entryPoint)
-        print "RETURNED", r.json()
+        r.raise_for_status()
+        print "RETURNED"
        
     def statusReport(self, status):
         self.status = status
