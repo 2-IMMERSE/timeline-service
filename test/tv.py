@@ -6,7 +6,9 @@ DEVICE_ID="4200"
 if len(sys.argv) != 3:
     print 'Usage: %s layoutservice timelineservice' % sys.argv[0]
     sys.exit(1)
-    
+
+# layoutService="http://173.39.240.79:7771/v1"
+# timelineService="http://141.105.120.225:8080/context"
 layoutService = sys.argv[1]
 timelineService = sys.argv[2]
 
