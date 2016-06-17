@@ -5,19 +5,19 @@ DEBUG=True
 class Timeline:
     ALL_CONTEXTS = {}
 
-    @classmethod
-    def createTimeline(cls, contextId):
-        """Factory function: create a new context"""
-        assert not contextId in cls.ALL_CONTEXTS
-        new = cls(contextId)
-        cls.ALL_CONTEXTS[contextId] = new
-        return dict(contextId=contextId)
-        
+#     @classmethod
+#     def createTimeline(cls, contextId):
+#         """Factory function: create a new context"""
+#         assert not contextId in cls.ALL_CONTEXTS
+#         new = cls(contextId)
+#         cls.ALL_CONTEXTS[contextId] = new
+#         return dict(contextId=contextId)
+#         
     @classmethod
     def get(cls, contextId):
         """Getter: return context for given ID"""
         if not contextId in cls.ALL_CONTEXTS:
-        	return cls.createTimeline(contextId)
+        	cls.ALL_CONTEXTS[contextId] = cls(contextId)
         return cls.ALL_CONTEXTS[contextId]
         
     @classmethod
