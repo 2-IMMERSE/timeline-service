@@ -55,6 +55,9 @@ class Timeline:
             dmappComponents=self.dmappComponents.keys(),
             )
         
+    def createTimeline(self, *args, **kwargs):
+    	print 'xyzy jck', args, kwargs
+    	
     def loadDMAppTimeline(self, timelineUrl, layoutServiceId=None):
         if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineUrl)
         pass
