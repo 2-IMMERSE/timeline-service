@@ -1,7 +1,6 @@
 import requests
 
 DEBUG=True
-LAYOUTSERVICE=None
 
 class Timeline:
     ALL_CONTEXTS = {}
@@ -25,14 +24,11 @@ class Timeline:
     def getAll(cls):
         return cls.ALL_CONTEXTS.keys()
         
-    def __init__(self, contextId, layoutServiceId=None):
+    def __init__(self, contextId):
         """Initializer, creates a new context and stores it for global reference"""
-        if DEBUG: print "Timeline(%s): created with object %s" % (contextId, self)
-        if layoutServiceId is None:
-            layoutServiceId = LAYOUTSERVICE
-        assert LAYOUTSERVICE, 'No layoutService, override with --layoutService argument'
         self.contextId = contextId
         self.timelineUrl = None
+        self.layoutServiceId = None
         self.dmappTimeline = None
         self.dmappId = None
         # Do other initialization
@@ -66,10 +62,11 @@ class Timeline:
         assert self.dmappTimeline is None
         assert self.dmappId is None
         self.timelineUrl = timelineUrl
+        self.layoutService = layoutServiceId
         self.dmappTimeline = "Here will be a document encoding the timeline"
         self.dmappId = "dmappid-42"
             
-        self.layoutService = ProxyLayoutService(LAYOUTSERVICE, self.contextId, self.dmappId)
+        self.layoutService = ProxyLayoutService(self.layoutService, self.contextId, self.dmappId)
         self.clockService = ProxyClockService()
         self._populateTimeline()
         self._updateTimeline()
