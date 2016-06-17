@@ -17,6 +17,8 @@ class Timeline:
     @classmethod
     def get(cls, contextId):
         """Getter: return context for given ID"""
+        if not contextId in cls.ALL_CONTEXTS:
+        	return cls.createTimeline(contextId)
         return cls.ALL_CONTEXTS[contextId]
         
     @classmethod
