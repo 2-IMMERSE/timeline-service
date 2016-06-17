@@ -4,13 +4,14 @@ import requests
 DEVICE_ID="4200"
 
 if len(sys.argv) != 3:
-    print 'Usage: %s layoutservice timelineservice' % sys.argv[0]
-    sys.exit(1)
+	layoutService="http://173.39.240.79:7771/timeline/v1"
+	timelineService="http://141.105.120.225:8080/context"
+    #print 'Usage: %s layoutservice timelineservice' % sys.argv[0]
+    #sys.exit(1)
+else:
+	layoutService = sys.argv[1]
+	timelineService = sys.argv[2]
 
-# layoutService="http://173.39.240.79:7771/v1"
-# timelineService="http://141.105.120.225:8080/context"
-layoutService = sys.argv[1]
-timelineService = sys.argv[2]
 
 # Create the context
 r = requests.post(layoutService+"/context", params=dict(deviceId=DEVICE_ID), json=dict(displayWidth=1920, displayHeight=1080))
@@ -23,7 +24,7 @@ contextId = reply["contextId"]
 print "contextId:", contextId
 
 # Create it in the timeline service (until layout does this)
-if timelineService:
+if False and timelineService:
     r = requests.post(timelineService, params=dict(contextId=contextId))
     if r.status_code not in (requests.codes.ok, requests.codes.created):
         print 'Error', r.status_code
@@ -37,7 +38,11 @@ print 'Press return to create DMApp - ',
 sys.stdin.readline()
 
 # Create DMApp
-r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dict(deviceId=DEVICE_ID), json=dict(timelineUrl="http://example.com/2immerse/timeline.json", layoutReqsUrl="http://example.com/2immerse/layout.json"))
+r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dict(deviceId=DEVICE_ID),
+		json=dict(
+			timelineDocUrl="http://example.com/2immerse/timeline.json",
+			timelineServiceUrl=timelineService,
+			layoutReqsUrl="http://example.com/2immerse/layout.json"))
 if r.status_code not in (requests.codes.ok, requests.codes.created):
     print 'Error', r.status_code
     print r.text
@@ -46,7 +51,7 @@ reply = r.json()
 dmappId = reply["DMAppId"]
 
 # Create it in the timeline service
-if timelineService:
+if False and timelineService:
     r = requests.post(timelineService + '/' + contextId + '/loadDMAppTimeline', params=dict(timelineUrl="http://example.com/2immerse/timeline.json"))
     if r.status_code not in (requests.codes.ok, requests.codes.created):
         print 'Error', r.status_code
