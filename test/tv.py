@@ -45,16 +45,6 @@ reply = r.json()   # XXXJACK the [0] may be a bug workaround
 contextId = reply["contextId"]
 print "contextId:", contextId
 
-# Create it in the timeline service (until layout does this)
-if False and timelineService:
-    r = requests.post(timelineService, params=dict(contextId=contextId))
-    if r.status_code not in (requests.codes.ok, requests.codes.created):
-        print 'Error', r.status_code
-        print r.text
-    r.raise_for_status()
-    reply=r.json()
-    assert reply['contextId'] == contextId
-
 # Wait
 print 'Press return to create DMApp - ',
 sys.stdin.readline()
@@ -71,6 +61,7 @@ if r.status_code not in (requests.codes.ok, requests.codes.created):
     r.raise_for_status()
 reply = r.json()
 dmappId = reply["DMAppId"]
+print 'dmappId:', dmappId
 
 # Create it in the timeline service
 if False and timelineService:
