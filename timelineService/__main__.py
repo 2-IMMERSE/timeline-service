@@ -27,6 +27,9 @@ class timelineServerServer:
     def POST(self):
         args = web.input()
         rv = timeline.Timeline.createTimeline(**args)
+        if rv == None or rv == '':
+        	web.ctx.status = '204 No Content'
+        	return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
@@ -54,6 +57,9 @@ class timelineServer:
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
         rv = method(**args)
+        if rv == None or rv == '':
+        	web.ctx.status = '204 No Content'
+        	return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
@@ -66,6 +72,9 @@ class timelineServer:
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
         rv = method(**args)
+        if rv == None or rv == '':
+        	web.ctx.status = '204 No Content'
+        	return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 

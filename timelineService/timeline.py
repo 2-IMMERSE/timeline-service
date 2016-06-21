@@ -5,14 +5,14 @@ DEBUG=True
 class Timeline:
     ALL_CONTEXTS = {}
 
-#     @classmethod
-#     def createTimeline(cls, contextId):
-#         """Factory function: create a new context"""
-#         assert not contextId in cls.ALL_CONTEXTS
-#         new = cls(contextId)
-#         cls.ALL_CONTEXTS[contextId] = new
-#         return dict(contextId=contextId)
-#         
+    @classmethod
+    def createTimeline(cls, contextId, layoutServiceUrl):
+        """Factory function: create a new context"""
+        assert not contextId in cls.ALL_CONTEXTS
+        new = cls(contextId)
+        cls.ALL_CONTEXTS[contextId] = new
+        return
+        
     @classmethod
     def get(cls, contextId):
         """Getter: return context for given ID"""
@@ -24,11 +24,11 @@ class Timeline:
     def getAll(cls):
         return cls.ALL_CONTEXTS.keys()
         
-    def __init__(self, contextId):
+    def __init__(self, contextId, layoutServiceUrl):
         """Initializer, creates a new context and stores it for global reference"""
         self.contextId = contextId
         self.timelineUrl = None
-        self.layoutServiceId = None
+        self.layoutServiceUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         # Do other initialization
@@ -58,18 +58,17 @@ class Timeline:
     def createTimeline(self, *args, **kwargs):
     	print 'xyzy jck', args, kwargs
     	
-    def loadDMAppTimeline(self, timelineUrl, layoutServiceId=None):
+    def loadDMAppTimeline(self, timelineUrl):
         if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineUrl)
         pass
         assert self.timelineUrl is None
         assert self.dmappTimeline is None
         assert self.dmappId is None
         self.timelineUrl = timelineUrl
-        self.layoutService = layoutServiceId
         self.dmappTimeline = "Here will be a document encoding the timeline"
         self.dmappId = "dmappid-42"
             
-        self.layoutService = ProxyLayoutService(self.layoutService, self.contextId, self.dmappId)
+        self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
         self.clockService = ProxyClockService()
         self._populateTimeline()
         self._updateTimeline()

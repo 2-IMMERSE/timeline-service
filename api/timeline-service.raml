@@ -7,18 +7,16 @@ documentation:
 
 /context:
 	post:
+		description: Create a timeline for the given context
 		queryParameters:
 			contextId:
 				description: The ID of the context to be created
+			layoutServiceUrl:
+				description: Base URL of layout service
 		responses:
-			200:
-				body:
-					application/json:
-						example: |
-							{
-								"contextId" : "1234"
-							}
+			204:
 	get:
+		description: Get list of initialised contextIDs
 		responses:
 			200:
 				body:
@@ -28,6 +26,11 @@ documentation:
 	/{contextId}:
 		/dump:
 			get:
+				description: Dump some debugging info about this context
+				responses:
+					200:
+						body:
+							text/plain
 		/loadDMAppTimeline:
 			put:
 				queryParameters:
