@@ -11,7 +11,7 @@ class Timeline:
         assert not contextId in cls.ALL_CONTEXTS
         new = cls(contextId)
         cls.ALL_CONTEXTS[contextId] = new
-        return
+        return None
         
     @classmethod
     def get(cls, contextId):
@@ -44,6 +44,7 @@ class Timeline:
         self.layoutService = None
         self.dmappComponents = {}
         # Do other cleanup
+        return None
         
     def dump(self):
         return dict(
@@ -55,10 +56,7 @@ class Timeline:
             dmappComponents=self.dmappComponents.keys(),
             )
         
-    def createTimeline(self, *args, **kwargs):
-    	print 'xyzy jck', args, kwargs
-    	
-    def loadDMAppTimeline(self, timelineUrl):
+    def loadDMAppTimeline(self, timelineUrl, dmappId):
         if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineUrl)
         pass
         assert self.timelineUrl is None
@@ -66,13 +64,13 @@ class Timeline:
         assert self.dmappId is None
         self.timelineUrl = timelineUrl
         self.dmappTimeline = "Here will be a document encoding the timeline"
-        self.dmappId = "dmappid-42"
+        self.dmappId = dmappId
             
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
         self.clockService = ProxyClockService()
         self._populateTimeline()
         self._updateTimeline()
-        return {'dmappId':self.dmappId}
+        return None
         
     def unloadDMAppTimeline(self, dmappId):
         if DEBUG: print "Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId)
@@ -83,6 +81,7 @@ class Timeline:
         self.timelineUrl = None
         self.dmappTimeline = None
         self.dmappId = None
+        return None
         
     def dmappcStatus(self, dmappId, componentId, status):
         if DEBUG: print "Timeline(%s): dmappcStatus(%s, %s, %s)" % (self.contextId, dmappId, componentId, status)
@@ -90,14 +89,17 @@ class Timeline:
         c = self.dmappComponents[componentId]
         c.statusReport(status)
         self._updateTimeline()
+        return None
                 
     def timelineEvent(self, eventId):
         if DEBUG: print "Timeline(%s): timelineEvent(%s)" % (self.contextId, eventId)
         pass
+        return None
         
     def clockChanged(self, *args, **kwargs):
         if DEBUG: print "Timeline(%s): clockChanged(%s, %s)" % (self.contextId, args, kwargs)
         pass
+        return None
         
     def _populateTimeline(self):
         """Create proxy objects, etc, using self.dmappTimeline"""

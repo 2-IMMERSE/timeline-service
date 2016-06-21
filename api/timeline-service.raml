@@ -33,24 +33,24 @@ documentation:
 							text/plain
 		/loadDMAppTimeline:
 			put:
+				description: Load a document into the timeline for a given DMApp
 				queryParameters:
-					timelineUrl:
+					timelineDocUrl:
 						description: Reference to document containing timeline service instructions
 						required: true
+					dmappId:
+						description: The identifier for the DMApp that needs this timeline
+						required: true
 				responses:
-					200:
-						body:
-							application/json:
-								example: |
-									{
-										"dmappId" : "dmappid-42"
-									}
+					204:
 		/unloadDMAppTimeline:
 			put:
 				queryParameters:
 					dmappId:
 						description: The dmapp for which the timeline should be unloaded
 						required: true
+				responses:
+					204:
 		/dmappcStatus:
 			put:
 				queryParameters:
@@ -62,11 +62,17 @@ documentation:
 						required: true
 					status:
 						description: The status report
+				responses:
+					204:
 		/timelineEvent:
 			put:
 				queryParameters:
 					eventId:
 						description: The timeline event that got triggered
 						required: true
+				responses:
+					204:
 		/clockChanged:
 			put:
+				responses:
+					204:
