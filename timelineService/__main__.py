@@ -5,8 +5,8 @@ import json
 import argparse
 
 urls = (
-    '/timeline/v1', 'timelineServerServer',
-    '/timeline/v1/(.*)/(.*)', 'timelineServer',
+    '/timeline/v1/context', 'timelineServerServer',
+    '/timeline/v1/context/(.*)/(.*)', 'timelineServer',
 )
 
 app = web.application(urls, globals())

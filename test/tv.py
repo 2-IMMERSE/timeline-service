@@ -53,7 +53,7 @@ sys.stdin.readline()
 r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dict(deviceId=DEVICE_ID),
 		json=dict(
 			timelineDocUrl="http://example.com/2immerse/timeline.json",
-			timelineServiceUrl=timelineService + '/' + contextId,
+			timelineServiceUrl=timelineService,
 			layoutReqsUrl="http://example.com/2immerse/layout.json"))
 if r.status_code not in (requests.codes.ok, requests.codes.created):
     print 'Error', r.status_code
