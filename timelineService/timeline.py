@@ -9,7 +9,7 @@ class Timeline:
     def createTimeline(cls, contextId, layoutServiceUrl):
         """Factory function: create a new context"""
         assert not contextId in cls.ALL_CONTEXTS
-        new = cls(contextId)
+        new = cls(contextId, layoutServiceUrl)
         cls.ALL_CONTEXTS[contextId] = new
         return None
         
