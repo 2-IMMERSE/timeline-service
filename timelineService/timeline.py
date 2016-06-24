@@ -28,7 +28,7 @@ class Timeline:
         """Initializer, creates a new context and stores it for global reference"""
         self.contextId = contextId
         self.timelineDocUrl = None
-        self.layoutServiceUrl = None
+        self.layoutServiceUrl = layoutServiceUrl
         self.dmappTimeline = None
         self.dmappId = None
         # Do other initialization
@@ -53,6 +53,7 @@ class Timeline:
             dmappTimeline=self.dmappTimeline, 
             dmappId=self.dmappId,
             layoutService=repr(self.layoutService),
+            layoutServiceUrl=self.layoutServiceUrl,
             dmappComponents=self.dmappComponents.keys(),
             )
         
