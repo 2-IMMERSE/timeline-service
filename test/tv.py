@@ -18,7 +18,7 @@ if DEBUG:
 DEVICE_ID="4200"
 
 if len(sys.argv) != 3:
-	layoutService="http://layout-service.2immerse.advdev.tv/v1"
+	layoutService="http://layout-service.2immerse.advdev.tv/layout/v1"
 	timelineService="http://141.105.120.225:8080/timeline/v1"
     #print 'Usage: %s layoutservice timelineservice' % sys.argv[0]
     #sys.exit(1)
@@ -54,6 +54,7 @@ r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dic
 		json=dict(
 			timelineDocUrl="http://example.com/2immerse/timeline.json",
 			timelineServiceUrl=timelineService,
+			extLayoutServiceUrl=layoutService,  # For now: the layout service cannot determine this itself....
 			layoutReqsUrl="http://example.com/2immerse/layout.json"))
 if r.status_code not in (requests.codes.ok, requests.codes.created):
     print 'Error', r.status_code

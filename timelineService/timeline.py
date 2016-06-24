@@ -27,7 +27,7 @@ class Timeline:
     def __init__(self, contextId, layoutServiceUrl):
         """Initializer, creates a new context and stores it for global reference"""
         self.contextId = contextId
-        self.timelineUrl = None
+        self.timelineDocUrl = None
         self.layoutServiceUrl = None
         self.dmappTimeline = None
         self.dmappId = None
@@ -38,7 +38,7 @@ class Timeline:
         if DEBUG: print "Timeline(%s): destroyTimeline()" % self.contextId
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
-        self.timelineUrl = None
+        self.timelineDocUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         self.layoutService = None
@@ -49,20 +49,20 @@ class Timeline:
     def dump(self):
         return dict(
             contextId=self.contextId, 
-            timelineUrl=self.timelineUrl, 
+            timelineDocUrl=self.timelineDocUrl, 
             dmappTimeline=self.dmappTimeline, 
             dmappId=self.dmappId,
             layoutService=repr(self.layoutService),
             dmappComponents=self.dmappComponents.keys(),
             )
         
-    def loadDMAppTimeline(self, timelineUrl, dmappId):
-        if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineUrl)
+    def loadDMAppTimeline(self, timelineDocUrl, dmappId):
+        if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl)
         pass
-        assert self.timelineUrl is None
+        assert self.timelineDocUrl is None
         assert self.dmappTimeline is None
         assert self.dmappId is None
-        self.timelineUrl = timelineUrl
+        self.timelineDocUrl = timelineDocUrl
         self.dmappTimeline = "Here will be a document encoding the timeline"
         self.dmappId = dmappId
             
@@ -75,10 +75,10 @@ class Timeline:
     def unloadDMAppTimeline(self, dmappId):
         if DEBUG: print "Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId)
         pass
-        assert self.timelineUrl
+        assert self.timelineDocUrl
         assert self.dmappTimeline
         assert self.dmappId == dmappId
-        self.timelineUrl = None
+        self.timelineDocUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         return None
