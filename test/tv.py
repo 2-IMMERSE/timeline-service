@@ -47,7 +47,7 @@ if r.status_code not in (requests.codes.ok, requests.codes.created):
 reply = r.json()   # XXXJACK the [0] may be a bug workaround
 contextId = reply["contextId"]
 print "contextId:", contextId
-
+print "layoutServiceContextURL:", layoutService + '/context/' + contextId
 # Wait
 print 'Press return to create DMApp - ',
 sys.stdin.readline()

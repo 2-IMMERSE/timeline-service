@@ -17,29 +17,27 @@ if DEBUG:
 	requests_log.setLevel(logging.DEBUG)
 	requests_log.propagate = True
 
-DEVICE_ID="4200"
+DEVICE_ID="4300"
 
-if len(sys.argv) != 3:
-	layoutService="http://layout-service.2immerse.advdev.tv/layout/v1"
-	timelineService="http://141.105.120.225:8080/timeline/v1"
-    #print 'Usage: %s layoutservice timelineservice' % sys.argv[0]
-    #sys.exit(1)
+if len(sys.argv) != 2:
+    print 'Usage: %s layoutServiceContextURL' % sys.argv[0]
+    sys.exit(1)
 else:
-	layoutService = sys.argv[1]
-	timelineService = sys.argv[2]
+	layoutServiceContextUrl = sys.argv[1]
 
 
-# Create the context
-print 'Creating context at the layout service'
-r = requests.post(layoutService+"/context", params=dict(deviceId=DEVICE_ID), 
-	json=dict(
-		displayWidth=1920, 
-		displayHeight=1080,
-		audioChannels=1,
-		concurrentVideo=1,
-		touchInteraction=True,
-		sharedDevice=True
-		))
+# Join the context
+print 'Joining context at the layout service'
+r = requests.post(layoutServiceContextUrl+"/devices", params=dict(deviceId=DEVICE_ID), 
+# 	json=dict(
+# 		displayWidth=1920, 
+# 		displayHeight=1080,
+# 		audioChannels=1,
+# 		concurrentVideo=1,
+# 		touchInteraction=True,
+# 		sharedDevice=True
+# 		)
+		)
 if r.status_code not in (requests.codes.ok, requests.codes.created):
     print 'Error', r.status_code
     print r.text
@@ -48,26 +46,10 @@ reply = r.json()   # XXXJACK the [0] may be a bug workaround
 contextId = reply["contextId"]
 print "contextId:", contextId
 
-# Wait
-print 'Press return to create DMApp - ',
-sys.stdin.readline()
-
-print 'Creating DMApp at the layout service'
-# Create DMApp
-r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dict(deviceId=DEVICE_ID),
-		json=dict(
-			timelineDocUrl="http://example.com/2immerse/timeline.json",
-			timelineServiceUrl=timelineService,
-			extLayoutServiceUrl=layoutService,  # For now: the layout service cannot determine this itself....
-			layoutReqsUrl="http://example.com/2immerse/layout.json"))
-if r.status_code not in (requests.codes.ok, requests.codes.created):
-    print 'Error', r.status_code
-    print r.text
-    r.raise_for_status()
-reply = r.json()
-dmappId = reply["DMAppId"]
-print 'dmappId:', dmappId
-
+print 'DMAppId?',
+sys.stdout.flush()
+dmappId = sys.stdin.readline().strip()
+print 'DMAppId:', dmappId
 
 # Check what is happening by polling the layout service
 print 'Check status every second'
@@ -76,7 +58,7 @@ status_for_component = {}
 last_status_report_for_component = {}
 while True:
     print 'Get status for', DEVICE_ID
-    r = requests.get(layoutService + '/context/' + contextId + '/dmapp/' + dmappId, params=dict(deviceId=DEVICE_ID))
+    r = requests.get(layoutServiceContextUrl + '/dmapp/' + dmappId, params=dict(deviceId=DEVICE_ID))
     if r.status_code not in (requests.codes.ok, requests.codes.created):
         print 'Error', r.status_code
         print r.text
@@ -91,7 +73,7 @@ while True:
             last_status_report_for_component[componentId] = comp
             print 'New component:', componentId
             # Report status for new component
-            r = requests.post(layoutService + '/context/' + contextId + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(deviceId=DEVICE_ID),
+            r = requests.post(layoutServiceContextUrl + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(deviceId=DEVICE_ID),
                     json=dict(status=status_for_component[componentId]))
             if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
                 print 'Error', r.status_code
