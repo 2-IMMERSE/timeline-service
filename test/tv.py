@@ -1,5 +1,7 @@
 import sys
+import time
 import requests
+import pprint
 
 DEBUG=False
 
@@ -28,6 +30,7 @@ else:
 
 
 # Create the context
+print 'Creating context at the layout service'
 r = requests.post(layoutService+"/context", params=dict(deviceId=DEVICE_ID), 
 	json=dict(
 		displayWidth=1920, 
@@ -49,6 +52,7 @@ print "contextId:", contextId
 print 'Press return to create DMApp - ',
 sys.stdin.readline()
 
+print 'Creating DMApp at the layout service'
 # Create DMApp
 r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dict(deviceId=DEVICE_ID),
 		json=dict(
@@ -64,12 +68,38 @@ reply = r.json()
 dmappId = reply["DMAppId"]
 print 'dmappId:', dmappId
 
-# Create it in the timeline service
-if False and timelineService:
-    r = requests.post(timelineService + '/' + contextId + '/loadDMAppTimeline', params=dict(timelineUrl="http://example.com/2immerse/timeline.json"))
+
+# Check what is happening by polling the layout service
+print 'Check status every second'
+pp = pprint.PrettyPrinter()
+status_for_component = {}
+last_status_report_for_component = {}
+while True:
+    print 'Get status for', DEVICE_ID
+    r = requests.get(layoutService + '/context/' + contextId + '/dmapp/' + dmappId, params=dict(deviceId=DEVICE_ID))
     if r.status_code not in (requests.codes.ok, requests.codes.created):
         print 'Error', r.status_code
         print r.text
-    r.raise_for_status()
-    reply=r.json()
-    
+        r.raise_for_status()
+    reply = r.json()
+    #pp.pprint(reply)
+    # Iterate over all components, see which ones are new
+    for comp in reply['components']:
+        componentId = comp['componentId']
+        if not componentId in status_for_component:
+            status_for_component[componentId] = 'inited'
+            last_status_report_for_component[componentId] = comp
+            print 'New component:', componentId
+            # Report status for new component
+            r = requests.post(layoutService + '/context/' + contextId + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(deviceId=DEVICE_ID),
+                    json=dict(status=status_for_component[componentId]))
+            if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
+                print 'Error', r.status_code
+                print r.text
+                r.raise_for_status()
+        elif comp != last_status_report_for_component[componentId]:
+            print 'Status report changed for component:', componentId
+
+    print
+    time.sleep(1)
+
