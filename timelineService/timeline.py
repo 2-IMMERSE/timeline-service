@@ -170,6 +170,12 @@ class ProxyDMAppComponent:
         contactInfo += '/component/' + self.dmappcId
         return contactInfo
         
+    def _getTime(self, timestamp):
+        head = time.strftime('%H:%M:%S', time.localtime(timestamp))
+        frac = timestamp - int(timestamp)
+        tail = str(frac)[1:]
+        return frac + tail
+        
     def initComponent(self):
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/init'
@@ -184,7 +190,7 @@ class ProxyDMAppComponent:
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/start'
         print "CALL", entryPoint
-        r = requests.post(entryPoint)
+        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.startTime)))
         r.raise_for_status()
         print "RETURNED"
         
@@ -192,7 +198,7 @@ class ProxyDMAppComponent:
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
         print "CALL", entryPoint
-        r = requests.post(entryPoint)
+        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.stopTime)))
         r.raise_for_status()
         print "RETURNED"
        
@@ -206,6 +212,6 @@ class ProxyDMAppComponent:
         return self.status == "initialized" and self.startTime >= self.clockService.now()
         
     def shouldStop(self):
-        return self.status == "running" and self.stopTime is not None and self.stopTime >= self.clockService.now()
+        return self.status == "started" and self.stopTime is not None and self.stopTime >= self.clockService.now()
         
         
