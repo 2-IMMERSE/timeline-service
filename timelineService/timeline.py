@@ -183,7 +183,7 @@ class ProxyDMAppComponent:
         self.status = "initRequested"
         
     def startComponent(self, timeSpec):
-        assert self.status == "initialized"
+        assert self.status == "inited"
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/start'
         print "CALL", entryPoint
