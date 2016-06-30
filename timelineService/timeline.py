@@ -206,7 +206,7 @@ class ProxyDMAppComponent:
         return self.status == None
         
     def shouldStart(self):
-        return self.status == "initialized" and self.startTime >= self.clockService.now()
+        return self.status == "inited" and self.startTime >= self.clockService.now()
         
     def shouldStop(self):
         return self.status == "started" and self.stopTime is not None and self.stopTime >= self.clockService.now()
