@@ -31,7 +31,7 @@ else:
 
 # Create the context
 print 'Creating context at the layout service'
-r = requests.post(layoutService+"/context", params=dict(deviceId=DEVICE_ID), 
+r = requests.post(layoutService+"/context", params=dict(reqDeviceId=DEVICE_ID), 
 	json=dict(
 		displayWidth=1920, 
 		displayHeight=1080,
@@ -54,7 +54,7 @@ sys.stdin.readline()
 
 print 'Creating DMApp at the layout service'
 # Create DMApp
-r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dict(deviceId=DEVICE_ID),
+r = requests.post(layoutService + '/context/' + contextId + '/dmapp', params=dict(reqDeviceId=DEVICE_ID),
 		json=dict(
 			timelineDocUrl="http://example.com/2immerse/timeline.json",
 			timelineServiceUrl=timelineService,
@@ -76,7 +76,7 @@ status_for_component = {}
 last_status_report_for_component = {}
 while True:
     print 'Get status for', DEVICE_ID
-    r = requests.get(layoutService + '/context/' + contextId + '/dmapp/' + dmappId, params=dict(deviceId=DEVICE_ID))
+    r = requests.get(layoutService + '/context/' + contextId + '/dmapp/' + dmappId, params=dict(reqDeviceId=DEVICE_ID))
     if r.status_code not in (requests.codes.ok, requests.codes.created):
         print 'Error', r.status_code
         print r.text
@@ -91,7 +91,7 @@ while True:
             last_status_report_for_component[componentId] = comp
             print 'New component:', componentId
             # Report status for new component
-            r = requests.post(layoutService + '/context/' + contextId + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(deviceId=DEVICE_ID),
+            r = requests.post(layoutService + '/context/' + contextId + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(reqDeviceId=DEVICE_ID),
                     json=dict(status=status_for_component[componentId]))
             if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
                 print 'Error', r.status_code

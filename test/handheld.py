@@ -28,7 +28,7 @@ else:
 
 # Join the context
 print 'Joining context at the layout service'
-r = requests.post(layoutServiceContextUrl+"/devices", params=dict(deviceId=DEVICE_ID), 
+r = requests.post(layoutServiceContextUrl+"/devices", params=dict(reqDeviceId=DEVICE_ID), 
 # 	json=dict(
 # 		displayWidth=1920, 
 # 		displayHeight=1080,
@@ -58,7 +58,7 @@ status_for_component = {}
 last_status_report_for_component = {}
 while True:
     print 'Get status for', DEVICE_ID
-    r = requests.get(layoutServiceContextUrl + '/dmapp/' + dmappId, params=dict(deviceId=DEVICE_ID))
+    r = requests.get(layoutServiceContextUrl + '/dmapp/' + dmappId, params=dict(reqDeviceId=DEVICE_ID))
     if r.status_code not in (requests.codes.ok, requests.codes.created):
         print 'Error', r.status_code
         print r.text
@@ -73,7 +73,7 @@ while True:
             last_status_report_for_component[componentId] = comp
             print 'New component:', componentId
             # Report status for new component
-            r = requests.post(layoutServiceContextUrl + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(deviceId=DEVICE_ID),
+            r = requests.post(layoutServiceContextUrl + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(reqDeviceId=DEVICE_ID),
                     json=dict(status=status_for_component[componentId]))
             if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
                 print 'Error', r.status_code
