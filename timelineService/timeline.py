@@ -171,10 +171,7 @@ class ProxyDMAppComponent:
         return contactInfo
         
     def _getTime(self, timestamp):
-        head = time.strftime('%H:%M:%S', time.localtime(timestamp))
-        frac = timestamp - int(timestamp)
-        tail = str(frac)[1:]
-        return frac + tail
+        return timestamp + 0.0
         
     def initComponent(self):
         entryPoint = self._getContactInfo()
