@@ -209,7 +209,8 @@ class MasterClock(GlobalClock):
         url = self.application.layoutServiceApplicationURL
         # For now, remove everything after /context
         print '%s (wallclock=%s):' % (self.now(), time.time())
-        cEnd = url.find('/context') + len('/context')
+        return # For now layout-service implementation is incomplete (July 1)
+        cEnd = url.find('/dmapp')
         url = url[:cEnd]
         r = requests.post(
                 url+"/actions/clockChanged", 
@@ -219,6 +220,10 @@ class MasterClock(GlobalClock):
                     contextClock=self.now()
                     )
                 )
+        if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
+            print 'Error', r.status_code
+            print r.text
+            r.raise_for_status()
 
 class SlaveClock(GlobalClock):
     pass
