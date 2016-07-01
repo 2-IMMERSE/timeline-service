@@ -1,6 +1,17 @@
 import requests
 
 DEBUG=True
+if DEBUG:
+	import httplib
+	import logging
+	httplib.HTTPConnection.debuglevel = 1
+
+	# You must initialize logging, otherwise you'll not see debug output.
+	logging.basicConfig()
+	logging.getLogger().setLevel(logging.DEBUG)
+	requests_log = logging.getLogger("requests.packages.urllib3")
+	requests_log.setLevel(logging.DEBUG)
+	requests_log.propagate = True
 
 class Timeline:
     ALL_CONTEXTS = {}
@@ -195,7 +206,7 @@ class ProxyDMAppComponent:
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
         print "CALL", entryPoint
-        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.stopTime)))
+        r = requests.post(entryPoint, params=dict(stopTime=self._getTime(self.stopTime)))
         r.raise_for_status()
         print "RETURNED"
        
