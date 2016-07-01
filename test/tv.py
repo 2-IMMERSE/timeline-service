@@ -37,7 +37,7 @@ r = requests.post(layoutService+"/context", params=dict(reqDeviceId=DEVICE_ID),
 		displayHeight=1080,
 		audioChannels=1,
 		concurrentVideo=1,
-		touchInteraction=True,
+		touchInteraction=False,
 		sharedDevice=True
 		))
 if r.status_code not in (requests.codes.ok, requests.codes.created):

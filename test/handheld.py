@@ -29,15 +29,14 @@ else:
 # Join the context
 print 'Joining context at the layout service'
 r = requests.post(layoutServiceContextUrl+"/devices", params=dict(reqDeviceId=DEVICE_ID), 
-# 	json=dict(
-# 		displayWidth=1920, 
-# 		displayHeight=1080,
-# 		audioChannels=1,
-# 		concurrentVideo=1,
-# 		touchInteraction=True,
-# 		sharedDevice=True
-# 		)
-		)
+	json=dict(
+		displayWidth=720, 
+		displayHeight=1280,
+		audioChannels=2,
+		concurrentVideo=2,
+		touchInteraction=True,
+		sharedDevice=False
+		))
 if r.status_code not in (requests.codes.ok, requests.codes.created):
     print 'Error', r.status_code
     print r.text
