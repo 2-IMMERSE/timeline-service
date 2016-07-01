@@ -9,9 +9,9 @@ class Context:
         self.contextId = None
         self.layoutServiceContextURL = None
         
-    def create(self, layoutServiceUrl):
+    def create(self, layoutServiceURL):
         r = requests.post(
-                layoutServiceUrl+"/context", 
+                layoutServiceURL+"/context", 
                 params=dict(reqDeviceId=self.deviceId), 
                 json=self.caps
                 )
@@ -21,7 +21,7 @@ class Context:
             r.raise_for_status()
         reply = r.json()
         self.contextId = reply["contextId"]
-        self.layoutServiceContextURL = layoutService + '/context/' + contextId
+        self.layoutServiceContextURL = layoutServiceURL + '/context/' + self.contextId
 
     def join(self, layoutServiceContextURL):
         self.layoutServiceContextURL = layoutServiceContextURL
@@ -36,7 +36,7 @@ class Context:
             r.raise_for_status()
         reply = r.json()
         self.contextId = reply["contextId"]
-        print "contextId:", contextId
+        print "contextId:", self.contextId
         
     def createDMApp(self, urls):
         r = requests.post(
@@ -51,7 +51,7 @@ class Context:
         reply = r.json()
         dmappId = reply["DMAppId"]
         print 'dmappId:', dmappId
-        return Application(self, dmappId)
+        return Application(self, dmappId, True)
 
     def getDMApp(self):
         r = requests.get(
@@ -66,13 +66,13 @@ class Context:
         if type(reply) != type([]) or len(reply) != 1:
             print 'Error: excepted array with one dmappId but got:', repl(reply)
         dmappId = reply[0]
-        return Application(self, dmappId)
+        return Application(self, dmappId, False)
         
 class Application:
     def __init__(self, context, dmappId, isMaster):
         self.context = context
         self.dmappId = dmappId
-        self.layoutServiceAppURL = self.context.layoutServiceContextURL + '/dmapp/' + dmappId
+        self.layoutServiceApplicationURL = self.context.layoutServiceContextURL + '/dmapp/' + dmappId
         if isMaster:
             self.clock = MasterClock(self)
         else:
@@ -97,7 +97,7 @@ class Application:
             time.sleep(1)
             
     def _getLayoutInstruction(self):
-        r = requests.get(self.layoutServiceAppURL, params=dict(reqDeviceId=self.context.deviceId))
+        r = requests.get(self.layoutServiceApplicationURL, params=dict(reqDeviceId=self.context.deviceId))
         if r.status_code not in (requests.codes.ok, requests.codes.created):
             print 'Error', r.status_code
             print r.text
@@ -105,14 +105,14 @@ class Application:
         reply = r.json()
         return reply
         
-    def _doLayoutInstructions(self, inst):
+    def _doLayoutInstruction(self, inst):
         oldComponents = set(self.components)
         for componentInfo in inst['components']:
             componentId = componentInfo['componentId']
             if componentId in oldComponents:
                 # Update status for existing components
                 self.components[componentId].update(componentInfo)
-                del oldComponents[componentId]
+                oldComponents.remove(componentId)
             else:
                 # Create new components
                 c = Component(self, componentId, componentInfo)
@@ -155,9 +155,9 @@ class Component:
             self._reportStatus()
             
     def _reportStatus(self):
-        print 'Status for', componentId, 'is now', status_for_component[componentId]
+        print 'Status for', self.componentId, 'is now', self.status
         # Report status for new component
-        r = requests.post(self.layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=DEVICE_ID),
+        r = requests.post(self.layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=self.application.context.deviceId),
                 json=dict(status=self.status))
         if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
             print 'Error', r.status_code
@@ -175,6 +175,7 @@ class GlobalClock:
         now = self.epoch
         self.epoch = time.time()
         self.epoch -= now
+        self.running = True
         
     def stop(self):
         if not self.running: return
@@ -205,13 +206,14 @@ class MasterClock(GlobalClock):
         
     def report(self):
         # Should also broadcast to the slave clocks or something
-        url = self.application.layoutServiceAppURL
+        url = self.application.layoutServiceApplicationURL
         # For now, remove everything after /context
+        print '%s (wallclock=%s):' % (self.now(), time.time())
         cEnd = url.find('/context') + len('/context')
         url = url[:cEnd]
         r = requests.post(
                 url+"/actions/clockChanged", 
-                params=dict(reqDeviceId=self.deviceId), 
+                params=dict(reqDeviceId=self.application.context.deviceId), 
                 json=dict(
                     wallClock=time.time(),
                     contextClock=self.now()
