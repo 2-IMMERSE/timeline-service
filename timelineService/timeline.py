@@ -1,7 +1,8 @@
 import requests
 
 DEBUG=True
-if DEBUG:
+DEBUG_OUTGOING=False
+if DEBUG_OUTGOING:
 	import httplib
 	import logging
 	httplib.HTTPConnection.debuglevel = 1
