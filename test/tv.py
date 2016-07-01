@@ -17,7 +17,7 @@ if DEBUG:
 	requests_log.setLevel(logging.DEBUG)
 	requests_log.propagate = True
 
-DEVICE_ID="4200"
+DEVICE_ID="TV"
 
 if len(sys.argv) != 3:
 	layoutService="http://layout-service.2immerse.advdev.tv/layout/v1"
@@ -97,7 +97,6 @@ while True:
             # Status will be reported further down
         elif comp != last_status_report_for_component[componentId]:
             print 'Status report changed for component:', componentId
-            print comp
             last_status_report_for_component[componentId] = comp
     # Iterate over all components, see which ones have a new status
     for componentId in status_for_component.keys():
@@ -123,7 +122,7 @@ while True:
                 print r.text
                 r.raise_for_status()
         else:
-            print 'Status for', componentId, 'is still', status_for_component[componentId], (now, startTime, stopTime)
+            pass # print 'Status for', componentId, 'is still', status_for_component[componentId], (now, startTime, stopTime)
 
     print
     time.sleep(1)

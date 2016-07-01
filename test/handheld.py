@@ -17,7 +17,7 @@ if DEBUG:
 	requests_log.setLevel(logging.DEBUG)
 	requests_log.propagate = True
 
-DEVICE_ID="4300"
+DEVICE_ID="handheld"
 
 if len(sys.argv) != 2:
     print 'Usage: %s layoutServiceContextURL' % sys.argv[0]
@@ -56,6 +56,7 @@ print 'Check status every second'
 pp = pprint.PrettyPrinter()
 status_for_component = {}
 last_status_report_for_component = {}
+epoch = None
 while True:
     print 'Get status for', DEVICE_ID
     r = requests.get(layoutServiceContextUrl + '/dmapp/' + dmappId, params=dict(reqDeviceId=DEVICE_ID))
@@ -64,14 +65,37 @@ while True:
         print r.text
         r.raise_for_status()
     reply = r.json()
+    # Start the "clock" running, if it isn't already
+    if epoch == None:
+        epoch = time.time()
     #pp.pprint(reply)
     # Iterate over all components, see which ones are new
     for comp in reply['components']:
         componentId = comp['componentId']
         if not componentId in status_for_component:
-            status_for_component[componentId] = 'inited'
+            status_for_component[componentId] = None 
             last_status_report_for_component[componentId] = comp
             print 'New component:', componentId
+            # Status will be reported further down
+        elif comp != last_status_report_for_component[componentId]:
+            print 'Status report changed for component:', componentId
+            last_status_report_for_component[componentId] = comp
+    # Iterate over all components, see which ones have a new status
+    for componentId in status_for_component.keys():
+        startTime = last_status_report_for_component[componentId]['startTime']
+        if startTime: startTime = float(startTime)
+        stopTime = last_status_report_for_component[componentId]['stopTime']
+        if stopTime: stopTime = float(stopTime)
+        now = time.time() - epoch
+        if stopTime != None and now >= stopTime:
+            newStatus = "stopped"
+        elif startTime != None and now >= startTime:
+            newStatus = "started"
+        else:
+            newStatus = "inited"
+        if newStatus != status_for_component[componentId]:
+            status_for_component[componentId] = newStatus 
+            print 'Status for', componentId, 'is now', status_for_component[componentId]
             # Report status for new component
             r = requests.post(layoutServiceContextUrl + '/dmapp/' + dmappId + '/component/' + componentId + '/actions/status', params=dict(reqDeviceId=DEVICE_ID),
                     json=dict(status=status_for_component[componentId]))
@@ -79,8 +103,8 @@ while True:
                 print 'Error', r.status_code
                 print r.text
                 r.raise_for_status()
-        elif comp != last_status_report_for_component[componentId]:
-            print 'Status report changed for component:', componentId
+        else:
+            pass # print 'Status for', componentId, 'is still', status_for_component[componentId], (now, startTime, stopTime)
 
     print
     time.sleep(1)
