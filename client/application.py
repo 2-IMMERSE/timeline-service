@@ -6,13 +6,14 @@ class Context:
     def __init__(self, deviceId, caps):
         self.deviceId = deviceId
         self.caps = caps
+        self.orientation = self.caps['orientations'][0]
         self.contextId = None
         self.layoutServiceContextURL = None
         
     def create(self, layoutServiceURL):
         r = requests.post(
                 layoutServiceURL+"/context", 
-                params=dict(reqDeviceId=self.deviceId), 
+                params=dict(reqDeviceId=self.deviceId, deviceId=self.deviceId, orientation=self.orientation), 
                 json=self.caps
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
@@ -27,7 +28,7 @@ class Context:
         self.layoutServiceContextURL = layoutServiceContextURL
         r = requests.post(
                 self.layoutServiceContextURL+"/devices", 
-                params=dict(reqDeviceId=self.deviceId), 
+                params=dict(reqDeviceId=self.deviceId, deviceId=self.deviceId, orientation=self.orientation), 
                 json=self.caps
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
