@@ -108,9 +108,16 @@ depends on the `tl:end` attribute: either when the first of its children has end
 the last of its children has ended or its timeline master child has ended. We may
 also want to specify a specific child (by xmlid) to determine when the `tl:par`
 ends.
+
 `tl:sync` determines whether the children (except the master) are synchronised
 to the `tl:par`, or whether they are free-running. The latter essentially creates
 a completely independent timeline.
+
+It may be better to move the functionality of the `tl:sync` attribute to the child node,
+so it is possible to easily specify that most children of a par are synchronised but
+some are running on an independent timeline. Then we would get something like a
+`tl:independent="true|false"` attribute. But it would only be allowed inside a
+`tl:par` parent...
 
 `<tl:seq>`
 

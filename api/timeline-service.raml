@@ -74,5 +74,13 @@ documentation:
 					204:
 		/clockChanged:
 			put:
+				description: Informs the timeline server of the current mapping of wallclock to presentation clock
+				body:
+					application/json:
+						example: |
+							{ 
+								"wallClock" : 1467290807.506383,
+								"contextClock" : 3.456000
+							}
 				responses:
 					204:

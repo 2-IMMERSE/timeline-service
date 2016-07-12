@@ -1,6 +1,18 @@
 import requests
 
 DEBUG=True
+DEBUG_OUTGOING=False
+if DEBUG_OUTGOING:
+	import httplib
+	import logging
+	httplib.HTTPConnection.debuglevel = 1
+
+	# You must initialize logging, otherwise you'll not see debug output.
+	logging.basicConfig()
+	logging.getLogger().setLevel(logging.DEBUG)
+	requests_log = logging.getLogger("requests.packages.urllib3")
+	requests_log.setLevel(logging.DEBUG)
+	requests_log.propagate = True
 
 class Timeline:
     ALL_CONTEXTS = {}
@@ -17,7 +29,7 @@ class Timeline:
     def get(cls, contextId):
         """Getter: return context for given ID"""
         if not contextId in cls.ALL_CONTEXTS:
-        	cls.ALL_CONTEXTS[contextId] = cls(contextId)
+        	return None
         return cls.ALL_CONTEXTS[contextId]
         
     @classmethod
@@ -170,6 +182,9 @@ class ProxyDMAppComponent:
         contactInfo += '/component/' + self.dmappcId
         return contactInfo
         
+    def _getTime(self, timestamp):
+        return timestamp + 0.0
+        
     def initComponent(self):
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/init'
@@ -180,11 +195,11 @@ class ProxyDMAppComponent:
         self.status = "initRequested"
         
     def startComponent(self, timeSpec):
-        assert self.status == "initialized"
+        assert self.status == "inited"
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/start'
         print "CALL", entryPoint
-        r = requests.post(entryPoint)
+        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.startTime)))
         r.raise_for_status()
         print "RETURNED"
         
@@ -192,7 +207,7 @@ class ProxyDMAppComponent:
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
         print "CALL", entryPoint
-        r = requests.post(entryPoint)
+        r = requests.post(entryPoint, params=dict(stopTime=self._getTime(self.stopTime)))
         r.raise_for_status()
         print "RETURNED"
        
@@ -203,9 +218,9 @@ class ProxyDMAppComponent:
         return self.status == None
         
     def shouldStart(self):
-        return self.status == "initialized" and self.startTime >= self.clockService.now()
+        return self.status == "inited" and self.startTime >= self.clockService.now()
         
     def shouldStop(self):
-        return self.status == "running" and self.stopTime is not None and self.stopTime >= self.clockService.now()
+        return self.status == "started" and self.stopTime is not None and self.stopTime >= self.clockService.now()
         
         
