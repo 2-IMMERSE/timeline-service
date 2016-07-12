@@ -8,7 +8,8 @@ def dmapp_for_tv(layoutServiceURL, timelineServiceURL):
         audioChannels=1,
         concurrentVideo=1,
         touchInteraction=False,
-        sharedDevice=True
+        sharedDevice=True,
+        orientations=["landscape"]
         )
     context = application.Context("TV", caps)
     context.create(layoutServiceURL)
@@ -28,7 +29,8 @@ def dmapp_for_handheld(layoutServiceContextURL):
         audioChannels=2,
         concurrentVideo=2,
         touchInteraction=True,
-        sharedDevice=False
+        sharedDevice=False,
+        orientations=['landscape', 'portrait']
         )
     context = application.Context("handheld", caps)
     context.join(layoutServiceContextURL)
