@@ -18,7 +18,8 @@ class DvbClientClock:
         # Based on that we create a second clock, that will run along with that clock,
         # but possibly updated by the clock master.
         #
-        self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq)
+        self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq) # , correlation=(self.wallClock.ticks, 0))
+        #self.timelineClock.speed = 0
         #
         # Now we can create the controller, that will update our timelineClock
         # when messages form the master come in
@@ -62,7 +63,19 @@ class DvbClientClock:
         print 'xxxjack: DvbClientClock.onTimingChange args=%s kwargs=%s' % (args, kwargs)
         
     def now(self):
-        return self.timelineClock.ticks/1000.0
+        return self.timelineClock.ticks/self.timelineClock.tickRate
+        
+    def start(self):
+        self.timelineClock.speed = 1.0
+        
+    def stop(self):
+        self.timelineClock.speed = 0.0
+        
+    def set(self, now):
+        self.timelineClock.rebaseCorrelationAtTicks(now*self.timelineClock.tickRate)
+        
+    def skew(self, delta):
+        self.set(self.now+delta)
         
 class DvbServerClock:
     def __init__(self, contentId, timelineSelector, host='127.0.0.1', port=7681):
@@ -76,7 +89,8 @@ class DvbServerClock:
         # Based on that we create a second clock, that will run along with that clock,
         # but possibly updated by the clock master.
         #
-        self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq)
+        self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq, correlation=(self.wallClock.ticks, 0))
+        #self.timelineClock.speed = 0
         #
         # Now we can create the controller, that will update our timelineClock
         # when messages form the master come in
@@ -122,11 +136,21 @@ class DvbServerClock:
             })
             
         cherrypy.engine.start()
-        
                 
     def now(self):
-        return self.timelineClock.ticks/1000.0
+        return self.timelineClock.ticks/self.timelineClock.tickRate
         
+    def start(self):
+        self.timelineClock.speed = 1.0
+        
+    def stop(self):
+        self.timelineClock.speed = 0.0
+        
+    def set(self, now):
+        self.timelineClock.rebaseCorrelationAtTicks(now*self.timelineClock.tickRate)
+        
+    def skew(self, delta):
+        self.set(self.now+delta)
         
 if __name__ == '__main__':
     if sys.argv[1] == 'client':
@@ -139,9 +163,14 @@ if __name__ == '__main__':
             sys.stdout.flush()
     elif sys.argv[1] == 'server':
         s = DvbServerClock('dvb:', 'urn:dvb:css:timeline:pts', '127.0.0.1', 7681)
+        toStart = time.time() + 10
         while True:
             time.sleep(1)
             print
             print 'S', time.time(), s.now(),
             sys.stdout.flush()
+            if toStart and time.time() > toStart:
+                print '(start clock)'
+                toStart = None
+                s.start()
 

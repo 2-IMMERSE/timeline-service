@@ -210,12 +210,12 @@ class MasterClock(GlobalClock):
         url = self.application.layoutServiceApplicationURL
         # For now, remove everything after /context
         print '%s (wallclock=%s):' % (self.now(), time.time())
-        return # For now layout-service implementation is incomplete (July 1)
-        cEnd = url.find('/dmapp')
-        url = url[:cEnd]
+        #return # For now layout-service implementation is incomplete (July 1)
+        #cEnd = url.find('/dmapp')
+        #url = url[:cEnd]
         r = requests.post(
                 url+"/actions/clockChanged", 
-                params=dict(reqDeviceId=self.application.context.deviceId), 
+                #params=dict(reqDeviceId=self.application.context.deviceId), 
                 json=dict(
                     wallClock=time.time(),
                     contextClock=self.now()
