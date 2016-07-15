@@ -170,14 +170,18 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'server':
         s = DvbServerClock('dvb://233a.1004.1044;363a~20130218T0915Z--PT00H45M', 'urn:dvb:css:timeline:pts', '127.0.0.1', 7681)
         toStart = time.time() + 10
-        while True:
-            time.sleep(1)
-            print
-            print 'S', time.time(), s.now(),
-            sys.stdout.flush()
-            if toStart and time.time() > toStart:
-                print '(start clock)'
-                toStart = None
-                s.start()
-            s.tsServer.updateAllClients()
+        try:
+            while True:
+                time.sleep(1)
+                print
+                print 'S', time.time(), s.now(),
+                sys.stdout.flush()
+                if toStart and time.time() > toStart:
+                    print '(start clock)'
+                    toStart = None
+                    s.start()
+                s.tsServer.updateAllClients()
+        finally:
+            cherrypy.engine.exit()
+            
 
