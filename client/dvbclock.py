@@ -1,5 +1,6 @@
 import time
 import sys
+import logging
 import dvbcss
 import dvbcss.clock
 import dvbcss.protocol.client.ts
@@ -66,11 +67,13 @@ class DvbClientClock:
         return self.timelineClock.ticks/self.timelineClock.tickRate
         
     def start(self):
+        self.timelineClock.correlation = (self.timelineClock.getParent().ticks, self.timelineClock.correlation[1])
         self.timelineClock.speed = 1.0
         
     def stop(self):
+        self.timelineClock.rebaseCorrelationAtTicks(self.timelineClock.ticks)
         self.timelineClock.speed = 0.0
-        
+
     def set(self, now):
         self.timelineClock.rebaseCorrelationAtTicks(now*self.timelineClock.tickRate)
         
@@ -90,7 +93,7 @@ class DvbServerClock:
         # but possibly updated by the clock master.
         #
         self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq, correlation=(self.wallClock.ticks, 0))
-        #self.timelineClock.speed = 0
+        self.timelineClock.speed = 0
         #
         # Now we can create the controller, that will update our timelineClock
         # when messages form the master come in
@@ -141,9 +144,11 @@ class DvbServerClock:
         return self.timelineClock.ticks/self.timelineClock.tickRate
         
     def start(self):
+        self.timelineClock.correlation = (self.timelineClock.getParent().ticks, self.timelineClock.correlation[1])
         self.timelineClock.speed = 1.0
         
     def stop(self):
+        self.timelineClock.rebaseCorrelationAtTicks(self.timelineClock.ticks)
         self.timelineClock.speed = 0.0
         
     def set(self, now):
@@ -153,16 +158,17 @@ class DvbServerClock:
         self.set(self.now+delta)
         
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     if sys.argv[1] == 'client':
         c = DvbClientClock('ws://127.0.0.1:7681/ts', 'dvb:', 'urn:dvb:css:timeline:pts')
         c.connect()
         while True:
-            time.sleep(1)
+            time.sleep(0.4)
             print
             print 'C', time.time(), c.now(),
             sys.stdout.flush()
     elif sys.argv[1] == 'server':
-        s = DvbServerClock('dvb:', 'urn:dvb:css:timeline:pts', '127.0.0.1', 7681)
+        s = DvbServerClock('dvb://233a.1004.1044;363a~20130218T0915Z--PT00H45M', 'urn:dvb:css:timeline:pts', '127.0.0.1', 7681)
         toStart = time.time() + 10
         while True:
             time.sleep(1)
@@ -173,4 +179,5 @@ if __name__ == '__main__':
                 print '(start clock)'
                 toStart = None
                 s.start()
+            s.tsServer.updateAllClients()
 
