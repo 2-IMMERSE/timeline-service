@@ -117,7 +117,7 @@ class Timeline:
     def _populateTimeline(self):
         """Create proxy objects, etc, using self.dmappTimeline"""
         self.dmappComponents = dict(
-            masterVideo = ProxyDMAppComponent(self.clockService, self.layoutService, "masterVideo", "video", "http://example.com/masterVideo.mp4", 0, None),
+            masterVideo = ProxyDMAppComponent(self.clockService, self.layoutService, "masterVideo", "mastervideo", "http://example.com/masterVideo.mp4", 0, None),
             hello = ProxyDMAppComponent(self.clockService, self.layoutService, "hello", "text", None, 0, 10),
             world = ProxyDMAppComponent(self.clockService, self.layoutService, "world", "text", None, 0, None),
             goodbye = ProxyDMAppComponent(self.clockService, self.layoutService, "goodbye", "text", None, 10, None),

@@ -49,7 +49,12 @@ class timelineServer:
         return json.dumps(rv)
 
     def PUT(self, contextId, verb):
-        args = web.input()
+        args = dict(web.input())
+        # PUT gets data as a JSON body, sometimes?
+        if not args:
+            data = web.data()
+            if data:
+                args = json.loads(data)
         tl = timeline.Timeline.get(contextId)
         if not tl:
             return web.notfound("404 No such context: %s" % contextId)
