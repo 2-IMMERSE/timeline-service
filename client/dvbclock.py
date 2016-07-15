@@ -6,6 +6,7 @@ import dvbcss.clock
 import dvbcss.protocol.client.ts
 import dvbcss.protocol.server.ts
 import cherrypy
+import ws4py.server.cherrypyserver
 
 class DvbClientClock:
     def __init__(self, tsUrl, contentIDStem, timelineSelector):
@@ -120,6 +121,7 @@ class DvbServerClock:
         #
         # Boilerplate picked up from pydvbcss/examples/TSServer.py, no clue how it works
         #
+        ws4py.server.cherrypyserver.WebSocketPlugin(cherrypy.engine).subscribe()
         cherrypy.config.update({
             'server.socket_host' : host,
             'server.socket_port' : port,
