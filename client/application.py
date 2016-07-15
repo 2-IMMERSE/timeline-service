@@ -210,7 +210,7 @@ class MasterClock(GlobalClock):
         url = self.application.layoutServiceApplicationURL
         # For now, remove everything after /context
         print '%s (wallclock=%s):' % (self.now(), time.time())
-        #return # For now layout-service implementation is incomplete (July 1)
+        return # For now layout-service implementation is incomplete (July 15)
         #cEnd = url.find('/dmapp')
         #url = url[:cEnd]
         r = requests.post(
