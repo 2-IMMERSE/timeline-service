@@ -8,8 +8,9 @@ import dvbcss.protocol.server.ts
 import cherrypy
 import ws4py.server.cherrypyserver
 
-class DvbClientClock:
-    def __init__(self, tsUrl, contentIDStem, timelineSelector):
+class DvbClock:
+    """Baseclass for DvbClientClock and DvbServerClock"""
+    def __init__(self):
         timelineFreq = 1000 # Ticks-per-second we want for the clock we expose.
         #
         # First we need a monotonic clock. For the time being we use SysClock, will
@@ -20,8 +21,29 @@ class DvbClientClock:
         # Based on that we create a second clock, that will run along with that clock,
         # but possibly updated by the clock master.
         #
-        self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq) # , correlation=(self.wallClock.ticks, 0))
-        #self.timelineClock.speed = 0
+        self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq, correlation=(self.wallClock.ticks, 0))
+        self.timelineClock.speed = 0
+
+    def now(self):
+        return self.timelineClock.ticks/self.timelineClock.tickRate
+        
+    def start(self):
+        self.timelineClock.correlation = (self.timelineClock.getParent().ticks, self.timelineClock.correlation[1])
+        self.timelineClock.speed = 1.0
+        
+    def stop(self):
+        self.timelineClock.rebaseCorrelationAtTicks(self.timelineClock.ticks)
+        self.timelineClock.speed = 0.0
+
+    def set(self, now):
+        self.timelineClock.rebaseCorrelationAtTicks(now*self.timelineClock.tickRate)
+        
+    def skew(self, delta):
+        self.set(self.now+delta)
+    
+class DvbClientClock(DvbClock):
+    def __init__(self, tsUrl, contentIDStem, timelineSelector):
+        DvbClock.__init__(self)
         #
         # Now we can create the controller, that will update our timelineClock
         # when messages form the master come in
@@ -63,38 +85,10 @@ class DvbClientClock:
         
     def onTimingChange(self, *args, **kwargs):
         print 'xxxjack: DvbClientClock.onTimingChange args=%s kwargs=%s' % (args, kwargs)
-        
-    def now(self):
-        return self.timelineClock.ticks/self.timelineClock.tickRate
-        
-    def start(self):
-        self.timelineClock.correlation = (self.timelineClock.getParent().ticks, self.timelineClock.correlation[1])
-        self.timelineClock.speed = 1.0
-        
-    def stop(self):
-        self.timelineClock.rebaseCorrelationAtTicks(self.timelineClock.ticks)
-        self.timelineClock.speed = 0.0
-
-    def set(self, now):
-        self.timelineClock.rebaseCorrelationAtTicks(now*self.timelineClock.tickRate)
-        
-    def skew(self, delta):
-        self.set(self.now+delta)
-        
-class DvbServerClock:
+                
+class DvbServerClock(DvbClock):
     def __init__(self, contentId, timelineSelector, host='127.0.0.1', port=7681):
-        timelineFreq = 1000 # Ticks-per-second we want for the clock we expose.
-        #
-        # First we need a monotonic clock. For the time being we use SysClock, will
-        # use TunableClock or something later.
-        #
-        self.wallClock = dvbcss.clock.SysClock()
-        #
-        # Based on that we create a second clock, that will run along with that clock,
-        # but possibly updated by the clock master.
-        #
-        self.timelineClock = dvbcss.clock.CorrelatedClock(self.wallClock, timelineFreq, correlation=(self.wallClock.ticks, 0))
-        self.timelineClock.speed = 0
+        DvbClock.__init__(self)
         #
         # Now we can create the controller, that will update our timelineClock
         # when messages form the master come in
@@ -141,23 +135,6 @@ class DvbServerClock:
             })
             
         cherrypy.engine.start()
-                
-    def now(self):
-        return self.timelineClock.ticks/self.timelineClock.tickRate
-        
-    def start(self):
-        self.timelineClock.correlation = (self.timelineClock.getParent().ticks, self.timelineClock.correlation[1])
-        self.timelineClock.speed = 1.0
-        
-    def stop(self):
-        self.timelineClock.rebaseCorrelationAtTicks(self.timelineClock.ticks)
-        self.timelineClock.speed = 0.0
-        
-    def set(self, now):
-        self.timelineClock.rebaseCorrelationAtTicks(now*self.timelineClock.tickRate)
-        
-    def skew(self, delta):
-        self.set(self.now+delta)
         
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
