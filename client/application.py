@@ -1,6 +1,7 @@
 import requests
 import requests
 import time
+import dvbclock
 
 class Context:
     def __init__(self, deviceId, caps):
@@ -70,18 +71,30 @@ class Context:
         return Application(self, dmappId, False)
         
 class Application:
-    def __init__(self, context, dmappId, isMaster):
+    def __init__(self, context, dmappId, isMaster, clockParams={}):
         self.context = context
         self.dmappId = dmappId
         self.layoutServiceApplicationURL = self.context.layoutServiceContextURL + '/dmapp/' + dmappId
-        if isMaster:
-            self.clock = MasterClock(self)
-        else:
-            self.clock = SlaveClock()
+        self.clock = self._selectClock(isMaster, clockParams)
         self.components = {}
         
+    def _selectClock(self, isMaster, clockParams):
+        # We need to select either a DVB clock or a free-running one, in master or non-master one.
+        # This is for debugging purposes, really.
+        if isMaster:
+            if clockParams:
+                return DvbMasterClock(self, **clockParams)
+            else:
+                return MasterClock(self)
+        else:
+            if clockParams:
+                return DvbSlaveClock(**clockParams)
+            else:
+                return SlaveClock()
+            
+        
     def start(self):
-        self.clock.start()
+        # Start clock only when masterVideo is started: self.clock.start()
         self.run()
         
     def wait(self):
@@ -90,6 +103,7 @@ class Application:
     def run(self):
         # Non-threaded polling. But interface (start/run/wait) is ready for threading and event-based reports.
         while True:
+            print '%s (wallclock=%s):' % (self.clock.now(), time.time())
             inst = self._getLayoutInstruction()
             self._doLayoutInstruction(inst)
             self.clock.report()
@@ -125,6 +139,7 @@ class Application:
             
 class Component:
     def __init__(self, application, componentId, componentInfo):
+        self.isMasterVideo = componentId == 'masterVideo' # Temporary hack: this component controls the master clock
         self.application = application
         self.layoutServiceComponentURL = self.application.layoutServiceApplicationURL + '/component/' + componentId
         self.componentId = componentId
@@ -135,6 +150,11 @@ class Component:
     def update(self, componentInfo):
         if componentInfo != self.componentInfo:
             self.componentInfo = componentInfo
+        if self.isMasterVideo:
+            if self.status == 'started':
+                self.application.clock.start()
+            else:
+                self.application.clock.stop()
             
     def destroy(self):
         pass
@@ -200,7 +220,7 @@ class GlobalClock:
     def report(self):
         pass
         
-class MasterClock(GlobalClock):
+class MasterClockMixin:
     def __init__(self, application):
         self.application = application
         GlobalClock.__init__(self)
@@ -208,7 +228,7 @@ class MasterClock(GlobalClock):
     def report(self):
         # Should also broadcast to the slave clocks or something
         url = self.application.layoutServiceApplicationURL
-        print '%s (wallclock=%s):' % (self.now(), time.time())
+        print 'clockChanged(contextClock=%s, wallClock=%s)' % (self.now(), time.time())
         r = requests.post(
                 url+"/actions/clockChanged", 
                 #params=dict(reqDeviceId=self.application.context.deviceId), 
@@ -222,6 +242,19 @@ class MasterClock(GlobalClock):
             print r.text
             r.raise_for_status()
 
+class MasterClock(MasterClockMixin, GlobalClock):
+    def __init__(self, application):
+        GlobalClock.__init__(self)
+        MasterClockMixin.__init__(self, application)
+
 class SlaveClock(GlobalClock):
+    pass
+    
+class DvbMasterClock(MasterClockMixin, dvbclock.DvbServerClock):
+    def __init__(self, application, **kwargs):
+        dvbclock.DvbServerClock(self, *kwargs)
+        MasterClockMixin(self, application)
+        
+class DvbSlaveClock(dvbclock.DvbClientClock):
     pass
     
