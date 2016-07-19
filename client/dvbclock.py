@@ -28,10 +28,12 @@ class DvbClock:
         return self.timelineClock.ticks/self.timelineClock.tickRate
         
     def start(self):
+        if self.timelineClock.speed == 1.0: return
         self.timelineClock.correlation = (self.timelineClock.getParent().ticks, self.timelineClock.correlation[1])
         self.timelineClock.speed = 1.0
         
     def stop(self):
+        if self.timelineClock.speed == 0.0: return
         self.timelineClock.rebaseCorrelationAtTicks(self.timelineClock.ticks)
         self.timelineClock.speed = 0.0
 
@@ -40,6 +42,9 @@ class DvbClock:
         
     def skew(self, delta):
         self.set(self.now+delta)
+        
+    def report(self):
+        pass
     
 class DvbClientClock(DvbClock):
     def __init__(self, tsUrl, contentIDStem, timelineSelector):

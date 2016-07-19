@@ -74,26 +74,29 @@ class Application:
     def __init__(self, context, dmappId, isMaster, clockParams={}):
         self.context = context
         self.dmappId = dmappId
+        self.isMaster = isMaster
         self.layoutServiceApplicationURL = self.context.layoutServiceContextURL + '/dmapp/' + dmappId
-        self.clock = self._selectClock(isMaster, clockParams)
+        self.clock = None
         self.components = {}
         
-    def _selectClock(self, isMaster, clockParams):
+    def selectClock(self, clockParams):
         # We need to select either a DVB clock or a free-running one, in master or non-master one.
         # This is for debugging purposes, really.
-        if isMaster:
+        assert not self.clock
+        if self.isMaster:
             if clockParams:
-                return DvbMasterClock(self, **clockParams)
+                self.clock = DvbMasterClock(self, **clockParams)
             else:
-                return MasterClock(self)
+                self.clock = MasterClock(self)
         else:
             if clockParams:
-                return DvbSlaveClock(**clockParams)
+                self.clock = DvbSlaveClock(**clockParams)
             else:
-                return SlaveClock()
-            
+                self.clock = SlaveClock()
+        assert self.clock
         
     def start(self):
+        assert self.clock
         # Start clock only when masterVideo is started: self.clock.start()
         self.run()
         
@@ -223,7 +226,6 @@ class GlobalClock:
 class MasterClockMixin:
     def __init__(self, application):
         self.application = application
-        GlobalClock.__init__(self)
         
     def report(self):
         # Should also broadcast to the slave clocks or something
@@ -252,8 +254,8 @@ class SlaveClock(GlobalClock):
     
 class DvbMasterClock(MasterClockMixin, dvbclock.DvbServerClock):
     def __init__(self, application, **kwargs):
-        dvbclock.DvbServerClock(self, *kwargs)
-        MasterClockMixin(self, application)
+        dvbclock.DvbServerClock.__init__(self, **kwargs)
+        MasterClockMixin.__init__(self, application)
         
 class DvbSlaveClock(dvbclock.DvbClientClock):
     pass
