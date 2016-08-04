@@ -176,6 +176,9 @@ class ProxyDMAppComponent:
         self.startTime = startTime
         self.stopTime = stopTime
         self.status = None
+        self.initSent = False
+        self.startSent = False
+        self.stopSent = False
 
     def _getContactInfo(self):
         contactInfo = self.layoutService.getContactInfo()
@@ -192,10 +195,11 @@ class ProxyDMAppComponent:
         r = requests.post(entryPoint, json={'class':self.klass, 'url':self.url})
         r.raise_for_status()
         print "RETURNED"
+        self.initSent = True
         self.status = "initRequested"
 
     def startComponent(self, timeSpec):
-        assert self.status == "inited"
+        assert self.initSent == True and self.startSent == False
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/start'
         print "CALL", entryPoint
@@ -204,6 +208,7 @@ class ProxyDMAppComponent:
         print "RETURNED"
 
     def stopComponent(self, timeSpec):
+        assert self.initSent == True and self.stopSent == False
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
         print "CALL", entryPoint
@@ -218,7 +223,7 @@ class ProxyDMAppComponent:
         return self.status == None
 
     def shouldStart(self):
-        return self.status == "inited" and self.startTime >= self.clockService.now()
+        return self.initSent == True and self.startSent == False and self.startTime is not None and self.startTime >= self.clockService.now()
 
     def shouldStop(self):
-        return self.status == "started" and self.stopTime is not None and self.stopTime >= self.clockService.now()
+        return self.initSent == True and self.stopSent == False and self.stopTime is not None and self.stopTime >= self.clockService.now()
