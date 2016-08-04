@@ -15,7 +15,7 @@ class timelineServerServer:
     """Toplevel REST interface: create new timeline servers and get the identity of existing ones"""
     # Note this is hack-y: post/get work with both /timelineServer and /timelineServer/createTimeline
     # and do the same. To be fixed.
-    
+
     def GET(self):
         rv = timeline.Timeline.getAll()
         # HACK WARNING: GET with arguments is treated as POST
@@ -23,13 +23,13 @@ class timelineServerServer:
             return self.POST()
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
-        
+
     def POST(self):
         args = web.input()
         rv = timeline.Timeline.createTimeline(**args)
         if rv == None or rv == '':
-        	web.ctx.status = '204 No Content'
-        	return ''
+            web.ctx.status = '204 No Content'
+            return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
@@ -63,8 +63,8 @@ class timelineServer:
             return web.notfound("404 No such verb: %s" % verb)
         rv = method(**args)
         if rv == None or rv == '':
-        	web.ctx.status = '204 No Content'
-        	return ''
+            web.ctx.status = '204 No Content'
+            return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
@@ -78,8 +78,8 @@ class timelineServer:
             return web.notfound("404 No such verb: %s" % verb)
         rv = method(**args)
         if rv == None or rv == '':
-        	web.ctx.status = '204 No Content'
-        	return ''
+            web.ctx.status = '204 No Content'
+            return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
