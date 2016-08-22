@@ -205,6 +205,7 @@ class ProxyDMAppComponent:
         print "CALL", entryPoint
         r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.startTime)))
         r.raise_for_status()
+        self.startSent = True
         print "RETURNED"
 
     def stopComponent(self, timeSpec):
@@ -214,6 +215,7 @@ class ProxyDMAppComponent:
         print "CALL", entryPoint
         r = requests.post(entryPoint, params=dict(stopTime=self._getTime(self.stopTime)))
         r.raise_for_status()
+        self.stopSent = True
         print "RETURNED"
 
     def statusReport(self, status):
