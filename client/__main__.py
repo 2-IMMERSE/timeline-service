@@ -2,7 +2,7 @@ import sys
 import argparse
 import application
 
-def dmapp_for_tv(layoutServiceURL, timelineServiceURL, tsserver):
+def context_for_tv(layoutServiceURL):
     caps = dict(
         displayWidth=1920, 
         displayHeight=1080,
@@ -10,10 +10,14 @@ def dmapp_for_tv(layoutServiceURL, timelineServiceURL, tsserver):
         concurrentVideo=1,
         touchInteraction=False,
         sharedDevice=True,
-        orientations=["landscape"]
+        orientations=["landscape"],
+        deviceType="TV",
         )
     context = application.Context("TV", caps)
     context.create(layoutServiceURL)
+    return context
+
+def dmapp_for_tv(context, layoutServiceURL, timelineServiceURL, tsserver):
     appSettings = dict(
         timelineDocUrl="http://example.com/2immerse/timeline.json",
         timelineServiceUrl=timelineServiceURL,
@@ -35,7 +39,8 @@ def dmapp_for_handheld(layoutServiceContextURL, tsclient):
         concurrentVideo=2,
         touchInteraction=True,
         sharedDevice=False,
-        orientations=['landscape', 'portrait']
+        orientations=['landscape', 'portrait'],
+        deviceType="handheld",
         )
     context = application.Context("handheld", caps)
     context.join(layoutServiceContextURL)
@@ -53,22 +58,32 @@ def main():
     parser.add_argument('--layout', metavar="URL", help="Create context and app at layout server endpoint URL (usually tv only)")
     parser.add_argument('--timeline', metavar="URL", help="Tell layout server about timeline server endpoint URL (usually tv only)")
     parser.add_argument('--context', metavar="URL", help="Connect to layout context at URL (usually handheld only)")
+    
     args = parser.parse_args()
     if args.context:
         # Client mode.
         if args.layout or args.timeline:
             print "Specify either --context (handheld) or both --layout and --timeline (tv)"
             sys.exit(1)
+            
         dmapp = dmapp_for_handheld(args.context, args.tsclient)
     else:
         if not args.layout or not args.timeline:
             print "Specify either --context (handheld) or both --layout and --timeline (tv)"
             sys.exit(1)
-        dmapp = dmapp_for_tv(args.layout, args.timeline, args.tsserver)
+            
+        context = context_for_tv(args.layout)
+        
         tsargsforclient = ""
         if args.tsserver:
             tsargsforclient = "--tsclient ws://%s:7681/ts" % args.tsserver
-        print 'For handheld run: %s %s --context %s' % (sys.argv[0], tsargsforclient, dmapp.context.layoutServiceContextURL)
+        print 'For handheld(s) run: %s %s --context %s' % (sys.argv[0], tsargsforclient, context.layoutServiceContextURL)
+        print
+        print 'Press return when done -',
+        _ = sys.stdin.readline()
+        
+        dmapp = dmapp_for_tv(context, args.layout, args.timeline, args.tsserver)
+            
     dmapp.start()
     dmapp.wait()
 

@@ -6,7 +6,7 @@ To run the test:
 	$ docker run -ti -p 9000:8000 layout-service
 - (possibly build) and run the timeline service:
 	$ cd timeline-service
-	$ docker build -t timeline-service .install 
+	$ docker build -t timeline-service .
 	$ docker run -ti -p 9090:8080 timeline-service
 - run the tv
 	$ cd timeline-service

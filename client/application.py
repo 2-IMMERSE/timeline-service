@@ -66,7 +66,7 @@ class Context:
             r.raise_for_status()
         reply = r.json()
         if type(reply) != type([]) or len(reply) != 1:
-            print 'Error: excepted array with one dmappId but got:', repl(reply)
+            print 'Error: excepted array with one dmappId but got:', repr(reply)
         dmappId = reply[0]
         return Application(self, dmappId, False)
         
