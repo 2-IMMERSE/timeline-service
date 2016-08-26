@@ -25,12 +25,32 @@ NAMESPACES.update(NS_2IMMERSE.ns())
 class DummyDelegate:
     def __init__(self, elt):
         self.elt = elt
+        self.state = "idle"
         
     def checkAttributes(self):
         pass
         
     def checkChildren(self):
         pass
+        
+    def setState(self, state):
+        self.state = state
+        
+    def init(self):
+        assert self.state == "idle"
+        self.setState("inited")
+        
+    def start(self):
+        assert self.state == "inited"
+        self.setState("started")
+        
+    def stop(self):
+        assert self.state in {"inited", "started"}
+        self.setState("stopped")
+        
+    def terminate(self):
+        assert self.state == "stopped"
+        self.setState("idle")
         
 class ErrorDelegate(DummyDelegate):
     def __init__(self, elt):
