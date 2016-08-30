@@ -39,6 +39,9 @@ class State:
     stopped = "stopped"
     terminating = "terminating"
     
+    DONE = {stopping, stopped, terminating}
+    READY = {inited}
+    
 class DummyDelegate:
     def __init__(self, elt, document):
         self.elt = elt
@@ -61,29 +64,32 @@ class DummyDelegate:
         #print 'xxxjack parent is', parentElement
         if parentElement is not None:
             parentElement.delegate.reportChildState(self.elt, self.state)
-            
+           
+    def assertState(self, *allowedStates):
+        assert self.state in set(allowedStates), "%s: state==%s, expected %s" % (self, self.state, set(allowedStates))
+         
     def reportChildState(self, child, childState):
         pass
         
     def init(self):
-        assert self.state == State.idle
+        self.assertState(State.idle)
         self.setState(State.initing)
         self.setState(State.inited)
         
     def start(self):
-        assert self.state == State.inited
+        self.assertState(State.inited)
         self.setState(State.starting)
         #self.setState(State.started)
         #self.setState(State.stopping)
         self.setState(State.stopped)
         
     def stop(self):
-        assert self.state in {State.inited, State.started}
+        self.assertState(State.inited, State.started)
         self.setState(State.stopping)
         self.setState(State.stopped)
         
     def terminate(self):
-        assert self.state == State.stopped
+        self.assertState(State.stopped)
         self.setState(State.terminating)
         self.setState(State.idle)
         
@@ -115,25 +121,25 @@ class SingleChildDelegate(TimelineDelegate):
     EXACT_CHILD_COUNT=1
 
     def init(self):
-        assert self.state == State.idle
+        self.assertState(State.idle)
         self.setState(State.initing)
         self.elt[0].delegate.init()
         self.setState(State.inited)
         
     def start(self):
-        assert self.state == State.inited
+        self.assertState(State.inited)
         self.setState(State.starting)
         self.elt[0].delegate.start()
         self.setState(State.started)
         
     def stop(self):
-        assert self.state in {State.inited, State.started}
+        self.assertState(State.inited, State.started)
         self.setState(State.stopping)
         self.elt[0].delegate.stop()
         self.setState(State.stopped)
         
     def terminate(self):
-        assert self.state == State.stopped
+        self.assertState(State.stopped)
         self.setState(State.terminating)
         self.elt[0].delegate.terminate()
         self.setState(State.idle)
@@ -156,35 +162,101 @@ class ParDelegate(TimeElementDelegate):
         }
         
     def init(self):
-        assert self.state == State.idle
+        self.assertState(State.idle)
         self.setState(State.initing)
         for child in self.elt: child.delegate.init()
         self.setState(State.inited)
         
     def start(self):
-        assert self.state == State.inited
+        self.assertState(State.inited)
         self.setState(State.starting)
         for child in self.elt: child.delegate.start()
         self.setState(State.started)
         
     def stop(self):
-        assert self.state in {State.inited, State.started}
+        self.assertState(State.inited, State.started)
         self.setState(State.stopping)
         for child in self.elt: child.delegate.stop()
         self.setState(State.stopped)
         
     def terminate(self):
-        assert self.state == State.stopped
+        self.assertState(State.stopped)
         self.setState(State.terminating)
         for child in self.elt: child.delegate.terminate()
         self.setState(State.idle)
 
 class SeqDelegate(TimeElementDelegate):
-    pass
+
+    def reportChildState(self, child, state):
+        # Ignore arguments, for now
+        if self._currentChild is None:
+            return
+        if self._currentChild.delegate.state not in State.DONE:
+            return
+        nextChild = self._nextChild()
+        if nextChild is None or nextChild.delegate.state in State.READY:
+            self._startFollowingChild()
+        
+    def init(self):
+        self.assertState(State.idle)
+        self.setState(State.initing)
+        self._currentChild = None
+        self.elt[0].delegate.init()
+        self.setState(State.inited)
+        
+    def start(self):
+        self.assertState(State.inited)
+        self.setState(State.starting)
+        self._currentChild = self.elt[0]
+        self._currentChild.delegate.start()
+        self.setState(State.started)
+        nextChild = self._nextChild()
+        if nextChild is not None:
+            nextChild.delegate.init()
+            
+    def _startFollowingChild(self):
+        if self._currentChild is not None:
+            self._currentChild.delegate.terminate()
+        self._currentChild = self._nextChild()
+        if self._currentChild is not None:
+            self._currentChild.delegate.start()
+            nextChild = self._nextChild()
+            if nextChild is not None:
+                nextChild.delegate.init()
+        else:
+            self.stop()
+        
+    def stop(self):
+        self.assertState(State.inited, State.started)
+        self.setState(State.stopping)
+        if self._currentChild is not None:
+            self._currentChild.delegate.stop()
+        self.setState(State.stopped)
+        
+    def terminate(self):
+        self.assertState(State.stopped)
+        self.setState(State.terminating)
+        if self._currentChild is not None:
+            self._currentChild.delegate.terminate()
+        # xxxjack: do anything about nextChild?
+        self.setState(State.idle)
+
+    def _nextChild(self):
+        foundCurrent = False
+        for ch in self.elt:
+            if foundCurrent: return ch
+            foundCurrent = (ch == self._currentChild)
+        return None
     
 class RefDelegate(TimeElementDelegate):
     EXACT_CHILD_COUNT=0
-    pass
+
+    def start(self):
+        self.assertState(State.inited)
+        self.setState(State.starting)
+        self.setState(State.started)
+        print 'xxxjack, time passes and', self, 'is presented'
+        self.setState(State.stopped)
     
 class ConditionalDelegate(SingleChildDelegate):
     ALLOWED_ATTRIBUTES = {
@@ -192,7 +264,7 @@ class ConditionalDelegate(SingleChildDelegate):
         }
 
     def start(self):
-        assert self.state == State.inited
+        self.assertState(State.inited)
         self.setState(State.starting)
         print 'xxxjack assuming expr is True for', self
         self.elt[0].delegate.start()
@@ -202,11 +274,27 @@ class SleepDelegate(TimeElementDelegate):
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
         NS_TIMELINE("dur")
         }
+
+    def start(self):
+        self.assertState(State.inited)
+        self.setState(State.starting)
+        self.setState(State.started)
+        print 'xxxjack, time passes and', self, 'has waited for', self.elt.get(NS_TIMELINE("dur"))
+        self.setState(State.stopped)
+    
     
 class WaitDelegate(TimelineDelegate):
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("event")
         }
+        
+    def start(self):
+        self.assertState(State.inited)
+        self.setState(State.starting)
+        self.setState(State.started)
+        print 'xxxjack, time passes and', self, 'event', self.elt.get(NS_TIMELINE("event")), "has fired"
+        self.setState(State.stopped)
+    
     
 DELEGATE_CLASSES = {
     NS_TIMELINE("document") : DocumentDelegate,
