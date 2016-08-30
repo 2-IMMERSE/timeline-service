@@ -87,12 +87,15 @@ def main():
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
     parser.add_argument('--debug', help="Enable all debug output")
+    parser.add_argument('--port', type=int, help="Set port to listen on")
     args = parser.parse_args()
     if args.debug:
         timeline.DEBUG = True
     if args.layoutService:
         timeline.LAYOUTSERVICE = args.layoutService
     del sys.argv[1:]
+    if args.port:
+        sys.argv.append(str(args.port))
     app.run()
 
 main()
