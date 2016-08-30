@@ -67,7 +67,13 @@ class DummyDelegate:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
             
     def setState(self, state):
-        if DEBUG: print self, ': new state', state
+        if DEBUG: print '%-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt))
+        if self.state == state:
+            print 'xxxjack superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt))
+            if DEBUG:
+                import pdb
+                pdb.set_trace()
+            return
         self.state = state
         parentElement = self.document.getParent(self.elt)
         #print 'xxxjack parent is', parentElement
@@ -132,23 +138,31 @@ class TimelineDelegate(DummyDelegate):
 class SingleChildDelegate(TimelineDelegate):
     EXACT_CHILD_COUNT=1
 
+    def reportChildState(self, child, childState):
+        if childState == State.inited:
+            self.assertState(State.initing)
+            self.setState(State.inited)
+        elif childState == State.started:
+            self.assertState(State.starting)
+            self.setState(State.started)
+        elif childState == State.stopped:
+            self.assertState(State.stopping, State.started)
+            self.setState(State.stopped)
+
     def init(self):
         self.assertState(State.idle)
         self.setState(State.initing)
         self.document.schedule(self.elt[0].delegate.init)
-        self.setState(State.inited)
         
     def start(self):
         self.assertState(State.inited, State.stopped)
         self.setState(State.starting)
         self.document.schedule(self.elt[0].delegate.start)
-        self.setState(State.started)
         
     def stop(self):
         self.assertState(State.inited, State.started)
         self.setState(State.stopping)
         self.document.schedule(self.elt[0].delegate.stop)
-        self.setState(State.stopped)
         
 #     def terminate(self):
 #         self.assertState(State.stopped)
@@ -173,26 +187,62 @@ class ParDelegate(TimeElementDelegate):
         NS_TIMELINE("sync"),
         }
         
+    def reportChildState(self, child, childState):
+        if self.state == State.initing:
+            for ch in self.elt:
+                if ch.delegate.state != State.inited:
+                    return
+            self.setState(State.inited)
+        elif self.state == State.starting:
+            for ch in self.elt:
+                if ch.delegate.state not in {State.started, State.stopped}:
+                    return
+            self.setState(State.started)
+        elif self.state == State.started:
+            relevantChildren = self._getRelevantChildren()
+            for ch in relevantChildren:
+                if ch.delegate.state != State.stopped:
+                    return
+            self.setState(State.stopping)
+            needToWait = False
+            for ch in self.elt:
+                if ch.delegate.state == State.stopping:
+                    needToWait = True
+                elif ch.delegate.state != State.stopped:
+                    self.document.schedule(ch.delegate.stop)
+                    needToWait = True
+            if not needToWait:
+                self.setState(State.stopped)
+        elif self.state == State.stopping:
+            for ch in self.elt:
+                if ch.delegate.state != State.stopped:
+                    return
+            self.setState(State.stopped)
+    
+    def _getRelevantChildren(self):
+        # Stopgap
+        if len(self.elt) == 0: return []
+        if self.elt.get(NS_TIMELINE("end"), "all") == "all":
+            return list(self.elt)
+        return self.elt[0]     
+        
     def init(self):
         self.assertState(State.idle)
         self.setState(State.initing)
         for child in self.elt: 
             self.document.schedule(child.delegate.init)
-        self.setState(State.inited)
         
     def start(self):
         self.assertState(State.inited, State.stopped)
         self.setState(State.starting)
         for child in self.elt: 
             self.document.schedule(child.delegate.start)
-        self.setState(State.started)
         
     def stop(self):
         self.assertState(State.inited, State.started)
         self.setState(State.stopping)
         for child in self.elt: 
             self.document.schedule(child.delegate.stop)
-        self.setState(State.stopped)
         
 #     def terminate(self):
 #         self.assertState(State.stopped)
@@ -232,7 +282,7 @@ class SeqDelegate(TimeElementDelegate):
             
     def _startFollowingChild(self):
         if self._currentChild is not None:
-            self._currentChild.delegate.assertState(State.stopped)
+            self._currentChild.delegate.assertState(State.stopped, State.stopping)
 #            self.document.schedule(self._currentChild.delegate.terminate)
         self._currentChild = self._nextChild()
         if self._currentChild is not None:
@@ -272,7 +322,7 @@ class RefDelegate(TimeElementDelegate):
         self.assertState(State.inited, State.stopped)
         self.setState(State.starting)
         self.setState(State.started)
-        print 'xxxjack, time passes and', self, 'is presented'
+        if DEBUG: print '%-8s %-8s %s' % ('-', 'present', self.document.getXPath(self.elt))
         self.setState(State.stopped)
     
 class ConditionalDelegate(SingleChildDelegate):
@@ -283,9 +333,8 @@ class ConditionalDelegate(SingleChildDelegate):
     def start(self):
         self.assertState(State.inited, State.stopped)
         self.setState(State.starting)
-        print 'xxxjack assuming expr is True for', self
+        if DEBUG: print '%-8s %-8s %s' % ('COND', True, self.document.getXPath(self.elt))
         self.document.schedule(self.elt[0].delegate.start)
-        self.setState(State.started)
         
 class SleepDelegate(TimeElementDelegate):
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
@@ -296,7 +345,8 @@ class SleepDelegate(TimeElementDelegate):
         self.assertState(State.inited, State.stopped)
         self.setState(State.starting)
         self.setState(State.started)
-        print 'xxxjack, time passes and', self, 'has waited for', self.elt.get(NS_TIMELINE("dur"))
+        if DEBUG: print '%-8s %-8s %s' % ('SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
+        if DEBUG: print '%-8s %-8s %s' % ('SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
         self.setState(State.stopped)
     
     
@@ -308,8 +358,9 @@ class WaitDelegate(TimelineDelegate):
     def start(self):
         self.assertState(State.inited, State.stopped)
         self.setState(State.starting)
+        if DEBUG: print '%-8s %-8s %s' % ('WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
         self.setState(State.started)
-        print 'xxxjack, time passes and', self, 'event', self.elt.get(NS_TIMELINE("event")), "has fired"
+        if DEBUG: print '%-8s %-8s %s' % ('WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
         self.setState(State.stopped)
     
     
@@ -362,6 +413,7 @@ class Document:
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
         self.tree.write(fp)
+        fp.write('\n')
         
     def addDelegates(self):
         for elt in self.tree.iter():
@@ -381,6 +433,7 @@ class Document:
         self.schedule(self.root.delegate.start)
             
     def schedule(self, callback, *args, **kwargs):
+        if DEBUG: print '%-8s %-8s %s' % ('EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
         callback(*args, **kwargs)
         
 def main():
