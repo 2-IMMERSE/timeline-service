@@ -375,11 +375,13 @@ DELEGATE_CLASSES = {
     }
     
 class Document:
+    RECURSIVE = True
         
     def __init__(self):
         self.tree = None
         self.root = None
         self.parentMap = {}
+        self.toDo = []
         
     def load(self, url):
         fp = urllib.urlopen(url)
@@ -431,10 +433,21 @@ class Document:
     def run(self):
         self.root.delegate.init()
         self.schedule(self.root.delegate.start)
+        if not self.RECURSIVE:
+            self.runloop()
             
     def schedule(self, callback, *args, **kwargs):
         if DEBUG: print '%-8s %-8s %s' % ('EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
-        callback(*args, **kwargs)
+        if self.RECURSIVE:
+            callback(*args, **kwargs)
+        else:
+            self.toDo.append((callback, args, kwargs))
+            
+    def runloop(self):
+        assert not self.RECURSIVE
+        while self.toDo:
+            callback, args, kwargs = self.toDo.pop(0)
+            callback(*args, **kwargs)
         
 def main():
     d = Document()
