@@ -255,6 +255,7 @@ class SeqDelegate(TimeElementDelegate):
 
     def reportChildState(self, child, state):
         # Ignore arguments, for now
+        # xxxjack need to model after ParDelegate
         if self._currentChild is None:
             return
         if self._currentChild.delegate.state not in State.DONE:
@@ -375,7 +376,7 @@ DELEGATE_CLASSES = {
     }
     
 class Document:
-    RECURSIVE = True
+    RECURSIVE = False
         
     def __init__(self):
         self.tree = None
@@ -431,10 +432,13 @@ class Document:
         return DELEGATE_CLASSES.get(tag, ErrorDelegate)
             
     def run(self):
-        self.root.delegate.init()
+        self.schedule(self.root.delegate.init)
+        if not self.RECURSIVE:
+            self.runloop(State.inited)
         self.schedule(self.root.delegate.start)
         if not self.RECURSIVE:
-            self.runloop()
+            self.runloop(State.stopped)
+            
             
     def schedule(self, callback, *args, **kwargs):
         if DEBUG: print '%-8s %-8s %s' % ('EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
@@ -443,11 +447,14 @@ class Document:
         else:
             self.toDo.append((callback, args, kwargs))
             
-    def runloop(self):
+    def runloop(self, stopstate):
         assert not self.RECURSIVE
         while self.toDo:
             callback, args, kwargs = self.toDo.pop(0)
             callback(*args, **kwargs)
+            if self.root.delegate.state == stopstate:
+                break
+        assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
         
 def main():
     d = Document()
