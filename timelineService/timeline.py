@@ -127,14 +127,14 @@ class Timeline:
         # Initialize any components that can be initialized
         for c in self.dmappComponents.values():
             if c.shouldInitialize():
-                c.initComponent()
+                c.initTimelineElement()
         # Check whether all components that should have been initialized are so
         for c in self.dmappComponents.values():
             if c.shouldStart():
-                c.startComponent(c.startTime)
+                c.startTimelineElement(c.startTime)
         for c in self.dmappComponents.values():
             if c.shouldStop():
-                c.stopComponent(c.stopTime)
+                c.stopTimelineElement(c.stopTime)
 
 class ProxyClockService:
     def __init__(self):
@@ -188,7 +188,7 @@ class ProxyDMAppComponent:
     def _getTime(self, timestamp):
         return timestamp + 0.0
 
-    def initComponent(self):
+    def initTimelineElement(self):
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/init'
         print "CALL", entryPoint
@@ -198,7 +198,7 @@ class ProxyDMAppComponent:
         self.initSent = True
         self.status = "initRequested"
 
-    def startComponent(self, timeSpec):
+    def startTimelineElement(self, timeSpec):
         assert self.initSent == True and self.startSent == False
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/start'
@@ -208,7 +208,7 @@ class ProxyDMAppComponent:
         self.startSent = True
         print "RETURNED"
 
-    def stopComponent(self, timeSpec):
+    def stopTimelineElement(self, timeSpec):
         assert self.initSent == True and self.stopSent == False
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
