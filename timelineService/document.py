@@ -1,5 +1,6 @@
 import sys
 import urllib
+import argparse
 import xml.etree.ElementTree as ET
 
 DEBUG=True
@@ -490,16 +491,26 @@ class Document:
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
         
 def main():
+    global DEBUG
+    parser = argparse.ArgumentParser(description="Test runner for timeline documents")
+    parser.add_argument("document", help="The XML timeline document to parse and run")
+    parser.add_argument("--debug", action="store_true", help="Print detailed state machine progression output")
+    parser.add_argument("--dump", action="store_true", help="Dump document to stdout on exceptions and succesful termination")
+    args = parser.parse_args()
+    DEBUG = args.debug
+    
     d = Document()
     try:
-        d.load(sys.argv[1])
+        d.load(args.document)
         d.addDelegates()
-        d.dump(sys.stdout)
-        print '--------------------'
+        if args.dump:
+            d.dump(sys.stdout)
+            print '--------------------'
         d.run()
     finally:
-        print '--------------------'
-        d.dump(sys.stdout)
+        if args.dump:
+            print '--------------------'
+            d.dump(sys.stdout)
     
 if __name__ == '__main__':
     main()
