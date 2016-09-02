@@ -1,6 +1,8 @@
 import sys
 import urllib
 import argparse
+import time
+import Queue
 import xml.etree.ElementTree as ET
 
 DEBUG=True
@@ -49,10 +51,11 @@ class State:
     READY = {inited}
     
 class DummyDelegate:
-    def __init__(self, elt, document):
+    def __init__(self, elt, document, clock):
         self.elt = elt
         self.document = document
         self.state = State.idle
+        self.clock = clock
         
     def __repr__(self):
         return 'Delegate(%s)' % self.document.getXPath(self.elt)
@@ -68,7 +71,7 @@ class DummyDelegate:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
             
     def setState(self, state):
-        if DEBUG: print '%-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt))
+        self.document.report('STATE', state, self.document.getXPath(self.elt))
         if self.state == state:
             print 'xxxjack superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt))
             if DEBUG:
@@ -116,8 +119,8 @@ class DummyDelegate:
 #         self.setState(State.idle)
         
 class ErrorDelegate(DummyDelegate):
-    def __init__(self, elt):
-        DummyDelegate.__init__(self, elt)
+    def __init__(self, elt, document, clock):
+        DummyDelegate.__init__(self, elt, document, clock)
         print >>sys.stderr, "* Error: unknown tag", elt.tag
 
 class TimelineDelegate(DummyDelegate):
@@ -349,7 +352,7 @@ class RefDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
-        if DEBUG: print '%-8s %-8s %s' % ('-', 'present', self.document.getXPath(self.elt))
+        self.document.report('-', 'present', self.document.getXPath(self.elt))
         self.setState(State.stopped)
     
 class ConditionalDelegate(SingleChildDelegate):
@@ -361,7 +364,7 @@ class ConditionalDelegate(SingleChildDelegate):
         self.assertState('startTimelineElement()', State.inited, State.stopped)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
-        if DEBUG: print '%-8s %-8s %s' % ('COND', True, self.document.getXPath(self.elt))
+        self.document.report('COND', True, self.document.getXPath(self.elt))
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
         
 class SleepDelegate(TimeElementDelegate):
@@ -374,11 +377,22 @@ class SleepDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
-        if DEBUG: print '%-8s %-8s %s' % ('SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
-        if DEBUG: print '%-8s %-8s %s' % ('SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
+        self.document.report('SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
+        dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
+        self.clock.schedule(dur, self._done)
+        
+    def _done(self):
+        self.document.report('SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
         self.setState(State.stopped)
     
-    
+    def parseDuration(self, dur):
+        try:
+            return float(dur)
+        except ValueError:
+            pass
+        tval = time.strptime(dur, "%H:%M:%S")
+        return tval.tm_sec + 60*(tval.tm_min+60*tval.tm_hour)
+        
 class WaitDelegate(TimelineDelegate):
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("event")
@@ -388,9 +402,9 @@ class WaitDelegate(TimelineDelegate):
         self.assertState('startTimelineElement()', State.inited, State.stopped)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
-        if DEBUG: print '%-8s %-8s %s' % ('WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
+        self.document.report('WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
         self.setState(State.started)
-        if DEBUG: print '%-8s %-8s %s' % ('WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
+        self.document.report('WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
         self.setState(State.stopped)
     
     
@@ -407,9 +421,10 @@ DELEGATE_CLASSES = {
 class Document:
     RECURSIVE = False
         
-    def __init__(self):
+    def __init__(self, clock):
         self.tree = None
         self.root = None
+        self.clock = clock
         self.parentMap = {}
         self.toDo = []
         self.delegateClasses = {}
@@ -456,7 +471,7 @@ class Document:
         for elt in self.tree.iter():
             if not hasattr(elt, 'delegate'):
                 klass = self._getDelegate(elt.tag)
-                elt.delegate = klass(elt, self)
+                elt.delegate = klass(elt, self, self.clock)
                 elt.delegate.checkAttributes()
                 elt.delegate.checkChildren()
                 
@@ -469,13 +484,13 @@ class Document:
         self.schedule(self.root.delegate.initTimelineElement)
         if not self.RECURSIVE:
             self.runloop(State.inited)
+        self.clock.start()
         self.schedule(self.root.delegate.startTimelineElement)
         if not self.RECURSIVE:
-            self.runloop(State.stopped)
-            
+            self.runloop(State.stopped)       
             
     def schedule(self, callback, *args, **kwargs):
-        if DEBUG: print '%-8s %-8s %s' % ('EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
+        self.report('EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
         if self.RECURSIVE:
             callback(*args, **kwargs)
         else:
@@ -483,29 +498,104 @@ class Document:
             
     def runloop(self, stopstate):
         assert not self.RECURSIVE
-        while self.toDo:
-            callback, args, kwargs = self.toDo.pop(0)
-            callback(*args, **kwargs)
-            if self.root.delegate.state == stopstate:
-                break
+        while not self.root.delegate.state == stopstate:
+            if len(self.toDo):
+                callback, args, kwargs = self.toDo.pop(0)
+                callback(*args, **kwargs)
+            else:
+                self.clock.sleepUntilNextEvent()
+                self.clock.handleEvents(self)
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
+
+    def report(self, event, arg1, arg2):
+        if DEBUG: print '%8.3f %-8s %-8s %s' % (self.clock.now(), event, arg1, arg2)
+    
+class ProxyClockService:
+    def __init__(self, sysclock=time):
+        self.epoch = 0
+        self.running = False
+        self.queue = Queue.PriorityQueue()
+        self.sysclock = sysclock
+
+    def now(self):
+        if not self.running:
+            return self.epoch
+        return self.sysclock.time() - self.epoch
+
+    def start(self):
+        if not self.running:
+            self.epoch = self.sysclock.time() - self.epoch
+            self.running = True
+
+    def stop(self):
+        if self.running:
+            self.epoch = self.sysclock.time() - self.epoch
+            self.running = False
+            
+    def wait(self):
+        pass
+
+    def sleepUntilNextEvent(self):
+        try:
+            peek = self.queue.get(False)
+        except Queue.Empty:
+            assert 0, "No events are forthcoming"
+        assert peek, "No events are forthcoming"
+        self.queue.put(peek)
+        t, callback, args, kwargs = peek
+        delta = t-self.now()
+        print 'xxxjack delta=', delta
+        if delta > 0:
+            self.sysclock.sleep(delta)
         
+    def schedule(self, delay, callback, *args, **kwargs):
+        self.queue.put((self.now()+delay, callback, args, kwargs))
+        
+    def handleEvents(self, handler):
+        while True:
+            try:
+                peek = self.queue.get(False)
+            except Queue.Empty:
+                return
+            if not peek: return
+            t, callback, args, kwargs = peek
+            if self.now() >= t:
+                handler.schedule(callback, *args, **kwargs)
+            else:
+                self.queue.put(peek)
+       
+class FastClock:
+    def __init__(self):
+        self.now = 0
+        
+    def time(self):
+        return self.now
+        
+    def sleep(self, duration):
+        self.now += duration
+             
 def main():
     global DEBUG
     parser = argparse.ArgumentParser(description="Test runner for timeline documents")
     parser.add_argument("document", help="The XML timeline document to parse and run")
     parser.add_argument("--debug", action="store_true", help="Print detailed state machine progression output")
     parser.add_argument("--dump", action="store_true", help="Dump document to stdout on exceptions and succesful termination")
+    parser.add_argument("--fast", action="store_true", help="Use fast-forward clock in stead of realtime clock")
     args = parser.parse_args()
     DEBUG = args.debug
     
-    d = Document()
+    if args.fast:
+        clock = ProxyClockService(FastClock())
+    else:
+        clock = ProxyClockService()
+    
+    d = Document(clock)
     try:
         d.load(args.document)
         d.addDelegates()
-        if args.dump:
-            d.dump(sys.stdout)
-            print '--------------------'
+#         if args.dump:
+#             d.dump(sys.stdout)
+#             print '--------------------'
         d.run()
     finally:
         if args.dump:
