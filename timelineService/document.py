@@ -352,9 +352,15 @@ class RefDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report('-', 'present', self.document.getXPath(self.elt))
+        self.document.report('-', 'present', self.document.getXPath(self.elt), self._getParameters())
         self.setState(State.stopped)
     
+    def _getParameters(self):
+        rv = {}
+        for k in self.elt.attrib:
+            if k in NS_2IMMERSE:
+                rv[NS_2IMMERSE.localTag(k)] = self.elt.attrib[k]
+        return rv
 class ConditionalDelegate(SingleChildDelegate):
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("expr")
@@ -507,8 +513,9 @@ class Document:
                 self.clock.handleEvents(self)
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
 
-    def report(self, event, arg1, arg2):
-        if DEBUG: print '%8.3f %-8s %-8s %s' % (self.clock.now(), event, arg1, arg2)
+    def report(self, event, verb, *args):
+        args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
+        if DEBUG: print ('%8.3f %-8s %-8s' % (self.clock.now(), event, verb))+args
     
 class ProxyClockService:
     def __init__(self, sysclock=time):
