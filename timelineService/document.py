@@ -82,7 +82,6 @@ class DummyDelegate:
             return
         self.state = state
         parentElement = self.document.getParent(self.elt)
-        #print 'xxxjack parent is', parentElement
         if parentElement is not None:
             parentElement.delegate.reportChildState(self.elt, self.state)
            
@@ -238,6 +237,8 @@ class ParDelegate(TimeElementDelegate):
                 elif ch.delegate.state != State.stopped:
                     self.document.schedule(ch.delegate.stopTimelineElement)
                     needToWait = True
+                else:
+                    pass
             if not needToWait:
                 self.setState(State.stopped)
         elif self.state == State.stopping:
@@ -380,11 +381,22 @@ class RefDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report('-', 'START', self.document.getXPath(self.elt), self._getParameters())
+        self.document.report('>', 'START', self.document.getXPath(self.elt), self._getParameters())
+        # XXXJACK test code. Assume text/image nodes finish straight away, masterVideo takes forever and others take 42 seconds
+        cl = self.elt.get(NS_2IMMERSE("class"), "unknown")
+        if cl == "masterVideo":
+            return
+        dur = 42
+        if cl == "text" or cl == "image": 
+            dur = 0
+        self.clock.schedule(dur, self._done)
+               
+    def _done(self):
+        self.document.report('<', 'stopped', self.document.getXPath(self.elt))
         self.setState(State.stopped)
-    
+
     def stopTimelineElement(self):
-        self.document.report('-', 'STOP', self.document.getXPath(self.elt), self._getParameters())
+        self.document.report('>', 'STOP', self.document.getXPath(self.elt), self._getParameters())
         TimeElementDelegate.stopTimelineElement(self)
         
     def _getParameters(self):
@@ -393,6 +405,7 @@ class RefDelegate(TimeElementDelegate):
             if k in NS_2IMMERSE:
                 rv[NS_2IMMERSE.localTag(k)] = self.elt.attrib[k]
         return rv
+        
 class ConditionalDelegate(SingleChildDelegate):
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("expr")
@@ -583,7 +596,6 @@ class ProxyClockService:
         self.queue.put(peek)
         t, callback, args, kwargs = peek
         delta = t-self.now()
-        print 'xxxjack delta=', delta
         if delta > 0:
             self.sysclock.sleep(delta)
         
@@ -600,10 +612,8 @@ class ProxyClockService:
             if not peek: return
             t, callback, args, kwargs = peek
             if self.now() >= t:
-                print 'xxxjack ProxyClockService. handle', peek
                 handler.schedule(callback, *args, **kwargs)
             else:
-                print 'xxxjack ProxyClockService.put back', peek
                 assert not self.queue.full()
                 self.queue.put(peek)
                 return
