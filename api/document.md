@@ -109,6 +109,11 @@ the last of its children has ended or its timeline master child has ended. We ma
 also want to specify a specific child (by xmlid) to determine when the `tl:par`
 ends.
 
+*Note* (20160805): `tl:end="master"` may not be such a good idea. The master needs to be
+computed dynamically (because it is used for clock synchronisation), but obviously
+when the child-previously-known-as-master has stopped it is now no longer master.
+Need to think about this a bit more.
+
 `tl:sync` determines whether the children (except the master) are synchronised
 to the `tl:par`, or whether they are free-running. The latter essentially creates
 a completely independent timeline.
@@ -178,4 +183,13 @@ be some sequence of `init()/start()/stop()/pause()/resume()`, and some
 calls to modify clock relationships `slaveClockToMe()/becomeMasterClock()`.
 There will be some callbacks from child to parent `inited()/started()/stopped()/paused()/resumed()`
 and some callbacks between clock master and clock slave `clockChanged()`.
-There needs to be a call to get the current time of an element
+There needs to be a call to get the current time of an element.
+
+*Note* (20160805): we may need another state between started and stopped
+that is similar to SMIL `fill="freeze"`, or alternatively a state `terminated`
+plus an accompanying call `terminate()`. Otherwise freeze semantics seem difficult 
+to implement. State `stopped` would then mean that the timeline of the object
+has run to completion, but the object is still visible. A call to `terminate()`
+would then be needed to remove it. And need to think whether `terminate()`
+implies `stop()`, etc.
+

@@ -1,11 +1,10 @@
 <tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" title="Hello World document, similar to previously hardcoded timelineServer example">
-    <tl:par tl:end="all">
+    <tl:par tl:end="master">
         <!-- Master video feed is edited, and is running all the time -->
-        <tl:sleep tl:dur="60" title="Kep presentation running for a minute, for now" />
+        <tl:sleep tl:dur="60" title="Kep presentation running for a minute, for now" tl:prio="high"/>
         <tl:ref tim:class="mastervideo" 
                 tim:dmappcid="masterVideo"
                 tim:url="http://cdn.2immerse.eu/theatre/mainfeed.mp4"
-                tl:prio="high"
                 />
         <tl:seq>
             <tl:par tl:end="master">

@@ -199,10 +199,11 @@ class TimeElementDelegate(TimelineDelegate):
         }
         
     def getCurrentPriority(self):
-        if self.state == State.started:
-            val = self.elt.get(NS_TIMELINE("prio"), "normal")
-        else:
-            val = "low"
+        val = self.elt.get(NS_TIMELINE("prio"), "normal")
+#         if self.state == State.started:
+#             val = self.elt.get(NS_TIMELINE("prio"), "normal")
+#         else:
+#             val = "low"
         val = PRIO_TO_INT.get(val, val)
         val = int(val)
         return val
@@ -226,6 +227,7 @@ class ParDelegate(TimeElementDelegate):
             self.setState(State.started)
         elif self.state == State.started:
             relevantChildren = self._getRelevantChildren()
+#             print 'xxxjack par relevant children', relevantChildren
             for ch in relevantChildren:
                 if ch.delegate.state != State.stopped:
                     return
@@ -233,11 +235,14 @@ class ParDelegate(TimeElementDelegate):
             needToWait = False
             for ch in self.elt:
                 if ch.delegate.state == State.stopping:
+#                    print 'xxxjack par stopping, need to wait for', ch.delegate
                     needToWait = True
                 elif ch.delegate.state != State.stopped:
+#                    print 'xxxjack par stopping, need to stop', ch.delegate
                     self.document.schedule(ch.delegate.stopTimelineElement)
                     needToWait = True
                 else:
+#                    print 'xxxjack par stopping, already stopped', ch.delegate
                     pass
             if not needToWait:
                 self.setState(State.stopped)
@@ -384,7 +389,7 @@ class RefDelegate(TimeElementDelegate):
         self.document.report('>', 'START', self.document.getXPath(self.elt), self._getParameters())
         # XXXJACK test code. Assume text/image nodes finish straight away, masterVideo takes forever and others take 42 seconds
         cl = self.elt.get(NS_2IMMERSE("class"), "unknown")
-        if cl == "masterVideo":
+        if cl == "mastervideo":
             return
         dur = 42
         if cl == "text" or cl == "image": 
