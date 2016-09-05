@@ -36,6 +36,8 @@ NAMESPACES.update(NS_TIMELINE_INTERNAL.ns())
 for k, v in NAMESPACES.items():
     ET.register_namespace(k, v)
 
+PRIO_TO_INT = dict(low=0, normal=50, high=100)
+
 class State:
     idle = "idle"
     initing = "initing"
@@ -112,6 +114,9 @@ class DummyDelegate:
         self.assertState('stopTimelineElement()', State.inited, State.started)
         self.setState(State.stopping)
         self.setState(State.stopped)
+        
+    def getCurrentPriority(self):
+        return PRIO_TO_INT["low"]
         
 #     def terminate(self):
 #         self.assertState('terminate()', State.stopped)
@@ -194,6 +199,15 @@ class TimeElementDelegate(TimelineDelegate):
         NS_TIMELINE("prio")
         }
         
+    def getCurrentPriority(self):
+        if self.state == State.started:
+            val = self.elt.get(NS_TIMELINE("prio"), "normal")
+        else:
+            val = "low"
+        val = PRIO_TO_INT.get(val, val)
+        val = int(val)
+        return val
+        
 class ParDelegate(TimeElementDelegate):
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
         NS_TIMELINE("end"),
@@ -236,9 +250,23 @@ class ParDelegate(TimeElementDelegate):
     def _getRelevantChildren(self):
         # Stopgap
         if len(self.elt) == 0: return []
-        if self.elt.get(NS_TIMELINE("end"), "all") == "all":
+        childSelector = self.elt.get(NS_TIMELINE("end"), "all")
+        if childSelector == "all":
             return list(self.elt)
-        return self.elt[0]     
+        elif childSelector == "master":
+            child = self._getMasterChild()
+            return [child]
+        assert 0, "Only all and master are implemented"
+        return [self.elt[0]]
+        
+    def _getMasterChild(self):
+        prioritiesAndChildren = []
+        for ch in self.elt:
+            prio = ch.delegate.getCurrentPriority()
+            prioritiesAndChildren.append((prio, ch))
+        prioritiesAndChildren.sort()
+        return prioritiesAndChildren[-1][1]
+        
         
     def initTimelineElement(self):
         self.assertState('initTimelineElement()', State.idle)
@@ -352,9 +380,13 @@ class RefDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report('-', 'present', self.document.getXPath(self.elt), self._getParameters())
+        self.document.report('-', 'START', self.document.getXPath(self.elt), self._getParameters())
         self.setState(State.stopped)
     
+    def stopTimelineElement(self):
+        self.document.report('-', 'STOP', self.document.getXPath(self.elt), self._getParameters())
+        TimeElementDelegate.stopTimelineElement(self)
+        
     def _getParameters(self):
         rv = {}
         for k in self.elt.attrib:
@@ -515,7 +547,7 @@ class Document:
 
     def report(self, event, verb, *args):
         args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
-        if DEBUG: print ('%8.3f %-8s %-8s' % (self.clock.now(), event, verb))+args
+        if DEBUG: print '%8.3f %-8s %-22s %s' % (self.clock.now(), event, verb, args)
     
 class ProxyClockService:
     def __init__(self, sysclock=time):
@@ -556,6 +588,7 @@ class ProxyClockService:
             self.sysclock.sleep(delta)
         
     def schedule(self, delay, callback, *args, **kwargs):
+        assert not self.queue.full()
         self.queue.put((self.now()+delay, callback, args, kwargs))
         
     def handleEvents(self, handler):
@@ -567,9 +600,13 @@ class ProxyClockService:
             if not peek: return
             t, callback, args, kwargs = peek
             if self.now() >= t:
+                print 'xxxjack ProxyClockService. handle', peek
                 handler.schedule(callback, *args, **kwargs)
             else:
+                print 'xxxjack ProxyClockService.put back', peek
+                assert not self.queue.full()
                 self.queue.put(peek)
+                return
        
 class FastClock:
     def __init__(self):
