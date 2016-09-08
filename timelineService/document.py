@@ -117,10 +117,10 @@ class DummyDelegate:
     def getCurrentPriority(self):
         return PRIO_TO_INT["low"]
         
-#     def terminate(self):
+     def terminate(self):
 #         self.assertState('terminate()', State.stopped)
 #         self.setState(State.terminating)
-#         self.setState(State.idle)
+         self.setState(State.idle)
         
 class ErrorDelegate(DummyDelegate):
     def __init__(self, elt, document, clock):
