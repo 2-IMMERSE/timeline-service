@@ -117,8 +117,8 @@ class DummyDelegate:
     def getCurrentPriority(self):
         return PRIO_TO_INT["low"]
         
-    def terminate(self):
-#         self.assertState('terminate()', State.stopped)
+    def terminateTimelineElement(self):
+#         self.assertState('terminateTimelineElement()', State.stopped)
 #         self.setState(State.terminating)
          self.setState(State.idle)
         
@@ -183,11 +183,11 @@ class SingleChildDelegate(TimelineDelegate):
         self.setState(State.stopping)
         self.document.schedule(self.elt[0].delegate.stopTimelineElement)
         
-    def terminate(self):
-#         self.assertState('terminate()', State.stopped)
+    def terminateTimelineElement(self):
+#         self.assertState('terminateTimelineElement()', State.stopped)
 #         self.setState(State.terminating)
         if self.elt[0].delegate.state != State.idle:
-            self.document.schedule(self.elt[0].delegate.terminate)
+            self.document.schedule(self.elt[0].delegate.terminateTimelineElement)
         self.setState(State.idle)
 
 class DocumentDelegate(SingleChildDelegate):
@@ -299,12 +299,12 @@ class ParDelegate(TimeElementDelegate):
         for child in self.elt: 
             self.document.schedule(child.delegate.stopTimelineElement)
         
-    def terminate(self):
-#         self.assertState('terminate()', State.stopped)
+    def terminateTimelineElement(self):
+#         self.assertState('terminateTimelineElement()', State.stopped)
 #         self.setState(State.terminating)
         for child in self.elt:
             if child.delegate.state != State.idle:
-                self.document.schedule(child.delegate.terminate)
+                self.document.schedule(child.delegate.terminateTimelineElement)
         self.setState(State.idle)
 
 class SeqDelegate(TimeElementDelegate):
@@ -336,7 +336,7 @@ class SeqDelegate(TimeElementDelegate):
                 if nextChild is not None:
                     self.document.schedule(nextChild.delegate.initTimelineElement)
                 if prevChild is not None and prevChild.delegate.state != State.idle:
-                    self.document.schedule(prevChild.delegate.terminate)
+                    self.document.schedule(prevChild.delegate.terminateTimelineElement)
             else:
                 pass # Wait for inited callback from nextChild
         elif self.state == State.stopping:
@@ -374,12 +374,12 @@ class SeqDelegate(TimeElementDelegate):
         if self._currentChild is not None:
             self.document.schedule(self._currentChild.delegate.stopTimelineElement)
         
-    def terminate(self):
-#         self.assertState('terminate()', State.stopped)
+    def terminateTimelineElement(self):
+#         self.assertState('terminateTimelineElement()', State.stopped)
 #         self.setState(State.terminating)
         for ch in self.elt:
             if ch.delegate.state != State.idle:
-                self.document.schedule(ch.delegate.terminate)
+                self.document.schedule(ch.delegate.terminateTimelineElement)
         self.setState(State.idle)
 
     def _nextChild(self):
@@ -415,9 +415,9 @@ class RefDelegate(TimeElementDelegate):
         self.document.report('>', 'STOP', self.document.getXPath(self.elt))
         TimeElementDelegate.stopTimelineElement(self)
         
-    def terminate(self):
+    def terminateTimelineElement(self):
         self.document.report('>', 'TERM', self.document.getXPath(self.elt))
-        TimeElementDelegate.terminate(self)
+        TimeElementDelegate.terminateTimelineElement(self)
         
     def _getParameters(self):
         rv = {}
@@ -502,6 +502,7 @@ class Document:
         self.toDo = []
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
+        self.terminating = False
         
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
         self.delegateClasses[tag] = klass
@@ -554,23 +555,28 @@ class Document:
         return self.delegateClasses.get(tag, ErrorDelegate)
             
     def run(self):
+        self.report('RUN', 'start')
         self.schedule(self.root.delegate.initTimelineElement)
         if not self.RECURSIVE:
             self.runloop(State.inited)
         self.clock.start()
         self.schedule(self.root.delegate.startTimelineElement)
-        if not self.RECURSIVE:
-            self.runloop(State.stopped)       
+        self.runloop(State.stopped)
+        self.report('RUN', 'stop')
+        self.root.delegate.assertDescendentState("run()", State.stopped, State.idle)
+        self.terminating = True
+        self.root.delegate.terminateTimelineElement()
+        self.root.delegate.assertDescendentState("run()", State.idle)
+        self.report('RUN', 'done')
             
     def schedule(self, callback, *args, **kwargs):
         self.report('EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
-        if self.RECURSIVE:
+        if self.RECURSIVE or self.terminating:
             callback(*args, **kwargs)
         else:
             self.toDo.append((callback, args, kwargs))
             
     def runloop(self, stopstate):
-        assert not self.RECURSIVE
         while not self.root.delegate.state == stopstate:
             if len(self.toDo):
                 callback, args, kwargs = self.toDo.pop(0)
@@ -581,7 +587,10 @@ class Document:
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
 
     def report(self, event, verb, *args):
-        args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
+        if args:
+            args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
+        else:
+            args = ''
         if DEBUG: print '%8.3f %-8s %-22s %s' % (self.clock.now(), event, verb, args)
     
 class ProxyClockService:
@@ -657,8 +666,10 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Print detailed state machine progression output")
     parser.add_argument("--dump", action="store_true", help="Dump document to stdout on exceptions and succesful termination")
     parser.add_argument("--fast", action="store_true", help="Use fast-forward clock in stead of realtime clock")
+    parser.add_argument("--recursive", action="store_true", help="Debugging: use recursion for callbacks, not queueing")
     args = parser.parse_args()
     DEBUG = args.debug
+    if args.recursive: Document.RECURSIVE=True
     
     if args.fast:
         clock = ProxyClockService(FastClock())
