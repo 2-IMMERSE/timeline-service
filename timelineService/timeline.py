@@ -1,4 +1,5 @@
 import requests
+import clocks
 
 DEBUG=True
 DEBUG_OUTGOING=False
@@ -80,7 +81,7 @@ class Timeline:
         self.dmappId = dmappId
 
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
-        self.clockService = ProxyClockService()
+        self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
         self._populateTimeline()
         self._updateTimeline()
         return None
@@ -135,26 +136,6 @@ class Timeline:
         for c in self.dmappComponents.values():
             if c.shouldStop():
                 c.stopTimelineElement(c.stopTime)
-
-class ProxyClockService:
-    def __init__(self):
-        self.epoch = 0
-        self.running = False
-
-    def now(self):
-        if not self.running:
-            return self.epoch
-        return time.time() - self.epoch
-
-    def start(self):
-        if not self.running:
-            self.epoch = time.time() - self.epoch
-            self.running = True
-
-    def stop(self):
-        if self.running:
-            self.epoch = time.time() - self.epoch
-            self.running = False
 
 class ProxyLayoutService:
     def __init__(self, contactInfo, contextId, dmappId):
