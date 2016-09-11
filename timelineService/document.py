@@ -5,6 +5,7 @@ import time
 import Queue
 import xml.etree.ElementTree as ET
 import logging
+import clocks
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -567,72 +568,6 @@ class Document:
         else:
             args = ''
         logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args)
-    
-class ProxyClockService:
-    def __init__(self, sysclock=time):
-        self.epoch = 0
-        self.running = False
-        self.queue = Queue.PriorityQueue()
-        self.sysclock = sysclock
-
-    def now(self):
-        if not self.running:
-            return self.epoch
-        return self.sysclock.time() - self.epoch
-
-    def start(self):
-        if not self.running:
-            self.epoch = self.sysclock.time() - self.epoch
-            self.running = True
-
-    def stop(self):
-        if self.running:
-            self.epoch = self.sysclock.time() - self.epoch
-            self.running = False
-            
-    def wait(self):
-        pass
-
-    def sleepUntilNextEvent(self):
-        try:
-            peek = self.queue.get(False)
-        except Queue.Empty:
-            assert 0, "No events are forthcoming"
-        assert peek, "No events are forthcoming"
-        self.queue.put(peek)
-        t, callback, args, kwargs = peek
-        delta = t-self.now()
-        if delta > 0:
-            self.sysclock.sleep(delta)
-        
-    def schedule(self, delay, callback, *args, **kwargs):
-        assert not self.queue.full()
-        self.queue.put((self.now()+delay, callback, args, kwargs))
-        
-    def handleEvents(self, handler):
-        while True:
-            try:
-                peek = self.queue.get(False)
-            except Queue.Empty:
-                return
-            if not peek: return
-            t, callback, args, kwargs = peek
-            if self.now() >= t:
-                handler.schedule(callback, *args, **kwargs)
-            else:
-                assert not self.queue.full()
-                self.queue.put(peek)
-                return
-       
-class FastClock:
-    def __init__(self):
-        self.now = 0
-        
-    def time(self):
-        return self.now
-        
-    def sleep(self, duration):
-        self.now += duration
              
 def main():
     global DEBUG
@@ -652,9 +587,9 @@ def main():
     if args.recursive: Document.RECURSIVE=True
     
     if args.fast:
-        clock = ProxyClockService(FastClock())
+        clock = clocks.CallbackPausableClock(clocks.FastClock())
     else:
-        clock = ProxyClockService()
+        clock = clocks.CallbackPausableClock(clocks.SystemClock())
     
     d = Document(clock)
     try:
