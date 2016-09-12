@@ -1,5 +1,7 @@
 import requests
 import clocks
+import document
+import logging
 
 DEBUG=True
 DEBUG_OUTGOING=False
@@ -39,11 +41,16 @@ class Timeline:
 
     def __init__(self, contextId, layoutServiceUrl):
         """Initializer, creates a new context and stores it for global reference"""
+        document.logger.setLevel(logging.DEBUG)
         self.contextId = contextId
         self.timelineDocUrl = None
         self.layoutServiceUrl = layoutServiceUrl
         self.dmappTimeline = None
         self.dmappId = None
+        self.dmappComponents = {}
+        self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
+        self.document = document.Document(self.clockService)
+        self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         # Do other initialization
 
     def destroyTimeline(self):
@@ -56,11 +63,12 @@ class Timeline:
         self.dmappId = None
         self.layoutService = None
         self.dmappComponents = {}
+        self.document = None
         # Do other cleanup
         return None
 
     def dump(self):
-        return dict(
+        rv = dict(
             contextId=self.contextId,
             timelineDocUrl=self.timelineDocUrl,
             dmappTimeline=self.dmappTimeline,
@@ -68,8 +76,15 @@ class Timeline:
             layoutService=repr(self.layoutService),
             layoutServiceUrl=self.layoutServiceUrl,
             dmappComponents=self.dmappComponents.keys(),
+            document=self.document.dumps(),
             )
+        return rv
 
+    def dmappComponentDelegateFactory(self, elt, document, clock):
+        rv = ProxyDMAppComponent(elt, document, clock, self.layoutService)
+        self.dmappComponents[rv.dmappcId] = rv
+        return rv
+        
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
         if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl)
         pass
@@ -81,7 +96,6 @@ class Timeline:
         self.dmappId = dmappId
 
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
-        self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
         self._populateTimeline()
         self._updateTimeline()
         return None
@@ -117,25 +131,19 @@ class Timeline:
 
     def _populateTimeline(self):
         """Create proxy objects, etc, using self.dmappTimeline"""
-        self.dmappComponents = dict(
-            masterVideo = ProxyDMAppComponent(self.clockService, self.layoutService, "masterVideo", "mastervideo", None, 0, None),
-            hello = ProxyDMAppComponent(self.clockService, self.layoutService, "hello", "text", None, 0, 10),
-            world = ProxyDMAppComponent(self.clockService, self.layoutService, "world", "text", None, 0, None),
-            goodbye = ProxyDMAppComponent(self.clockService, self.layoutService, "goodbye", "text", None, 10, None),
-            )
+        #self.document.load(self.timelineDocUrl)
+        self.document.load("api/sample-hello.xml")
+        self.document.addDelegates()
 
     def _updateTimeline(self):
-        # Initialize any components that can be initialized
-        for c in self.dmappComponents.values():
-            if c.shouldInitialize():
-                c.initTimelineElement()
-        # Check whether all components that should have been initialized are so
-        for c in self.dmappComponents.values():
-            if c.shouldStart():
-                c.startTimelineElement(c.startTime)
-        for c in self.dmappComponents.values():
-            if c.shouldStop():
-                c.stopTimelineElement(c.stopTime)
+        curState = self.document.getDocumentState()
+        if curState == document.State.idle:
+            # We need to initialize the document
+            self.document.runDocumentInit()
+        elif curState == document.State.inited and self.clock.now() > 0:
+            # We need to start the document
+            self.document.runDocumentStart()
+        self.document.runAvailable()
 
 class ProxyLayoutService:
     def __init__(self, contactInfo, contextId, dmappId):
@@ -146,20 +154,14 @@ class ProxyLayoutService:
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
-class ProxyDMAppComponent:
-    def __init__(self, clockService, layoutService, dmappcId, klass, url, startTime, stopTime):
-        self.clockService = clockService
+class ProxyDMAppComponent(document.TimeElementDelegate):
+    def __init__(self, elt, doc, clock, layoutService):
+    #def __init__(self, clockService, layoutService, dmappcId, klass, url, startTime, stopTime):
+        document.TimeElementDelegate.__init__(self, elt, doc, clock)
         self.layoutService = layoutService
-        self.dmappcId = dmappcId
-        self.klass = klass
-        if not url: url = ""
-        self.url = url
-        self.startTime = startTime
-        self.stopTime = stopTime
-        self.status = None
-        self.initSent = False
-        self.startSent = False
-        self.stopSent = False
+        self.dmappcId = self.elt.get(document.NS_2IMMERSE("dmappcid"))
+        self.klass = self.elt.get(document.NS_2IMMERSE("class"))
+        self.url = self.elt.get(document.NS_2IMMERSE("url"))
 
     def _getContactInfo(self):
         contactInfo = self.layoutService.getContactInfo()
@@ -170,6 +172,9 @@ class ProxyDMAppComponent:
         return timestamp + 0.0
 
     def initTimelineElement(self):
+        self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.idle)
+        self.setState(document.State.initing)
+        self.document.report(logging.INFO, '>>>>>', 'INIT', self.document.getXPath(self.elt), self._getParameters())
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/init'
         print "CALL", entryPoint
@@ -180,33 +185,34 @@ class ProxyDMAppComponent:
         self.status = "initRequested"
 
     def startTimelineElement(self, timeSpec):
-        assert self.initSent == True and self.startSent == False
+        self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
+        self.setState(document.State.starting)
+        self.document.report(logging.INFO, '>>>>>', 'START', self.document.getXPath(self.elt), self._getParameters())
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/start'
         print "CALL", entryPoint
-        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.startTime)))
+        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.clock.now())))
         r.raise_for_status()
         self.startSent = True
         print "RETURNED"
 
     def stopTimelineElement(self, timeSpec):
-        assert self.initSent == True and self.stopSent == False
+        self.document.report(logging.INFO, '>>>>>', 'STOP', self.document.getXPath(self.elt))
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
         print "CALL", entryPoint
-        r = requests.post(entryPoint, params=dict(stopTime=self._getTime(self.stopTime)))
+        r = requests.post(entryPoint, params=dict(stopTime=self._getTime(self.clock.now())))
         r.raise_for_status()
         self.stopSent = True
         print "RETURNED"
 
     def statusReport(self, status):
-        self.status = status
+        self.document.report(logging.INFO, '<<<<<', status, self.document.getXPath(self.elt))
+        self.setState(status)
 
-    def shouldInitialize(self):
-        return self.status == None
-
-    def shouldStart(self):
-        return self.initSent == True and self.startSent == False and self.startTime is not None and self.startTime >= self.clockService.now()
-
-    def shouldStop(self):
-        return self.initSent == True and self.stopSent == False and self.stopTime is not None and self.stopTime >= self.clockService.now()
+    def _getParameters(self):
+        rv = {}
+        for k in self.elt.attrib:
+            if k in document.NS_2IMMERSE:
+                rv[document.NS_2IMMERSE.localTag(k)] = self.elt.attrib[k]
+        return rv

@@ -596,6 +596,12 @@ class Document:
         self.tree.write(fp)
         fp.write('\n')
         
+    def dumps(self):
+        for elt in self.tree.iter():
+            elt.delegate.storeStateForSave()
+        xmlstr = ET.tostring(self.root, encoding='utf8', method='xml')
+        return xmlstr
+    
     def addDelegates(self):
         for elt in self.tree.iter():
             if not hasattr(elt, 'delegate'):
@@ -610,12 +616,11 @@ class Document:
         return self.delegateClasses.get(tag, ErrorDelegate)
             
     def run(self):
-        self.report(logging.DEBUG, 'RUN', 'start')
-        self.schedule(self.root.delegate.initTimelineElement)
+        self.runDocumentInit()
         if not self.RECURSIVE:
             self.runloop(State.inited)
         self.clock.start()
-        self.schedule(self.root.delegate.startTimelineElement)
+        self.runDocumentStart()
         self.runloop(State.finished)
         self.report(logging.DEBUG, 'RUN', 'stop')
         self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
@@ -624,6 +629,17 @@ class Document:
         self.runloop(State.idle)
         self.root.delegate.assertDescendentState("run()", State.idle)
         self.report(logging.DEBUG, 'RUN', 'done')
+            
+    def runDocumentInit(self):
+        self.report(logging.DEBUG, 'RUN', 'init')
+        self.schedule(self.root.delegate.initTimelineElement)
+    
+    def runDocumentStart(self):
+        self.report(logging.DEBUG, 'RUN', 'start')
+        self.schedule(self.root.delegate.startTimelineElement)
+
+    def getDocumentState(self):
+        return self.root.delegate.state
             
     def schedule(self, callback, *args, **kwargs):
         self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
@@ -642,6 +658,14 @@ class Document:
                 self.clock.handleEvents(self)
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
         assert self.root.delegate.state == stopstate, 'Document root did not reach state %s' % stopstate
+        
+    def runAvailable(self):
+        self.clock.handleEvents(self)
+        while len(self.toDo):
+            callback, args, kwargs = self.toDo.pop(0)
+            callback(*args, **kwargs)
+            if len(self.toDo) == 0:
+                self.clock.handleEvents(self)
 
     def report(self, level, event, verb, *args):
         if args:
@@ -683,7 +707,8 @@ def main():
     finally:
         if args.dump:
             print '--------------------'
-            d.dump(sys.stdout)
+            #d.dump(sys.stdout)
+            print d.dumps()
     
 if __name__ == '__main__':
     main()
