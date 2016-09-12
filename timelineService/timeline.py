@@ -140,9 +140,13 @@ class Timeline:
         if curState == document.State.idle:
             # We need to initialize the document
             self.document.runDocumentInit()
-        elif curState == document.State.inited and self.clock.now() > 0:
+        elif curState == document.State.inited:
             # We need to start the document
+            #self.document.clock.start()
             self.document.runDocumentStart()
+        elif curState == document.State.started and self.document.clock.now() == 0:
+            self.document.report(logging.DEBUG, 'RUN', 'startClock')
+            self.document.clock.start()
         self.document.runAvailable()
 
 class ProxyLayoutService:
@@ -161,7 +165,9 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.layoutService = layoutService
         self.dmappcId = self.elt.get(document.NS_2IMMERSE("dmappcid"))
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
-        self.url = self.elt.get(document.NS_2IMMERSE("url"))
+        self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
+        assert self.dmappcId
+        assert self.klass
 
     def _getContactInfo(self):
         contactInfo = self.layoutService.getContactInfo()
@@ -177,31 +183,34 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.document.report(logging.INFO, '>>>>>', 'INIT', self.document.getXPath(self.elt), self._getParameters())
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/init'
-        print "CALL", entryPoint
-        r = requests.post(entryPoint, json={'class':self.klass, 'url':self.url})
+        args = {'class':self.klass, 'url':self.url}
+        print "CALL", entryPoint, 'JSON', args
+        r = requests.post(entryPoint, json=args)
         r.raise_for_status()
         print "RETURNED"
         self.initSent = True
         self.status = "initRequested"
 
-    def startTimelineElement(self, timeSpec):
+    def startTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
         self.document.report(logging.INFO, '>>>>>', 'START', self.document.getXPath(self.elt), self._getParameters())
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/start'
-        print "CALL", entryPoint
-        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.clock.now())))
+        args = dict(startTime=self._getTime(self.clock.now()))
+        print "CALL", entryPoint, "ARGS", args
+        r = requests.post(entryPoint, params=args)
         r.raise_for_status()
         self.startSent = True
         print "RETURNED"
 
-    def stopTimelineElement(self, timeSpec):
+    def stopTimelineElement(self):
         self.document.report(logging.INFO, '>>>>>', 'STOP', self.document.getXPath(self.elt))
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/stop'
-        print "CALL", entryPoint
-        r = requests.post(entryPoint, params=dict(stopTime=self._getTime(self.clock.now())))
+        args = dict(stopTime=self._getTime(self.clock.now()))
+        print "CALL", entryPoint, "ARGS", args
+        r = requests.post(entryPoint, params=args)
         r.raise_for_status()
         self.stopSent = True
         print "RETURNED"
