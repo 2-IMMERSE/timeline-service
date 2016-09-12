@@ -126,7 +126,7 @@ class Timeline:
 
     def clockChanged(self, *args, **kwargs):
         if DEBUG: print "Timeline(%s): clockChanged(%s, %s)" % (self.contextId, args, kwargs)
-        pass
+        self._updateTimeline()
         return None
 
     def _populateTimeline(self):
