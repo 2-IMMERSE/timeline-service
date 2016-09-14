@@ -615,7 +615,7 @@ class Document:
                 return DummyDelegate
         return self.delegateClasses.get(tag, ErrorDelegate)
             
-    def run(self):
+    def runDocument(self):
         self.runDocumentInit()
         if not self.RECURSIVE:
             self.runloop(State.inited)
@@ -654,10 +654,13 @@ class Document:
                 callback, args, kwargs = self.toDo.pop(0)
                 callback(*args, **kwargs)
             else:
-                self.clock.sleepUntilNextEvent()
+                self.sleepUntilNextEvent()
                 self.clock.handleEvents(self)
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
         assert self.root.delegate.state == stopstate, 'Document root did not reach state %s' % stopstate
+        
+    def sleepUntilNextEvent(self):
+        self.clock.sleepUntilNextEvent()
         
     def runAvailable(self):
         self.clock.handleEvents(self)
@@ -703,7 +706,7 @@ def main():
 #         if args.dump:
 #             d.dump(sys.stdout)
 #             print '--------------------'
-        d.run()
+        d.runDocument()
     finally:
         if args.dump:
             print '--------------------'
