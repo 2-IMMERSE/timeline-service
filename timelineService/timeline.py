@@ -84,7 +84,7 @@ class Timeline:
         rv = ProxyDMAppComponent(elt, document, clock, self.layoutService)
         self.dmappComponents[rv.dmappcId] = rv
         return rv
-        
+
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
         if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl)
         pass
@@ -166,6 +166,13 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.dmappcId = self.elt.get(document.NS_2IMMERSE("dmappcid"))
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
+        self.parameters = {}
+        if self.klass == "mastervideo":
+            self.klass = "video"
+            self.parameters['syncMode'] = "master"
+        if self.klass == "video":
+            self.parameters['mediaUrl'] = self.url
+            self.url = ''
         assert self.dmappcId
         assert self.klass
 
@@ -183,7 +190,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.document.report(logging.INFO, '>>>>>', 'INIT', self.document.getXPath(self.elt), self._getParameters())
         entryPoint = self._getContactInfo()
         entryPoint += '/actions/init'
-        args = {'class':self.klass, 'url':self.url}
+        args = {'class':self.klass, 'url':self.url, 'parameters':self.parameters}
         print "CALL", entryPoint, 'JSON', args
         r = requests.post(entryPoint, json=args)
         r.raise_for_status()
