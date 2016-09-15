@@ -560,9 +560,11 @@ class Document:
         self.terminating = False
         
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
+        assert not self.root
         self.delegateClasses[tag] = klass
         
     def load(self, url):
+        assert not self.root
         fp = urllib.urlopen(url)
         self.tree = ET.parse(fp)
         self.root = self.tree.getroot()
@@ -572,6 +574,7 @@ class Document:
         return self.parentMap.get(elt)
         
     def getXPath(self, elt):
+        assert self.root
         parent = self.getParent(elt)
         if parent is None:
             return '/'
@@ -591,18 +594,23 @@ class Document:
         return rv
         
     def dump(self, fp):
+        if not self.root:
+            return
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
         self.tree.write(fp)
         fp.write('\n')
         
     def dumps(self):
+        if not self.root:
+            return ''
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
         xmlstr = ET.tostring(self.root, encoding='utf8', method='xml')
         return xmlstr
     
     def addDelegates(self):
+        assert self.root
         for elt in self.tree.iter():
             if not hasattr(elt, 'delegate'):
                 klass = self._getDelegate(elt.tag)
@@ -635,13 +643,17 @@ class Document:
         self.schedule(self.root.delegate.initTimelineElement)
     
     def runDocumentStart(self):
+        assert self.root
         self.report(logging.DEBUG, 'RUN', 'start')
         self.schedule(self.root.delegate.startTimelineElement)
 
     def getDocumentState(self):
+        if self.root is None:
+            return None
         return self.root.delegate.state
             
     def schedule(self, callback, *args, **kwargs):
+        assert self.root
         self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
         if self.RECURSIVE or self.terminating:
             callback(*args, **kwargs)
@@ -649,6 +661,7 @@ class Document:
             self.toDo.append((callback, args, kwargs))
             
     def runloop(self, stopstate):
+        assert self.root
         while self.root.delegate.state != stopstate or len(self.toDo):
             if len(self.toDo):
                 callback, args, kwargs = self.toDo.pop(0)
@@ -663,6 +676,7 @@ class Document:
         self.clock.sleepUntilNextEvent()
         
     def runAvailable(self):
+        assert self.root
         self.clock.handleEvents(self)
         while len(self.toDo):
             callback, args, kwargs = self.toDo.pop(0)
