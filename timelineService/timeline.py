@@ -2,6 +2,7 @@ import requests
 import clocks
 import document
 import logging
+import os
 
 DEBUG=True
 DEBUG_OUTGOING=False
@@ -132,7 +133,7 @@ class Timeline:
     def _populateTimeline(self):
         """Create proxy objects, etc, using self.dmappTimeline"""
         #self.document.load(self.timelineDocUrl)
-        self.document.load("api/sample-hello.xml")
+        self.document.load(os.path.dirname(os.path.abspath(__file__)) + "/../api/sample-hello.xml")
         self.document.addDelegates()
 
     def _updateTimeline(self):
