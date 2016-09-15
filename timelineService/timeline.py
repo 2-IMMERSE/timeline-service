@@ -137,6 +137,7 @@ class Timeline:
 
     def _updateTimeline(self):
         curState = self.document.getDocumentState()
+        if not curState: return
         if curState == document.State.idle:
             # We need to initialize the document
             self.document.runDocumentInit()
