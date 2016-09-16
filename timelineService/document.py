@@ -574,7 +574,7 @@ class Document:
         return self.parentMap.get(elt)
         
     def getXPath(self, elt):
-        assert self.root
+        assert self.root is not None
         parent = self.getParent(elt)
         if parent is None:
             return '/'
@@ -610,7 +610,7 @@ class Document:
         return xmlstr
     
     def addDelegates(self):
-        assert self.root
+        assert self.root is not None
         for elt in self.tree.iter():
             if not hasattr(elt, 'delegate'):
                 klass = self._getDelegate(elt.tag)
@@ -643,7 +643,7 @@ class Document:
         self.schedule(self.root.delegate.initTimelineElement)
     
     def runDocumentStart(self):
-        assert self.root
+        assert self.root is not None
         self.report(logging.DEBUG, 'RUN', 'start')
         self.schedule(self.root.delegate.startTimelineElement)
 
@@ -653,7 +653,7 @@ class Document:
         return self.root.delegate.state
             
     def schedule(self, callback, *args, **kwargs):
-        assert self.root
+        assert self.root is not None
         self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
         if self.RECURSIVE or self.terminating:
             callback(*args, **kwargs)
@@ -673,7 +673,7 @@ class Document:
         assert self.root.delegate.state == stopstate, 'Document root did not reach state %s' % stopstate
         
     def runAvailable(self):
-        assert self.root
+        assert self.root is not None
         self.clock.handleEvents(self)
         while len(self.toDo):
             callback, args, kwargs = self.toDo.pop(0)
