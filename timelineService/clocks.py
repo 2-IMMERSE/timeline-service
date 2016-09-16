@@ -8,6 +8,33 @@ class never:
     
 assert never > 1
 
+DEBUG_LOCKING=False
+threading._VERBOSE=True
+
+if DEBUG_LOCKING:
+    import logging
+    import traceback
+    clockLockLog = logging.getLogger("clocks.locks")
+    class ClockLock:
+        def __init__(self):
+            self._lock = threading.Lock()
+        def acquire(self):
+            clockLockLog.debug("%s: %s.acquire()", threading.currentThread().getName(), self)
+            for s in traceback.extract_stack():
+                clockLockLog.info('  Trace %s:%s [%s] %s' % s)
+            return self._lock.acquire(self)
+
+        def release(self):
+            clockLockLog.debug("%s: %s.release()", threading.currentThread().getName(), self)
+            for s in traceback.extract_stack():
+                clockLockLog.info('  Trace %s:%s [%s] %s' % s)
+            return self._lock.release(self)
+
+        __enter__ = acquire
+        __exit__ = release
+else:
+    ClockLock = threading.Lock
+    
 def synchronized(method):
     """Annotate a mthod to use the object lock"""
     def wrapper(self, *args, **kwargs):
@@ -21,7 +48,7 @@ class PausableClock:
         self.epoch = 0
         self.running = False
         self.underlyingClock = underlyingClock
-        self.lock = threading.Lock()
+        self.lock = ClockLock()
 
     @synchronized
     def now(self):
