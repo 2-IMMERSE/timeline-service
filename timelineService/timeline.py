@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 TRANSACTIONS=False
 
-DEBUG=True
 # DEBUG_OUTGOING=False
 # if DEBUG_OUTGOING:
 #     import httplib
@@ -162,11 +161,13 @@ class ProxyLayoutService:
         self.contextId = contextId
         self.dmappId = dmappId
         self.actions = []
+        self.actionsTimestamp = None
 
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
-    def scheduleAction(self, dmappcId, verb, config=None, parameters=None):
+    def scheduleAction(self, timestamp, dmappcId, verb, config=None, parameters=None):
+        self.actionsTimestamp = timestamp # XXXJACK Should really check that it is the same as previous ones....
         action = dict(action=verb, componentIds=[dmappcId])
         if config:
             action["config"] = config
@@ -175,8 +176,15 @@ class ProxyLayoutService:
         self.actions.append(action)
         
     def forwardActions(self):
-        logger.debug("ProxyLayoutService: forwarding %d actions", len(self.actions))
-        assert not self.actions
+        if not self.actions: return
+        logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(self.actions), repr(self.actions))
+        entryPoint = self.getContactInfo() + '/transaction'
+        body = dict(time=self.actionsTimestamp, actions=self.actions)
+        r = requests.post(entryPoint, json=body)
+            
+        r.raise_for_status()
+        self.actions = []
+        self.actionsTimestamp = None
         
 class ProxyDMAppComponent(document.TimeElementDelegate):
     def __init__(self, elt, doc, clock, layoutService):
@@ -237,7 +245,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
     
     def scheduleAction(self, verb, config=None, parameters=None):
         self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.clock.now())
-        self.layoutService.scheduleAction(self.dmappcId, verb, config=config, parameters=parameters)
+        self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
     
     def statusReport(self, status):
         self.document.report(logging.INFO, 'RECV', status, self.document.getXPath(self.elt))
