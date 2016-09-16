@@ -79,7 +79,7 @@ class DummyDelegate:
     def setState(self, state):
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
         if self.state == state:
-            print 'xxxjack superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt))
+            logger.warn('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
 #             if DEBUG:
 #                 import pdb
 #                 pdb.set_trace()
@@ -308,7 +308,7 @@ class ParDelegate(TimeElementDelegate):
                     return
             self.setState(State.idle)
         else:
-            print 'xxxjack par.reportChildState(%s) but self in %s' % (childState, self.state)
+            logger.warn('par.reportChildState(%s) but self in %s' % (childState, self.state))
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -395,7 +395,7 @@ class SeqDelegate(TimeElementDelegate):
                 # Next child not yet ready to run.
                 nextChild.delegate.assertState('seq-parent-reportChildState()', State.initing)
                 pass # Wait for inited callback from nextChild
-            if prevChild and prevChild.delegate.state in State.STOP_NEEDED:
+            if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
                 self.document.schedule(prevChild.delegate.stopTimelineElement)
         if self.state == State.stopping:
             for ch in self.elt:

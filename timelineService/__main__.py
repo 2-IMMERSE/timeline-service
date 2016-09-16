@@ -3,6 +3,9 @@ import web
 import timeline
 import json
 import argparse
+import logging
+
+logging.basicConfig()
 
 urls = (
     '/timeline/v1/context', 'timelineServerServer',
@@ -89,7 +92,18 @@ def main():
     parser.add_argument('--debug', help="Enable all debug output")
     parser.add_argument('--transactions', help="Use transaction interface to layout service for dmappc updates (default: simple calls)")
     parser.add_argument('--port', type=int, help="Set port to listen on")
+    parser.add_argument('--logLevel', metavar='SPEC', help="Set log levels (comma-separated list of [loggername:]LOGLEVEL)")
     args = parser.parse_args()
+    if args.logLevel:
+        for ll in args.logLevel.split(','):
+            if ':' in ll:
+                loggerToModify = logging.getLogger(ll.split(':')[0])
+                newLevel = getattr(logging, ll.split(':')[1])
+            else:
+                loggerToModify = logging.getLogger()
+                newLevel = getattr(logging, ll)
+            loggerToModify.setLevel(newLevel)
+        
     if args.debug:
         timeline.DEBUG = True
     if args.transactions:
