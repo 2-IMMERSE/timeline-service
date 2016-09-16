@@ -3,6 +3,8 @@ import clocks
 import document
 import logging
 
+TRANSACTIONS=False
+
 DEBUG=True
 DEBUG_OUTGOING=False
 if DEBUG_OUTGOING:
@@ -159,6 +161,17 @@ class ProxyLayoutService:
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
+    def scheduleAction(self, dmappcId, verb, config=None, parameters=None):
+        action = dict(action=verb, componentIds=[dmappcId])
+        if config:
+            action["config"] = config
+        if parameters:
+            action["parameters"] = parameters
+        self.actions.append(action)
+        
+    def forwardActions(self):
+        assert 0
+        
 class ProxyDMAppComponent(document.TimeElementDelegate):
     def __init__(self, elt, doc, clock, layoutService):
     #def __init__(self, clockService, layoutService, dmappcId, klass, url, startTime, stopTime):
@@ -181,48 +194,58 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
     def initTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.idle)
         self.setState(document.State.initing)
-        self.document.report(logging.INFO, '>>>>>', 'INIT', self.document.getXPath(self.elt), self._getParameters())
-        entryPoint = self._getContactInfo()
-        entryPoint += '/actions/init'
-        args = {'class':self.klass, 'url':self.url}
-        print "CALL", entryPoint, 'JSON', args
-        r = requests.post(entryPoint, json=args)
-        r.raise_for_status()
-        print "RETURNED"
-        self.initSent = True
-        self.status = "initRequested"
+        config = {'class':self.klass, 'url':self.url}
+        parameters = self._getParameters()
+        if TRANSACTIONS:
+            self.scheduleAction("init", config=config, parameters=parameters)
+        else:
+            # Direct API call has parameters inside config (sigh)
+            config['parameters'] = parameters
+            self.sendAction("init", body=config)
 
     def startTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
-        self.document.report(logging.INFO, '>>>>>', 'START', self.document.getXPath(self.elt), self._getParameters())
-        entryPoint = self._getContactInfo()
-        entryPoint += '/actions/start'
-        args = dict(startTime=self._getTime(self.clock.now()))
-        print "CALL", entryPoint, "ARGS", args
-        r = requests.post(entryPoint, params=args)
-        r.raise_for_status()
-        self.startSent = True
-        print "RETURNED"
+        if TRANSACTIONS:
+            self.scheduleAction("start")
+        else:
+            self.sendAction("start", queryParams=dict(startTime=self._getTime(self.clock.now())))
 
     def stopTimelineElement(self):
-        self.document.report(logging.INFO, '>>>>>', 'STOP', self.document.getXPath(self.elt))
-        entryPoint = self._getContactInfo()
-        entryPoint += '/actions/stop'
-        args = dict(stopTime=self._getTime(self.clock.now()))
-        print "CALL", entryPoint, "ARGS", args
-        r = requests.post(entryPoint, params=args)
-        r.raise_for_status()
-        self.stopSent = True
-        print "RETURNED"
+        self.setState(document.State.stopping)
+        if TRANSACTIONS:
+            self.scheduleAction("stop")
+        else:
+            self.sendAction("stop", queryParams=dict(stopTime=self._getTime(self.clock.now())))
 
+    def sendAction(self, verb, queryParams=None, body=None):
+        self.document.report(logging.INFO, 'SEND', verb, self.document.getXPath(self.elt), repr(body))
+        entryPoint = self._getContactInfo()
+        entryPoint += '/actions/' + verb
+        print "CALL", entryPoint, "ARGS", queryParams
+        if body is None:
+            r = requests.post(entryPoint, params=queryParams)
+        else:
+            r = requests.post(entryPoint, json=body, params=queryParams)
+            
+        r.raise_for_status()
+        print "RETURNED"
+    
+    def scheduleAction(self, verb, config=None, parameters=None):
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.clock.now())
+        self.layoutService.scheduleAction(self.dmappcId, verb, config=config, parameters=parameters)
+    
     def statusReport(self, status):
-        self.document.report(logging.INFO, '<<<<<', status, self.document.getXPath(self.elt))
+        self.document.report(logging.INFO, 'RECV', status, self.document.getXPath(self.elt))
         self.setState(status)
 
     def _getParameters(self):
         rv = {}
         for k in self.elt.attrib:
             if k in document.NS_2IMMERSE:
-                rv[document.NS_2IMMERSE.localTag(k)] = self.elt.attrib[k]
+                localName = document.NS_2IMMERSE.localTag(k)
+                if localName == "class" or localName == "url":
+                    # These are magic, don't pass them in parameters
+                    continue
+                rv[localName] = self.elt.attrib[k]
         return rv
