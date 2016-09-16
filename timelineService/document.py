@@ -79,7 +79,7 @@ class DummyDelegate:
     def setState(self, state):
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
         if self.state == state:
-            print 'xxxjack superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt))
+            logger.warn('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
 #             if DEBUG:
 #                 import pdb
 #                 pdb.set_trace()
@@ -308,7 +308,7 @@ class ParDelegate(TimeElementDelegate):
                     return
             self.setState(State.idle)
         else:
-            print 'xxxjack par.reportChildState(%s) but self in %s' % (childState, self.state)
+            logger.warn('par.reportChildState(%s) but self in %s' % (childState, self.state))
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -395,7 +395,7 @@ class SeqDelegate(TimeElementDelegate):
                 # Next child not yet ready to run.
                 nextChild.delegate.assertState('seq-parent-reportChildState()', State.initing)
                 pass # Wait for inited callback from nextChild
-            if prevChild and prevChild.delegate.state in State.STOP_NEEDED:
+            if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
                 self.document.schedule(prevChild.delegate.stopTimelineElement)
         if self.state == State.stopping:
             for ch in self.elt:
@@ -574,7 +574,7 @@ class Document:
         return self.parentMap.get(elt)
         
     def getXPath(self, elt):
-        assert self.root
+        assert self.root is not None
         parent = self.getParent(elt)
         if parent is None:
             return '/'
@@ -610,7 +610,7 @@ class Document:
         return xmlstr
     
     def addDelegates(self):
-        assert self.root
+        assert self.root is not None
         for elt in self.tree.iter():
             if not hasattr(elt, 'delegate'):
                 klass = self._getDelegate(elt.tag)
@@ -643,7 +643,7 @@ class Document:
         self.schedule(self.root.delegate.initTimelineElement)
     
     def runDocumentStart(self):
-        assert self.root
+        assert self.root is not None
         self.report(logging.DEBUG, 'RUN', 'start')
         self.schedule(self.root.delegate.startTimelineElement)
 
@@ -653,7 +653,7 @@ class Document:
         return self.root.delegate.state
             
     def schedule(self, callback, *args, **kwargs):
-        assert self.root
+        assert self.root is not None
         self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
         if self.RECURSIVE or self.terminating:
             callback(*args, **kwargs)
@@ -673,7 +673,7 @@ class Document:
         assert self.root.delegate.state == stopstate, 'Document root did not reach state %s' % stopstate
         
     def runAvailable(self):
-        assert self.root
+        assert self.root is not None
         self.clock.handleEvents(self)
         while len(self.toDo):
             callback, args, kwargs = self.toDo.pop(0)
