@@ -1,0 +1,20 @@
+{
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "network": "BRIDGE",
+      "image": "173.39.240.105:5000/timeline-service",
+      "forcePullImage": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  },
+  "id": "timeline-service",
+  "instances": 2,
+  "cpus": 0.50,
+  "mem": 256
+}
