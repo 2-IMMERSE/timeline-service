@@ -9,31 +9,34 @@ class never:
 assert never > 1
 
 DEBUG_LOCKING=False
-threading._VERBOSE=True
+#threading._VERBOSE=True
 
 if DEBUG_LOCKING:
     import logging
     import traceback
     clockLockLog = logging.getLogger("clocks.locks")
+    clockLockLog.setLevel(logging.DEBUG)
     class ClockLock:
         def __init__(self):
-            self._lock = threading.Lock()
-        def acquire(self):
+            self._lock = threading.RLock()
+            
+        def acquire(self,*args, **kwargs):
             clockLockLog.debug("%s: %s.acquire()", threading.currentThread().getName(), self)
             for s in traceback.extract_stack():
-                clockLockLog.info('  Trace %s:%s [%s] %s' % s)
-            return self._lock.acquire(self)
+                clockLockLog.info('    Trace %s:%s [%s] %s' % s)
+            return self._lock.acquire(*args, **kwargs)
 
         def release(self):
             clockLockLog.debug("%s: %s.release()", threading.currentThread().getName(), self)
             for s in traceback.extract_stack():
-                clockLockLog.info('  Trace %s:%s [%s] %s' % s)
-            return self._lock.release(self)
+                clockLockLog.info('    Trace %s:%s [%s] %s' % s)
+            return self._lock.release()
 
         __enter__ = acquire
-        __exit__ = release
+        def __exit__(self, *args):
+            self.release()
 else:
-    ClockLock = threading.Lock
+    ClockLock = threading.RLock
     
 def synchronized(method):
     """Annotate a mthod to use the object lock"""
@@ -53,6 +56,9 @@ class PausableClock:
     @synchronized
     def now(self):
         """Return current time of the clock"""
+        return self._now()
+        
+    def _now(self):
         if not self.running:
             return self.epoch
         return self.underlyingClock.now() - self.epoch
@@ -87,7 +93,7 @@ class CallbackPausableClock(PausableClock):
             return never
         self.queue.put(peek)
         t, callback, args, kwargs = peek
-        return t-self.now()
+        return t-self._now()
         
     def sleepUntilNextEvent(self):
         """Sleep until next callback. Do not use with multithreading."""
@@ -117,7 +123,7 @@ class CallbackPausableClock(PausableClock):
                 return
             if not peek: return
             t, callback, args, kwargs = peek
-            if self.now() >= t:
+            if self._now() >= t:
                 handler.schedule(callback, *args, **kwargs)
             else:
                 assert not self.queue.full()

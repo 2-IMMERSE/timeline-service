@@ -594,7 +594,7 @@ class Document:
         return rv
         
     def dump(self, fp):
-        if not self.root:
+        if self.root is None:
             return
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
@@ -602,7 +602,7 @@ class Document:
         fp.write('\n')
         
     def dumps(self):
-        if not self.root:
+        if self.root is None:
             return ''
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
