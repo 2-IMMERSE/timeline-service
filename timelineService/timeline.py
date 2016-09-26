@@ -4,22 +4,8 @@ import document
 import logging
 
 logger = logging.getLogger(__name__)
-#logger.setLevel(logging.DEBUG)
 
 TRANSACTIONS=False
-
-# DEBUG_OUTGOING=False
-# if DEBUG_OUTGOING:
-#     import httplib
-#     import logging
-#     httplib.HTTPConnection.debuglevel = 1
-# 
-#     # You must initialize logging, otherwise you'll not see debug output.
-#     logging.basicConfig()
-#     logging.getLogger().setLevel(logging.DEBUG)
-#     requests_log = logging.getLogger("requests.packages.urllib3")
-#     requests_log.setLevel(logging.DEBUG)
-#     requests_log.propagate = True
 
 class Timeline:
     ALL_CONTEXTS = {}
@@ -45,7 +31,6 @@ class Timeline:
 
     def __init__(self, contextId, layoutServiceUrl):
         """Initializer, creates a new context and stores it for global reference"""
-#        document.logger.setLevel(logging.DEBUG)
         self.contextId = contextId
         self.timelineDocUrl = None
         self.layoutServiceUrl = layoutServiceUrl
@@ -59,7 +44,7 @@ class Timeline:
 
     def destroyTimeline(self):
         """Destructor, sort-of"""
-        logger.debug("Timeline(%s): destroyTimeline()" % self.contextId)
+        logger.info("Timeline(%s): destroyTimeline()" % self.contextId)
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
         self.timelineDocUrl = None
@@ -90,7 +75,7 @@ class Timeline:
         return rv
         
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
-        logger.debug("Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl))
+        logger.info("Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl))
         pass
         assert self.timelineDocUrl is None
         assert self.dmappTimeline is None
@@ -105,7 +90,7 @@ class Timeline:
         return None
 
     def unloadDMAppTimeline(self, dmappId):
-        logger.debug("Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId))
+        logger.info("Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId))
         pass
         assert self.timelineDocUrl
         assert self.dmappTimeline

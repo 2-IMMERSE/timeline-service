@@ -7,6 +7,9 @@ import logging
 
 logging.basicConfig()
 
+# Default logging configuration: INFO for document and timeline (useful to app developers), WARNING for everything else.
+DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,WARNING"
+
 urls = (
     '/timeline/v1/context', 'timelineServerServer',
     '/timeline/v1/context/(.*)/(.*)', 'timelineServer',
@@ -91,7 +94,7 @@ def main():
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
     parser.add_argument('--transactions', action='store_true', help="Use transaction interface to layout service for dmappc updates (default: simple calls)")
     parser.add_argument('--port', type=int, help="Set port to listen on")
-    parser.add_argument('--logLevel', metavar='SPEC', help="Set log levels (comma-separated list of [loggername:]LOGLEVEL)")
+    parser.add_argument('--logLevel', metavar='SPEC', help="Set log levels (comma-separated list of [loggername:]LOGLEVEL)", default=DEFAULT_LOG_CONFIG)
     args = parser.parse_args()
     if args.logLevel:
         for ll in args.logLevel.split(','):
