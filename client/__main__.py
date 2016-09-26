@@ -17,12 +17,12 @@ def context_for_tv(layoutServiceURL):
     context.create(layoutServiceURL)
     return context
 
-def dmapp_for_tv(context, layoutServiceURL, timelineServiceURL, tsserver):
+def dmapp_for_tv(context, layoutServiceURL, timelineServiceURL, tsserver, timelineDocUrl, layoutDocUrl):
     appSettings = dict(
-        timelineDocUrl="http://example.com/2immerse/timeline.json",
+        timelineDocUrl=timelineDocUrl,
         timelineServiceUrl=timelineServiceURL,
         extLayoutServiceUrl=layoutServiceURL,  # For now: the layout service cannot determine this itself....
-        layoutReqsUrl="http://example.com/2immerse/layout.json"
+        layoutReqsUrl=layoutDocUrl
         )
     dmapp = context.createDMApp(appSettings)
     if tsserver:
@@ -56,7 +56,9 @@ def main():
     parser.add_argument('--tsserver', metavar="HOST", help="Run DVB TSS server on IP-address HOST, port 7681 (usually tv only)")
     parser.add_argument('--tsclient', metavar="URL", help="Contact DVB TSS server on URL, for example ws://127.0.0.1:7681/ts (usually handheld only)")
     parser.add_argument('--layout', metavar="URL", help="Create context and app at layout server endpoint URL (usually tv only)")
+    parser.add_argument('--layoutDoc', metavar="URL", help="Layout document", default="sample-hello-layout.json")
     parser.add_argument('--timeline', metavar="URL", help="Tell layout server about timeline server endpoint URL (usually tv only)")
+    parser.add_argument('--timelineDoc', metavar="URL", help="Timeline document", default="sample-hello-timeline.xml")
     parser.add_argument('--context', metavar="URL", help="Connect to layout context at URL (usually handheld only)")
     
     args = parser.parse_args()
@@ -82,7 +84,7 @@ def main():
         print 'Press return when done -',
         _ = sys.stdin.readline()
         
-        dmapp = dmapp_for_tv(context, args.layout, args.timeline, args.tsserver)
+        dmapp = dmapp_for_tv(context, args.layout, args.timeline, args.tsserver, args.timelineDoc, args.layoutDoc)
             
     dmapp.start()
     dmapp.wait()

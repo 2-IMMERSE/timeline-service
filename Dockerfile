@@ -7,12 +7,12 @@ RUN apt-get install -y python2.7 python-webpy python-requests
 RUN \
   mkdir -p /usr/src/timeline-service && \
   mkdir -p /usr/src/timeline-service/timelineService && \
-  mkdir -p /usr/src/timeline-service/api
+  mkdir -p /usr/src/timeline-service/samples
 WORKDIR /usr/src/timeline-service
 
 # Install app dependencies
 COPY timelineService/* timelineService/
-COPY api/* api/
+COPY samples/* samples/
 
 EXPOSE 8080
 CMD [ "/usr/bin/python", "/usr/src/timeline-service/timelineService" ]
