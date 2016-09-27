@@ -257,7 +257,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         for k in self.elt.attrib:
             if k in document.NS_2IMMERSE:
                 localName = document.NS_2IMMERSE.localTag(k)
-                if localName == "class" or localName == "url":
+                if localName == "class" or localName == "url" or localName == "dmappcid":
                     # These are magic, don't pass them in parameters
                     continue
                 rv[localName] = self.elt.attrib[k]
