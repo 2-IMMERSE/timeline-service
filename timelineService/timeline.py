@@ -187,7 +187,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         if not self.dmappcId:
             self.dmappcId = "unknown%d" % id(self)
-            logger.error("Element %s: missing tim:dmappcId attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId)
+            logger.error("Element %s: missing tim:dmappcid attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId)
         assert self.dmappcId
         if not self.klass:
             self.klass = "unknownClass"
