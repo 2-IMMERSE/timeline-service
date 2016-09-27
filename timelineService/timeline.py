@@ -262,5 +262,4 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
                     # These are magic, don't pass them in parameters
                     continue
                 rv[localName] = self.elt.attrib[k]
-        rv.update(self.parameters)
         return rv
