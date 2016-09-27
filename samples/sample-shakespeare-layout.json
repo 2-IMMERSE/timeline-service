@@ -3,7 +3,7 @@
     "dmapp": "200",
     "constraints": [
         {
-            "componentId" : "MasterVideo",
+            "componentId" : "masterVideo",
             "personal" : {
                 "aspect": "16:9",
                 "minSize": {
@@ -24,7 +24,7 @@
             }
         },
         {
-            "componentId" : "AVChat",
+            "componentId" : "aVChat",
             "personal": {
                 "minSize": {
                     "width": 200,
@@ -43,7 +43,7 @@
             }
         },
         {
-            "componentId" : "ScriptWidget",
+            "componentId" : "scriptWidget",
             "personal" : {
                 "minSize": {
                     "width": 125,
@@ -60,7 +60,7 @@
             }
         },
         {
-            "componentId" : "SubtitleWidget",
+            "componentId" : "SubtitleWidget1",
             "personal" : {
                 "minSize": {
                     "width": 400,
@@ -77,7 +77,24 @@
             }
          },
         {
-            "componentId" : "video",
+            "componentId" : "SubtitleWidget2",
+            "personal" : {
+                "minSize": {
+                    "width": 400,
+                    "height": 50
+                },
+                "priority": 4
+            },
+            "communal" : {
+                "minSize": {
+                    "width": 800,
+                    "height": 100
+                },
+                "priority": 4
+            }
+         },
+        {
+            "componentId" : "auxVideo",
             "personal" : {
                 "aspect": "16:9",
                 "minSize": {
