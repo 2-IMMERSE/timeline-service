@@ -3,6 +3,7 @@ import clocks
 import document
 import logging
 import urllib
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ class Timeline:
         rv = ProxyDMAppComponent(elt, document, clock, self.layoutService)
         self.dmappComponents[rv.dmappcId] = rv
         return rv
-        
+
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
         logger.info("Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl))
         if self.timelineDocUrl:
@@ -86,7 +87,7 @@ class Timeline:
         assert self.dmappId is None
         self.timelineDocUrl = timelineDocUrl
         # XXXJACK for debugging purposes, if the URL is a partial URL get it from the samples directory
-        self.timelineDocUrl = urllib.basejoin("samples/", self.timelineDocUrl)
+        self.timelineDocUrl = urllib.basejoin(os.path.dirname(os.path.abspath(__file__)) + "/../samples/", self.timelineDocUrl)
         self.dmappId = dmappId
 
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
@@ -166,18 +167,18 @@ class ProxyLayoutService:
         if parameters:
             action["parameters"] = parameters
         self.actions.append(action)
-        
+
     def forwardActions(self):
         if not self.actions: return
         logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(self.actions), repr(self.actions))
         entryPoint = self.getContactInfo() + '/transaction'
         body = dict(time=self.actionsTimestamp, actions=self.actions)
         r = requests.post(entryPoint, json=body)
-            
+
         r.raise_for_status()
         self.actions = []
         self.actionsTimestamp = None
-        
+
 class ProxyDMAppComponent(document.TimeElementDelegate):
     def __init__(self, elt, doc, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
@@ -207,6 +208,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.setState(document.State.initing)
         config = {'class':self.klass, 'url':self.url}
         parameters = self._getParameters()
+
         if TRANSACTIONS:
             self.scheduleAction("init", config=config, parameters=parameters)
         else:
@@ -240,13 +242,13 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             r = requests.post(entryPoint, params=queryParams)
         else:
             r = requests.post(entryPoint, json=body, params=queryParams)
-            
+
         r.raise_for_status()
-    
+
     def scheduleAction(self, verb, config=None, parameters=None):
         self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, self.clock.now())
         self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
-    
+
     def statusReport(self, status):
         self.document.report(logging.INFO, 'RECV', status, self.document.getXPath(self.elt))
         self.setState(status)
@@ -256,8 +258,9 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         for k in self.elt.attrib:
             if k in document.NS_2IMMERSE:
                 localName = document.NS_2IMMERSE.localTag(k)
-                if localName == "class" or localName == "url":
+                if localName == "class" or localName == "url" or localName == "dmappcid":
                     # These are magic, don't pass them in parameters
                     continue
                 rv[localName] = self.elt.attrib[k]
+        rv.update(self.parameters)
         return rv
