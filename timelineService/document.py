@@ -280,6 +280,7 @@ class ParDelegate(TimeElementDelegate):
                 if not ch in relevantChildren:
                     if ch.delegate.state in State.STOP_NEEDED:
                         self.document.schedule(ch.delegate.stopTimelineElement)
+            return
 #            self.setState(State.stopping)
 #             needToWait = False
 #             for ch in self.elt:
@@ -307,8 +308,13 @@ class ParDelegate(TimeElementDelegate):
                 if ch.delegate.state != State.idle:
                     return
             self.setState(State.idle)
-        else:
-            logger.warn('par.reportChildState(%s) but self in %s' % (childState, self.state))
+            return
+        if self.state == State.finished:
+            # We're fine with finished reports from children
+            if not childState in State.NOT_DONE:
+                return
+        # If we get here we got an unexpected state change from a child. Report.
+        logger.warn('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -594,7 +600,7 @@ class Document:
         return rv
         
     def dump(self, fp):
-        if not self.root:
+        if self.root is None:
             return
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
@@ -602,7 +608,7 @@ class Document:
         fp.write('\n')
         
     def dumps(self):
-        if not self.root:
+        if self.root is None:
             return ''
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
@@ -623,7 +629,7 @@ class Document:
                 return DummyDelegate
         return self.delegateClasses.get(tag, ErrorDelegate)
             
-    def run(self):
+    def runDocument(self):
         self.runDocumentInit()
         if not self.RECURSIVE:
             self.runloop(State.inited)
@@ -661,16 +667,19 @@ class Document:
             self.toDo.append((callback, args, kwargs))
             
     def runloop(self, stopstate):
-        assert self.root
+        assert self.root is not None
         while self.root.delegate.state != stopstate or len(self.toDo):
             if len(self.toDo):
                 callback, args, kwargs = self.toDo.pop(0)
                 callback(*args, **kwargs)
             else:
-                self.clock.sleepUntilNextEvent()
+                self.sleepUntilNextEvent()
                 self.clock.handleEvents(self)
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
         assert self.root.delegate.state == stopstate, 'Document root did not reach state %s' % stopstate
+        
+    def sleepUntilNextEvent(self):
+        self.clock.sleepUntilNextEvent()
         
     def runAvailable(self):
         assert self.root is not None
@@ -717,7 +726,7 @@ def main():
 #         if args.dump:
 #             d.dump(sys.stdout)
 #             print '--------------------'
-        d.run()
+        d.runDocument()
     finally:
         if args.dump:
             print '--------------------'
