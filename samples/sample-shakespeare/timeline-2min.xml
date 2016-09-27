@@ -1,0 +1,44 @@
+<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" title="Strawman presentation based on John's media set of 27-Jun-2016">
+    <tl:par tl:end="all">
+        <!-- Master video feed is edited, and is running all the time -->
+        <tl:ref tim:dmappcid="masterVideo"
+                tim:class="video" 
+                tim:syncMode="master"
+                tim:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/mainfeed.mp4"
+                title="20sec preshow + 21sec part1 + 22sec interval + 23sec part2"
+                tl:prio="high"
+                />
+        <!-- A/V Chat can be brought up at any point in time (not only during preshow/interval) -->
+        <tl:par tl:sync="false">
+            <tl:conditional tl:expr="enableChat">
+                <tl:ref tim:dmappcid="aVChat" tim:class="AVChat" />
+            </tl:conditional>
+        </tl:par>
+        <!-- Synchronised script can be brought up at any point in time, its timeline is the full 214 minutes -->
+        <tl:conditional tl:expr="enableScript">
+            <tl:ref tim:dmappcid="scriptWidget" tim:class="ScriptWidget" tim:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/script.vtt"/>
+        </tl:conditional>
+        <!-- Subtitles can only be brought up during the actual play, their timeline is the 180 minutes of the play -->
+        <tl:conditional tl:expr="enableSubtitles">
+            <tl:seq>
+                <tl:sleep tl:dur="00:00:20"/>
+                <tl:ref tim:dmappcid="subtitleWidget1" tim:class="SubtitleWidget" tim:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/subtitles.vtt#t=,00:00:21"/>
+                <tl:sleep tl:dur="00:00:22"/>
+                <tl:ref tim:dmappcid="subtitleWidget2" tim:class="SubtitleWidget" tim:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/subtitles.vtt#t=00:00:21"/>
+            </tl:seq>
+        </tl:conditional>
+        <!-- Trailer can be viewed (unsynchronised) only during the interval -->
+        <tl:seq>
+            <tl:sleep tl:dur="00:00:20"/> <!-- pre-show -->
+            <tl:sleep tl:dur="01:00:21"/> <!-- part 1 -->
+            <tl:par tl:sync="false" tl:end="master">
+                <tl:sleep tl:dur="00:00:22" tl:prio="high"/> <!-- interval -->
+                <tl:seq>
+                    <tl:wait tl:event="startTrailer"/>
+                    <tl:ref tim:dmappcid="auxVideo" tim:class="video" tim:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/trailer.mp4"/>
+                </tl:seq>
+            </tl:par>
+        </tl:seq>
+        <!-- Need to think of a way to do the second video feed -->
+    </tl:par>
+</tl:document>

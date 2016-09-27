@@ -3,6 +3,12 @@ import web
 import timeline
 import json
 import argparse
+import logging
+
+logging.basicConfig()
+
+# Default logging configuration: INFO for document and timeline (useful to app developers), WARNING for everything else.
+DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,WARNING"
 
 urls = (
     '/timeline/v1/context', 'timelineServerServer',
@@ -86,11 +92,22 @@ class timelineServer:
 def main():
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
-    parser.add_argument('--debug', help="Enable all debug output")
+    parser.add_argument('--transactions', action='store_true', help="Use transaction interface to layout service for dmappc updates (default: simple calls)")
     parser.add_argument('--port', type=int, help="Set port to listen on")
+    parser.add_argument('--logLevel', metavar='SPEC', help="Set log levels (comma-separated list of [loggername:]LOGLEVEL)", default=DEFAULT_LOG_CONFIG)
     args = parser.parse_args()
-    if args.debug:
-        timeline.DEBUG = True
+    if args.logLevel:
+        for ll in args.logLevel.split(','):
+            if ':' in ll:
+                loggerToModify = logging.getLogger(ll.split(':')[0])
+                newLevel = getattr(logging, ll.split(':')[1])
+            else:
+                loggerToModify = logging.getLogger()
+                newLevel = getattr(logging, ll)
+            loggerToModify.setLevel(newLevel)
+        
+    if args.transactions:
+        timeline.TRANSACTIONS = True
     if args.layoutService:
         timeline.LAYOUTSERVICE = args.layoutService
     del sys.argv[1:]

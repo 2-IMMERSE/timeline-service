@@ -1,18 +1,13 @@
 import requests
+import clocks
+import document
+import logging
+import urllib
+import os
 
-DEBUG=True
-DEBUG_OUTGOING=False
-if DEBUG_OUTGOING:
-    import httplib
-    import logging
-    httplib.HTTPConnection.debuglevel = 1
+logger = logging.getLogger(__name__)
 
-    # You must initialize logging, otherwise you'll not see debug output.
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.DEBUG)
-    requests_log.propagate = True
+TRANSACTIONS=False
 
 class Timeline:
     ALL_CONTEXTS = {}
@@ -20,6 +15,8 @@ class Timeline:
     @classmethod
     def createTimeline(cls, contextId, layoutServiceUrl):
         """Factory function: create a new context"""
+        if contextId in cls.ALL_CONTEXTS:
+            logger.error("Creating timeline for context %s but it already exists" % contextId)
         assert not contextId in cls.ALL_CONTEXTS
         new = cls(contextId, layoutServiceUrl)
         cls.ALL_CONTEXTS[contextId] = new
@@ -43,11 +40,15 @@ class Timeline:
         self.layoutServiceUrl = layoutServiceUrl
         self.dmappTimeline = None
         self.dmappId = None
+        self.dmappComponents = {}
+        self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
+        self.document = document.Document(self.clockService)
+        self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         # Do other initialization
 
     def destroyTimeline(self):
         """Destructor, sort-of"""
-        if DEBUG: print "Timeline(%s): destroyTimeline()" % self.contextId
+        logger.info("Timeline(%s): destroyTimeline()" % self.contextId)
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
         self.timelineDocUrl = None
@@ -55,11 +56,12 @@ class Timeline:
         self.dmappId = None
         self.layoutService = None
         self.dmappComponents = {}
+        self.document = None
         # Do other cleanup
         return None
 
     def dump(self):
-        return dict(
+        rv = dict(
             contextId=self.contextId,
             timelineDocUrl=self.timelineDocUrl,
             dmappTimeline=self.dmappTimeline,
@@ -67,27 +69,34 @@ class Timeline:
             layoutService=repr(self.layoutService),
             layoutServiceUrl=self.layoutServiceUrl,
             dmappComponents=self.dmappComponents.keys(),
+            document=self.document.dumps(),
             )
+        return rv
+
+    def dmappComponentDelegateFactory(self, elt, document, clock):
+        rv = ProxyDMAppComponent(elt, document, clock, self.layoutService)
+        self.dmappComponents[rv.dmappcId] = rv
+        return rv
 
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
-        if DEBUG: print "Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl)
-        pass
+        logger.info("Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl))
+        if self.timelineDocUrl:
+            logger.error("Timeline(%s): loadDMAppTimeline called but context already has a timeline (%s)", self.contextId, self.timelineDocUrl)
         assert self.timelineDocUrl is None
         assert self.dmappTimeline is None
         assert self.dmappId is None
         self.timelineDocUrl = timelineDocUrl
-        self.dmappTimeline = "Here will be a document encoding the timeline"
+        # XXXJACK for debugging purposes, if the URL is a partial URL get it from the samples directory
+        self.timelineDocUrl = urllib.basejoin(os.path.dirname(os.path.abspath(__file__)) + "/../samples/", self.timelineDocUrl)
         self.dmappId = dmappId
 
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
-        self.clockService = ProxyClockService()
         self._populateTimeline()
         self._updateTimeline()
         return None
 
     def unloadDMAppTimeline(self, dmappId):
-        if DEBUG: print "Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId)
-        pass
+        logger.info("Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId))
         assert self.timelineDocUrl
         assert self.dmappTimeline
         assert self.dmappId == dmappId
@@ -97,7 +106,7 @@ class Timeline:
         return None
 
     def dmappcStatus(self, dmappId, componentId, status):
-        if DEBUG: print "Timeline(%s): dmappcStatus(%s, %s, %s)" % (self.contextId, dmappId, componentId, status)
+        logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s)" % (self.contextId, dmappId, componentId, status))
         assert dmappId == self.dmappId
         c = self.dmappComponents[componentId]
         c.statusReport(status)
@@ -105,80 +114,86 @@ class Timeline:
         return None
 
     def timelineEvent(self, eventId):
-        if DEBUG: print "Timeline(%s): timelineEvent(%s)" % (self.contextId, eventId)
+        logger.debug("Timeline(%s): timelineEvent(%s)" % (self.contextId, eventId))
         pass
         return None
 
     def clockChanged(self, *args, **kwargs):
-        if DEBUG: print "Timeline(%s): clockChanged(%s, %s)" % (self.contextId, args, kwargs)
-        pass
+        logger.debug("Timeline(%s): clockChanged(%s, %s)" % (self.contextId, args, kwargs))
+        self._updateTimeline()
         return None
 
     def _populateTimeline(self):
         """Create proxy objects, etc, using self.dmappTimeline"""
-        self.dmappComponents = dict(
-            masterVideo = ProxyDMAppComponent(self.clockService, self.layoutService, "masterVideo", "mastervideo", None, 0, None),
-            hello = ProxyDMAppComponent(self.clockService, self.layoutService, "hello", "text", None, 0, 10),
-            world = ProxyDMAppComponent(self.clockService, self.layoutService, "world", "text", None, 0, None),
-            goodbye = ProxyDMAppComponent(self.clockService, self.layoutService, "goodbye", "text", None, 10, None),
-            )
+        try:
+            self.document.load(self.timelineDocUrl)
+        except:
+            logger.error("Timeline(%s): %s: Error loading document", self.contextId, self.timelineDocUrl)
+            raise
+        self.document.addDelegates()
 
     def _updateTimeline(self):
-        # Initialize any components that can be initialized
-        for c in self.dmappComponents.values():
-            if c.shouldInitialize():
-                c.initComponent()
-        # Check whether all components that should have been initialized are so
-        for c in self.dmappComponents.values():
-            if c.shouldStart():
-                c.startComponent(c.startTime)
-        for c in self.dmappComponents.values():
-            if c.shouldStop():
-                c.stopComponent(c.stopTime)
-
-class ProxyClockService:
-    def __init__(self):
-        self.epoch = 0
-        self.running = False
-
-    def now(self):
-        if not self.running:
-            return self.epoch
-        return time.time() - self.epoch
-
-    def start(self):
-        if not self.running:
-            self.epoch = time.time() - self.epoch
-            self.running = True
-
-    def stop(self):
-        if self.running:
-            self.epoch = time.time() - self.epoch
-            self.running = False
+        curState = self.document.getDocumentState()
+        if not curState: return
+        if curState == document.State.idle:
+            # We need to initialize the document
+            self.document.runDocumentInit()
+        elif curState == document.State.inited:
+            # We need to start the document
+            #self.document.clock.start()
+            self.document.runDocumentStart()
+        elif curState == document.State.started and self.document.clock.now() == 0:
+            self.document.report(logging.DEBUG, 'RUN', 'startClock')
+            self.document.clock.start()
+        self.document.runAvailable()
+        self.layoutService.forwardActions()
 
 class ProxyLayoutService:
     def __init__(self, contactInfo, contextId, dmappId):
         self.contactInfo = contactInfo
         self.contextId = contextId
         self.dmappId = dmappId
+        self.actions = []
+        self.actionsTimestamp = None
 
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
-class ProxyDMAppComponent:
-    def __init__(self, clockService, layoutService, dmappcId, klass, url, startTime, stopTime):
-        self.clockService = clockService
+    def scheduleAction(self, timestamp, dmappcId, verb, config=None, parameters=None):
+        self.actionsTimestamp = timestamp # XXXJACK Should really check that it is the same as previous ones....
+        action = dict(action=verb, componentIds=[dmappcId])
+        if config:
+            action["config"] = config
+        if parameters:
+            action["parameters"] = parameters
+        self.actions.append(action)
+
+    def forwardActions(self):
+        if not self.actions: return
+        logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(self.actions), repr(self.actions))
+        entryPoint = self.getContactInfo() + '/transaction'
+        body = dict(time=self.actionsTimestamp, actions=self.actions)
+        r = requests.post(entryPoint, json=body)
+
+        r.raise_for_status()
+        self.actions = []
+        self.actionsTimestamp = None
+
+class ProxyDMAppComponent(document.TimeElementDelegate):
+    def __init__(self, elt, doc, clock, layoutService):
+        document.TimeElementDelegate.__init__(self, elt, doc, clock)
         self.layoutService = layoutService
-        self.dmappcId = dmappcId
-        self.klass = klass
-        if not url: url = ""
-        self.url = url
-        self.startTime = startTime
-        self.stopTime = stopTime
-        self.status = None
-        self.initSent = False
-        self.startSent = False
-        self.stopSent = False
+        self.dmappcId = self.elt.get(document.NS_2IMMERSE("dmappcid"))
+        self.klass = self.elt.get(document.NS_2IMMERSE("class"))
+        self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
+        if not self.dmappcId:
+            self.dmappcId = "unknown%d" % id(self)
+            logger.error("Element %s: missing tim:dmappcid attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId)
+        assert self.dmappcId
+        if not self.klass:
+            self.klass = "unknownClass"
+            logger.error("Element %s: missing tim:class attribute, invented %s", self.document.getXPath(self.elt), self.klass)
+        assert self.klass
 
     def _getContactInfo(self):
         contactInfo = self.layoutService.getContactInfo()
@@ -188,44 +203,63 @@ class ProxyDMAppComponent:
     def _getTime(self, timestamp):
         return timestamp + 0.0
 
-    def initComponent(self):
-        entryPoint = self._getContactInfo()
-        entryPoint += '/actions/init'
-        print "CALL", entryPoint
-        r = requests.post(entryPoint, json={'class':self.klass, 'url':self.url})
-        r.raise_for_status()
-        print "RETURNED"
-        self.initSent = True
-        self.status = "initRequested"
+    def initTimelineElement(self):
+        self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.idle)
+        self.setState(document.State.initing)
+        config = {'class':self.klass, 'url':self.url}
+        parameters = self._getParameters()
 
-    def startComponent(self, timeSpec):
-        assert self.initSent == True and self.startSent == False
-        entryPoint = self._getContactInfo()
-        entryPoint += '/actions/start'
-        print "CALL", entryPoint
-        r = requests.post(entryPoint, params=dict(startTime=self._getTime(self.startTime)))
-        r.raise_for_status()
-        self.startSent = True
-        print "RETURNED"
+        if TRANSACTIONS:
+            self.scheduleAction("init", config=config, parameters=parameters)
+        else:
+            # Direct API call has parameters inside config (sigh)
+            config['parameters'] = parameters
+            self.sendAction("init", body=config)
 
-    def stopComponent(self, timeSpec):
-        assert self.initSent == True and self.stopSent == False
+    def startTimelineElement(self):
+        self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
+        self.setState(document.State.starting)
+        if TRANSACTIONS:
+            self.scheduleAction("start")
+        else:
+            self.sendAction("start", queryParams=dict(startTime=self._getTime(self.clock.now())))
+
+    def stopTimelineElement(self):
+        self.setState(document.State.stopping)
+        if TRANSACTIONS:
+            self.scheduleAction("stop")
+        else:
+            self.sendAction("stop", queryParams=dict(stopTime=self._getTime(self.clock.now())))
+
+    def sendAction(self, verb, queryParams=None, body=None):
+        if body:
+            self.document.report(logging.INFO, 'SEND', verb, self.document.getXPath(self.elt), self.dmappcId, repr(body))
+        else:
+            self.document.report(logging.INFO, 'SEND', verb, self.document.getXPath(self.elt), self.dmappcId)
         entryPoint = self._getContactInfo()
-        entryPoint += '/actions/stop'
-        print "CALL", entryPoint
-        r = requests.post(entryPoint, params=dict(stopTime=self._getTime(self.stopTime)))
+        entryPoint += '/actions/' + verb
+        if body is None:
+            r = requests.post(entryPoint, params=queryParams)
+        else:
+            r = requests.post(entryPoint, json=body, params=queryParams)
+
         r.raise_for_status()
-        self.stopSent = True
-        print "RETURNED"
+
+    def scheduleAction(self, verb, config=None, parameters=None):
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, self.clock.now())
+        self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
 
     def statusReport(self, status):
-        self.status = status
+        self.document.report(logging.INFO, 'RECV', status, self.document.getXPath(self.elt))
+        self.setState(status)
 
-    def shouldInitialize(self):
-        return self.status == None
-
-    def shouldStart(self):
-        return self.initSent == True and self.startSent == False and self.startTime is not None and self.startTime >= self.clockService.now()
-
-    def shouldStop(self):
-        return self.initSent == True and self.stopSent == False and self.stopTime is not None and self.stopTime >= self.clockService.now()
+    def _getParameters(self):
+        rv = {}
+        for k in self.elt.attrib:
+            if k in document.NS_2IMMERSE:
+                localName = document.NS_2IMMERSE.localTag(k)
+                if localName == "class" or localName == "url" or localName == "dmappcid":
+                    # These are magic, don't pass them in parameters
+                    continue
+                rv[localName] = self.elt.attrib[k]
+        return rv
