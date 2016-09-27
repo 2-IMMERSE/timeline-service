@@ -5,7 +5,7 @@
         <tl:ref tim:class="video"
                 tim:dmappcid="masterVideo"
                 tim:syncMode="master"
-                tim:mediaUrl="http://cdn.2immerse.eu/theatre/mainfeed.mp4"
+                tim:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/bunny.mp4"
                 />
         <tl:seq>
             <tl:par tl:end="master">
