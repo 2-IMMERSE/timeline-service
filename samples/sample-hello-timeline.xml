@@ -2,10 +2,10 @@
     <tl:par tl:end="master">
         <!-- Master video feed is edited, and is running all the time -->
         <tl:sleep tl:dur="60" title="Kep presentation running for a minute, for now" tl:prio="high"/>
-        <tl:ref tim:class="video" 
+        <tl:ref tim:class="video"
                 tim:dmappcid="masterVideo"
                 tim:syncMode="master"
-                tim:url="http://cdn.2immerse.eu/theatre/mainfeed.mp4"
+                tim:mediaUrl="http://cdn.2immerse.eu/theatre/mainfeed.mp4"
                 />
         <tl:seq>
             <tl:par tl:end="master">
