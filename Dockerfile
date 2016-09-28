@@ -11,8 +11,8 @@ RUN \
 WORKDIR /usr/src/timeline-service
 
 # Install app dependencies
-COPY timelineService/* timelineService/
-COPY samples/* samples/
+COPY timelineService/ timelineService/
+COPY samples/ samples/
 
 EXPOSE 8080
 CMD [ "/usr/bin/python", "/usr/src/timeline-service/timelineService" ]
