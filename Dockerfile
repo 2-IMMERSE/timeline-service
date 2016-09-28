@@ -15,4 +15,4 @@ COPY timelineService/ timelineService/
 COPY samples/ samples/
 
 EXPOSE 8080
-CMD [ "/usr/bin/python", "/usr/src/timeline-service/timelineService" ]
+CMD [ "/usr/bin/python", "/usr/src/timeline-service/timelineService", "--transactions" ]
