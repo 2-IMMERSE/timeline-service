@@ -244,8 +244,10 @@ class ParDelegate(TimeElementDelegate):
             # We're initializing. Go to initialized once all our children have.
             for ch in self.elt:
                 if ch.delegate.state != State.inited:
+#                    print 'xxxjack par initing', self.document.getXPath(self.elt), 'waitforchild', self.document.getXPath(ch)
                     return
             self.setState(State.inited)
+#            print 'xxxjack par inited'
             return
         if self.state == State.starting:
             # We're starting. Wait for all our children to have started (or started-and-finished).
@@ -467,15 +469,15 @@ class RefDelegate(TimeElementDelegate):
         if cl == "text" or cl == "image": 
             dft_dur = 0
         else:
-        	dft_dur = 42.345
+            dft_dur = 42.345
         dur = float(self.elt.get(NS_TIMELINE_CHECK("dur"), dft_dur))
         self.clock.schedule(dur, self._done)
                
     def _done(self):
-    	if self.state == State.started:
-    		# Do nothing if we aren't in the started state anymore (probably because we've been stopped)
-			self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt))
-			self.setState(State.finished)
+        if self.state == State.started:
+            # Do nothing if we aren't in the started state anymore (probably because we've been stopped)
+            self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt))
+            self.setState(State.finished)
 
     def stopTimelineElement(self):
         self.document.report(logging.INFO, '>', 'STOP', self.document.getXPath(self.elt))

@@ -92,7 +92,7 @@ class timelineServer:
 def main():
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
-    parser.add_argument('--transactions', action='store_true', help="Use transaction interface to layout service for dmappc updates (default: simple calls)")
+    parser.add_argument('--noTransactions', action='store_true', help="Don't transaction interface to layout service for dmappc updates (default: simple calls)")
     parser.add_argument('--port', type=int, help="Set port to listen on")
     parser.add_argument('--logLevel', metavar='SPEC', help="Set log levels (comma-separated list of [loggername:]LOGLEVEL)", default=DEFAULT_LOG_CONFIG)
     args = parser.parse_args()
@@ -106,8 +106,8 @@ def main():
                 newLevel = getattr(logging, ll)
             loggerToModify.setLevel(newLevel)
         
-    if args.transactions:
-        timeline.TRANSACTIONS = True
+    if args.noTransactions:
+        timeline.TRANSACTIONS = False
     if args.layoutService:
         timeline.LAYOUTSERVICE = args.layoutService
     del sys.argv[1:]

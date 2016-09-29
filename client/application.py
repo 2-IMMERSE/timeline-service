@@ -75,6 +75,7 @@ class Application:
         self.context = context
         self.dmappId = dmappId
         self.isMaster = isMaster
+        self.currentMasterClockComponent = None
         self.layoutServiceApplicationURL = self.context.layoutServiceContextURL + '/dmapp/' + dmappId
         self.clock = None
         self.components = {}
@@ -142,8 +143,14 @@ class Application:
             
 class Component:
     def __init__(self, application, componentId, componentInfo):
-        self.isMasterVideo = componentId == 'masterVideo' # Temporary hack: this component controls the master clock
         self.application = application
+        params = componentInfo.get('parameters')
+        if not params: params = {}
+        syncMode = params.get('syncMode')
+        if not syncMode: syncMode = None
+        self.canBeMasterClock = syncMode == 'master'
+        if self.canBeMasterClock: 
+        	self.application.currentMasterClockComponent = self
         self.layoutServiceComponentURL = self.application.layoutServiceApplicationURL + '/component/' + componentId
         self.componentId = componentId
         self.componentInfo = componentInfo
@@ -153,11 +160,13 @@ class Component:
     def update(self, componentInfo):
         if componentInfo != self.componentInfo:
             self.componentInfo = componentInfo
-        if self.isMasterVideo:
+        if self.canBeMasterClock and self.status == 'started':
+        	self.application.currentMasterClockComponent = self
+        if self.application.currentMasterClockComponent == self:
             if self.status == 'started':
                 self.application.clock.start()
-            else:
-                self.application.clock.stop()
+#            else:
+#                self.application.clock.stop()
             
     def destroy(self):
         pass

@@ -7,7 +7,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
-TRANSACTIONS=False
+TRANSACTIONS=True
 
 class Timeline:
     ALL_CONTEXTS = {}
