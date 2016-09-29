@@ -32,6 +32,7 @@ class NameSpace:
 
 NS_TIMELINE = NameSpace("tl", "http://jackjansen.nl/timelines")
 NS_TIMELINE_INTERNAL = NameSpace("tls", "http://jackjansen.nl/timelines/internal")
+NS_TIMELINE_CHECK = NameSpace("tlcheck", "http://jackjansen.nl/timelines/check")
 NS_2IMMERSE = NameSpace("tim", "http://jackjansen.nl/2immerse")
 NAMESPACES = {}
 NAMESPACES.update(NS_TIMELINE.ns())
@@ -462,14 +463,19 @@ class RefDelegate(TimeElementDelegate):
         cl = self.elt.get(NS_2IMMERSE("class"), "unknown")
         if cl == "mastervideo":
             return
-        dur = 42
+        # While checking document we use the tlcheck:dur attribute for the duration, or 42.345 as default
         if cl == "text" or cl == "image": 
-            dur = 0
+            dft_dur = 0
+        else:
+        	dft_dur = 42.345
+        dur = float(self.elt.get(NS_TIMELINE_CHECK("dur"), dft_dur))
         self.clock.schedule(dur, self._done)
                
     def _done(self):
-        self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt))
-        self.setState(State.finished)
+    	if self.state == State.started:
+    		# Do nothing if we aren't in the started state anymore (probably because we've been stopped)
+			self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt))
+			self.setState(State.finished)
 
     def stopTimelineElement(self):
         self.document.report(logging.INFO, '>', 'STOP', self.document.getXPath(self.elt))

@@ -26,6 +26,12 @@ Deployment notes (for Jack himself):
 - More detailed info is in the email thread with Erik, subject "Putting timeline server on mantl".
   This includes getting access to stderr and such, he'll move that info to the files above, at some point.
   
+- To run from Mantl:
+	$ python client --layout http://layout-service.2immerse.advdev.tv/layout/v2 \
+					--timeline http://timeline-service.2immerse.advdev.tv/timeline/v1 \
+					--layoutDoc http://origin.2immerse.advdev.tv/sandbox/sample-hello/layout.json \
+					--timelineDoc http://origin.2immerse.advdev.tv/sandbox/sample-hello/timeline.xml
+
 - To run the shakespear document from the CDN:
 	$ H=1.2.3.4 # Use the local host IP address here
 	$ python client --layout http://$H:9000/layout/v2 \
@@ -33,4 +39,6 @@ Deployment notes (for Jack himself):
 					--tsserver $H \
 					--layoutDoc http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/layout.json \
 					--timelineDoc http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/timeline-2min.xml
+					
+
 	
