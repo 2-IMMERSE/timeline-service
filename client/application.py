@@ -14,8 +14,7 @@ class Context:
     def create(self, layoutServiceURL):
         r = requests.post(
                 layoutServiceURL+"/context", 
-                params=dict(reqDeviceId=self.deviceId, deviceId=self.deviceId, orientation=self.orientation), 
-                json=self.caps
+                params=dict(reqDeviceId=self.deviceId), 
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
             print 'Error', r.status_code
@@ -24,6 +23,7 @@ class Context:
         reply = r.json()
         self.contextId = reply["contextId"]
         self.layoutServiceContextURL = layoutServiceURL + '/context/' + self.contextId
+        self.join(self.layoutServiceContextURL)
 
     def join(self, layoutServiceContextURL):
         self.layoutServiceContextURL = layoutServiceContextURL

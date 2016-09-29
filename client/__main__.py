@@ -9,11 +9,12 @@ def context_for_tv(layoutServiceURL):
         audioChannels=1,
         concurrentVideo=1,
         touchInteraction=False,
-        sharedDevice=True,
+        communalDevice=True,
         orientations=["landscape"],
         deviceType="TV",
         )
     context = application.Context("TV", caps)
+
     context.create(layoutServiceURL)
     return context
 
@@ -38,7 +39,7 @@ def dmapp_for_handheld(layoutServiceContextURL, tsclient):
         audioChannels=2,
         concurrentVideo=2,
         touchInteraction=True,
-        sharedDevice=False,
+        communalDevice=False,
         orientations=['landscape', 'portrait'],
         deviceType="handheld",
         )
