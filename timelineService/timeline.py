@@ -217,6 +217,9 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             self.sendAction("init", body=config)
 
     def startTimelineElement(self):
+    	if self.state == document.State.skipped:
+    		self.setState(document.State.finished)
+    		return
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
         if TRANSACTIONS:
@@ -262,4 +265,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
                     # These are magic, don't pass them in parameters
                     continue
                 rv[localName] = self.elt.attrib[k]
+            elif k in document.NS_TIMELINE_CHECK:
+                localName = document.NS_TIMELINE_CHECK.localTag(k)
+                rv['debug-2immerse-' + localName] = self.elt.attrib[k]
         return rv

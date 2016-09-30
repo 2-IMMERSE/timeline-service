@@ -133,6 +133,15 @@ class Application:
                 self.components[componentId].update(componentInfo)
                 oldComponents.remove(componentId)
             else:
+            	# Debug: if the component has debug=skip we simply return "skipped"
+            	print 'xxxjack', componentInfo
+            	# u'parameters': {u'debug-2immerse-debug': u'skip'}
+            	if 'parameters' in componentInfo:
+            		p = componentInfo['parameters']
+            		if p.get('debug-2immerse-debug') == 'skip':
+            			c = debugSkipComponent(self, componentId, componentInfo)
+            			self.components[componentId] = c
+            			continue
                 # Create new components
                 c = Component(self, componentId, componentInfo)
                 self.components[componentId] = c
@@ -140,7 +149,28 @@ class Application:
         for componentId in oldComponents:
             self.components[componentId].destroy()
             del self.components[componentId]
-            
+
+class debugSkipComponent:
+	def __init__(self, application, componentId, componentInfo):
+		print 'Status for', componentId, 'is now', 'skipped'
+		# Report status for new component
+		layoutServiceComponentURL = application.layoutServiceApplicationURL + '/component/' + componentId
+		r = requests.post(layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=application.context.deviceId),
+				json=dict(status='skipped'))
+		if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
+			print 'Error', r.status_code
+			print r.text
+			r.raise_for_status()
+ 
+ 	def update(self, componentInfo):
+ 		pass
+ 		
+ 	def destroy(self):
+ 		pass
+ 		
+ 	def tick(self):
+ 		pass
+ 		
 class Component:
     def __init__(self, application, componentId, componentInfo):
         self.application = application
