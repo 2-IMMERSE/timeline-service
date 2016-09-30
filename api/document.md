@@ -278,6 +278,9 @@ Note that some media items, notably static text and images, will usually go stra
 to `finished` in response to a `start()` call, because static media have no
 concept of a clock.
 
+For 2immerse, there is a state `skipped`, which signals a component could not be created.
+The timeline will continue using a placeholder for the media item.
+
 For 2immerse, for the time being, `finish()` is not implemented (but the `finished` state is),
 and neither are `pause()/paused()/resume()`.
 
