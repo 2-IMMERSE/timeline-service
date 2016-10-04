@@ -264,6 +264,10 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             if self.state != document.State.initing:
                 logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state))
                 return
+        elif state == document.State.started:
+            if self.state != document.State.starting:
+                logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state))
+                return
         elif state == document.State.finished:
             if self.state != document.State.starting:
                 logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state))

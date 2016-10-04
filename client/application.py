@@ -207,7 +207,7 @@ class Component:
         stopTime = self.componentInfo['stopTime']
         if stopTime: stopTime = float(stopTime)
         if stopTime != None and now >= stopTime:
-            newStatus = "stopped"
+            newStatus = "idle"
         elif startTime != None and now >= startTime:
             newStatus = "started"
         else:
