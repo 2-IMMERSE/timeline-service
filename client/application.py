@@ -134,7 +134,6 @@ class Application:
                 oldComponents.remove(componentId)
             else:
             	# Debug: if the component has debug=skip we simply return "skipped"
-            	print 'xxxjack', componentInfo
             	# u'parameters': {u'debug-2immerse-debug': u'skip'}
             	if 'parameters' in componentInfo:
             		p = componentInfo['parameters']

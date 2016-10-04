@@ -252,9 +252,32 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, self.clock.now())
         self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
 
-    def statusReport(self, status):
-        self.document.report(logging.INFO, 'RECV', status, self.document.getXPath(self.elt))
-        self.setState(status)
+    def statusReport(self, state):
+        #
+        # Sanity check for state change report
+        #
+        if state == document.State.inited:
+            if self.state != document.State.initing:
+                logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state))
+                return
+        elif state == document.State.skipped:
+            if self.state != document.State.initing:
+                logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state))
+                return
+        elif state == document.State.finished:
+            if self.state != document.State.starting:
+                logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state))
+                return
+        elif state == document.State.idle:
+            pass
+        else:
+            logger.error('Unknown "%s" state update for node %s (in state %s)' %( state, self.document.getXPath(self.elt), self.state))
+            return
+        if state == 'skipped' and self.state == document.State.idle:
+            logger.warn('Ignoring "skipped" state update for idle node %s'% ( self.document.getXPath(self.elt)))
+            return
+        self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt))
+        self.setState(state)
 
     def _getParameters(self):
         rv = {}
