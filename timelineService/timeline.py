@@ -8,6 +8,7 @@ import os
 logger = logging.getLogger(__name__)
 
 TRANSACTIONS=True
+DEBUG_IGNORE_SKIPPED=True
 
 class Timeline:
     ALL_CONTEXTS = {}
@@ -253,6 +254,10 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
 
     def statusReport(self, state):
+        if DEBUG_IGNORE_SKIPPED and state == 'skipped':
+            self.document.report(logging.INFO, 'IGNORE', state, self.document.getXPath(self.elt))
+            return
+        self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt))
         #
         # Sanity check for state change report
         #
@@ -280,7 +285,6 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         if state == 'skipped' and self.state == document.State.idle:
             logger.warn('Ignoring "skipped" state update for idle node %s'% ( self.document.getXPath(self.elt)))
             return
-        self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt))
         self.setState(state)
 
     def _getParameters(self):
