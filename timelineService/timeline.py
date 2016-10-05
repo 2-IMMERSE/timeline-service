@@ -8,7 +8,7 @@ import os
 logger = logging.getLogger(__name__)
 
 TRANSACTIONS=True
-DEBUG_IGNORE_SKIPPED=True
+DEBUG_IGNORE_SKIPPED=False
 
 class Timeline:
     ALL_CONTEXTS = {}
