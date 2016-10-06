@@ -31,4 +31,4 @@ cd $basedir/timeline-service
 myRunCommand docker run -ti -p 8001:8080 timeline-service
 
 cd $basedir/layout-service
-myRunCommand docker run -ti -p 8000:8000 layout-service npm start -- -w http://$hostname:3000/
+myRunCommand docker run -ti -p 8000:8000 layout-service npm start -- -w http://$hostname:3000/layout
