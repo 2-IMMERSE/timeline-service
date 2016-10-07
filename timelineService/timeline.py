@@ -4,13 +4,15 @@ import document
 import logging
 import urllib
 import os
+import threading
 
 logger = logging.getLogger(__name__)
 
 TRANSACTIONS=True
+THREADED=True
 DEBUG_IGNORE_SKIPPED=False
 
-class Timeline:
+class BaseTimeline:
     ALL_CONTEXTS = {}
 
     @classmethod
@@ -93,6 +95,7 @@ class Timeline:
 
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
         self._populateTimeline()
+        self._startTimeline()
         self._updateTimeline()
         return None
 
@@ -133,7 +136,8 @@ class Timeline:
             raise
         self.document.addDelegates()
 
-    def _updateTimeline(self):
+    def _stepTimeline(self):
+        logger.debug("Timeline(%s): stepTimeline at %f", self.contextId, self.document.clock.now())
         curState = self.document.getDocumentState()
         if not curState: return
         if curState == document.State.idle:
@@ -149,6 +153,51 @@ class Timeline:
         self.document.runAvailable()
         self.layoutService.forwardActions()
 
+class TimelinePollingRunnerMixin:
+    def __init__(self):
+        pass
+        
+    def _startTimeline(self):
+        pass
+        
+    def _updateTimeline(self):
+        self._stepTimeline()
+        
+class TimelineThreadedRunnerMixin:
+    def __init__(self):
+        self.timelineCondition = threading.Condition()
+        self.timelineThread = threading.Thread(target=self._runTimeline)
+        self.timelineThread.daemon = True
+
+    def _startTimeline(self):
+        self.timelineThread.start()
+        
+    def _runTimeline(self):
+        assert self.document
+        assert self.document.getDocumentState()
+        with self.timelineCondition:
+            while self.document and self.document.getDocumentState():
+                self._stepTimeline()
+                self.timelineCondition.wait(10)
+            
+    def _updateTimeline(self):
+        print 'xxxjack _updateTimeline'
+        with self.timelineCondition:
+            self.timelineCondition.notify()
+        print 'xxxjack updateTimeline done'
+
+if THREADED:
+    class Timeline(BaseTimeline, TimelineThreadedRunnerMixin):
+        def __init__(self, *args, **kwargs):
+            BaseTimeline.__init__(self, *args, **kwargs)
+            TimelineThreadedRunnerMixin.__init__(self)
+else:
+    class Timeline(BaseTimeline, TimelinePollingRunnerMixin):
+        def __init__(self, *args, **kwargs):
+            BaseTimeline.__init__(self, *args, **kwargs)
+            TimelinePollingRunnerMixin.__init__(self)
+        
+        
 class ProxyLayoutService:
     def __init__(self, contactInfo, contextId, dmappId):
         self.contactInfo = contactInfo
