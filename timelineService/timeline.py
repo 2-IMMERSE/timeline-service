@@ -122,8 +122,13 @@ class BaseTimeline:
         pass
         return None
 
-    def clockChanged(self, *args, **kwargs):
-        logger.debug("Timeline(%s): clockChanged(%s, %s)" % (self.contextId, args, kwargs))
+    def clockChanged(self, contextClock, contextClockRate, wallClock):
+        logger.debug("Timeline(%s): clockChanged(contextClock=%s, contextClockRate=%f, wallClock=%s)", self.contextId, contextClock, contextClockRate, wallClock)
+        # self.document.clock.setxxxxx(contextClock, wallClock)
+        if contextClockRate:
+            self.document.clock.start()
+        else:
+            self.document.clock.stop()
         self._updateTimeline()
         return None
 

@@ -37,6 +37,9 @@ class DvbClock:
         self.timelineClock.rebaseCorrelationAtTicks(self.timelineClock.ticks)
         self.timelineClock.speed = 0.0
 
+    def getSpeed(self):
+        return self.timelineClock.speed
+        
     def set(self, now):
         self.timelineClock.rebaseCorrelationAtTicks(now*self.timelineClock.tickRate)
         

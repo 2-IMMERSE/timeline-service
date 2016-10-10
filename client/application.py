@@ -194,8 +194,8 @@ class Component:
         if self.application.currentMasterClockComponent == self:
             if self.status == 'started':
                 self.application.clock.start()
-#            else:
-#                self.application.clock.stop()
+            else:
+                self.application.clock.stop()
             
     def destroy(self):
         pass
@@ -244,6 +244,10 @@ class GlobalClock:
         self.epoch = self.now()
         self.running = False
         
+    def getSpeed(self):
+        if self.running: return 1.0
+        return 0.0
+        
     def set(self, now):
         wasRunning = self.running
         self.stop()
@@ -268,13 +272,14 @@ class MasterClockMixin:
     def report(self):
         # Should also broadcast to the slave clocks or something
         url = self.application.layoutServiceApplicationURL
-        print 'clockChanged(contextClock=%s, wallClock=%s)' % (self.now(), time.time())
+        print 'clockChanged(contextClock=%s, wallClock=%s, contextClockRate=%f)' % (self.now(), time.time(), self.getSpeed())
         r = requests.post(
                 url+"/actions/clockChanged", 
                 #params=dict(reqDeviceId=self.application.context.deviceId), 
                 json=dict(
                     wallClock=time.time(),
-                    contextClock=self.now()
+                    contextClock=self.now(),
+                    contextClockRate=self.getSpeed(),
                     )
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
