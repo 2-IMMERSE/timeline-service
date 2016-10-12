@@ -209,7 +209,8 @@ or `stopping`. More states may be added later.
 ------------------
 
 The 2immerse-specific elements and attributes are flagged with the `tim:` namespace
-identifier.
+identifier. Attributes that are parameters to specific to a 2immerse component class
+are flagged with the `tic:` namespace.
 
 The `tl:ref` element is used to refer to media items, or DMApp Components in 2immerse
 lingo. This may change to something like `<tim:dmappc tl:timed="true" ...>` at some
@@ -221,8 +222,23 @@ At the moment I think that multiple instances sharing a name is allowed, these w
 be treated as multiple destinations of a single `tim:set` operation. But this may change.
 - `tim:url` is the (optional) url to be passed to the DMApp Component initialize call,
 to specify which media item should be played back.
-- More `tim:` attributes will undoubtedly be added.
 
+The per-component attributes include:
+
+- `tic:syncMode` how this dmappc relates to the master clock, either `slave` (the default),
+  `master` or `none`. Note that this is used in place of `tl:prio` for the time being.
+- `tic:mediaUrl` media to play.
+- `tic:offset` media start position in seconds.
+- `tic:showControls` whether to show controls on a video element. Defaults to `true`
+  for dmappc with `tic:syncMode="master"` and `false` otherwise.
+- `tic:controlEndpoint` is a string, a magic cookie used to rendezvous with another
+  dmappc (or a set of dmappcs).
+- `tic:controlTarget` is a string, a magic cookie used to rendezvous with another
+  dmappc or set of dmappcs. The intended use of these two attributes is that for
+  example video players will have a `tic:controlEndpoint="main video"` attribute
+  and the controller UI for that video player will have `tic:controlTarget="main video"`,
+  allowing it to send start/stop/pause/etc commands to the video player.
+  
 It may be needed to modify a DMApp Component that is already running, due to an event
 or something like that. For this we could use a `<tim:set tim:dmappcid="...." ....>`
 call. From a timeline point of view, a set behaves like an infinitely fast `tl:ref`
@@ -231,9 +247,8 @@ that does not need an `init()` call.
 For the time being, `<tl:conditional>`, `<tl:excl>`, `<tl:switch>` and `<tl:repeat>`
 have not been implemented.
 
-At the moment, `tl:prio` has not been implemented, and the master clock of the whole
-presentation is the broadcast video clock, where "broadcast video" is defined as the
-`tl:ref` element with `tim:class="mastervideo"`.
+At the moment, `tl:prio` has not been implemented, and the most recently started
+dmappc with `tic:syncMode="master"` is used to drive the clock.
 
 Examples
 --------

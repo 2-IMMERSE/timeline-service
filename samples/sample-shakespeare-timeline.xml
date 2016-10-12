@@ -1,4 +1,4 @@
-<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" title="Strawman presentation based on John's media set of 27-Jun-2016">
+<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tic="http://jackjansen.nl/2immerse/component" title="Strawman presentation based on John's media set of 27-Jun-2016">
     <tl:par tl:end="all">
         <!-- Master video feed is edited, and is running all the time -->
         <tl:ref tim:class="MasterVideo" 
@@ -14,15 +14,15 @@
         </tl:par>
         <!-- Synchronised script can be brought up at any point in time, its timeline is the full 214 minutes -->
         <tl:conditional tl:expr="enableScript">
-            <tl:ref tim:class="ScriptWidget" tim:url="http://cdn.2immerse.eu/theatre/script.ttml"/>
+            <tl:ref tim:class="ScriptWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/script.ttml"/>
         </tl:conditional>
         <!-- Subtitles can only be brought up during the actual play, their timeline is the 180 minutes of the play -->
         <tl:conditional tl:expr="enableSubtitles">
             <tl:seq>
                 <tl:sleep tl:dur="00:14:00"/>
-                <tl:ref tim:class="SubtitleWidget" tim:url="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=,01:45:00"/>
+                <tl:ref tim:class="SubtitleWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=,01:45:00"/>
                 <tl:sleep tl:dur="00:20:00"/>
-                <tl:ref tim:class="SubtitleWidget" tim:url="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=01:45:00"/>
+                <tl:ref tim:class="SubtitleWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=01:45:00"/>
             </tl:seq>
         </tl:conditional>
         <!-- Trailer can be viewed (unsynchronised) only during the interval -->
@@ -33,7 +33,7 @@
                 <tl:sleep tl:dur="00:20:00" tl:prio="high"/> <!-- interval -->
                 <tl:seq>
                     <tl:wait tl:event="startTrailer"/>
-                    <tl:ref tim:class="video" tim:url="http://cdn.2immerse.eu/theatre/trailer.mp4"/>
+                    <tl:ref tim:class="video" tic:mediaUrl="http://cdn.2immerse.eu/theatre/trailer.mp4"/>
                 </tl:seq>
             </tl:par>
         </tl:seq>

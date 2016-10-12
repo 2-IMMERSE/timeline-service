@@ -1,4 +1,4 @@
-<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" title="Home Trial version 0.1">
+<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tic="http://jackjansen.nl/2immerse/component" title="Home Trial version 0.2">
 
   <!-- Lobby setting up -->
   <tl:seq>
@@ -11,7 +11,7 @@
       <tl:sleep tl:dur="00:14:00"/>
       <tl:seq>
         <tl:wait tl:event="startTrailer"/>
-        <tl:ref tim:class="video" tim:url="http://cdn.2immerse.eu/theatre/trailer.mp4"/>
+        <tl:ref tim:class="video" tic:mediaUrl="http://cdn.2immerse.eu/theatre/trailer.mp4"/>
         <tl:ref tim:class="cameraWidget" />
       </tl:seq>
       <!-- A/V Chat can be brought up -->
@@ -20,7 +20,7 @@
       </tl:conditional>
 
       <tl:conditional tl:expr="enableScript">
-        <tl:ref tim:class="ScriptWidget" tim:url="http://cdn.2immerse.eu/theatre/script.ttml"/>
+        <tl:ref tim:class="ScriptWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/script.ttml"/>
       </tl:conditional>
 
       <tl:conditional tl:expr="enableProgram">
@@ -33,14 +33,14 @@
       <tl:sleep tl:dur="01:45:00"/>
 
       <!-- Master video feed part 1-->
-      <tl:ref tim:class="MasterVideo" tim:url="http://cdn.2immerse.eu/theatre/mainfeed1.mp4" title="105min part1" tl:prio="high"/>
+      <tl:ref tim:class="MasterVideo" tic:mediaUrl="http://cdn.2immerse.eu/theatre/mainfeed1.mp4" title="105min part1" tl:prio="high"/>
 
       <tl:conditional tl:expr="enableSubtitles">
-        <tl:ref tim:class="SubtitleWidget" tim:url="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=01:45:00"/>
+        <tl:ref tim:class="SubtitleWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=01:45:00"/>
       </tl:conditional>
 
       <tl:conditional tl:expr="enableScript">
-        <tl:ref tim:class="ScriptWidget" tim:url="http://cdn.2immerse.eu/theatre/script.ttml"/>
+        <tl:ref tim:class="ScriptWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/script.ttml"/>
       </tl:conditional>
     </tl:par>
 
@@ -56,7 +56,7 @@
       </tl:conditional>
 
       <tl:conditional tl:expr="enableScript">
-        <tl:ref tim:class="ScriptWidget" tim:url="http://cdn.2immerse.eu/theatre/script.ttml"/>
+        <tl:ref tim:class="ScriptWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/script.ttml"/>
       </tl:conditional>
 
       <tl:conditional tl:expr="enableProgram">
@@ -68,14 +68,14 @@
     <tl:par tl:end="all">
       <tl:sleep tl:dur="01:15:00"/>
       <!-- Master video feed part 2 -->
-      <tl:ref tim:class="MasterVideo" tim:url="http://cdn.2immerse.eu/theatre/mainfeed2.mp4" title="75min part2" tl:prio="high"/>
+      <tl:ref tim:class="MasterVideo" tic:mediaUrl="http://cdn.2immerse.eu/theatre/mainfeed2.mp4" title="75min part2" tl:prio="high"/>
 
       <tl:conditional tl:expr="enableSubtitles">
-        <tl:ref tim:class="SubtitleWidget" tim:url="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=01:45:00"/>
+        <tl:ref tim:class="SubtitleWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/subtitles.ttml#t=01:45:00"/>
       </tl:conditional>
 
       <tl:conditional tl:expr="enableScript">
-        <tl:ref tim:class="ScriptWidget" tim:url="http://cdn.2immerse.eu/theatre/script.ttml"/>
+        <tl:ref tim:class="ScriptWidget" tic:mediaUrl="http://cdn.2immerse.eu/theatre/script.ttml"/>
       </tl:conditional>
     </tl:par>
 

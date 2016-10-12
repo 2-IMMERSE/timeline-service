@@ -343,11 +343,8 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
     def _getParameters(self):
         rv = {}
         for k in self.elt.attrib:
-            if k in document.NS_2IMMERSE:
-                localName = document.NS_2IMMERSE.localTag(k)
-                if localName == "class" or localName == "url" or localName == "dmappcid":
-                    # These are magic, don't pass them in parameters
-                    continue
+            if k in document.NS_2IMMERSE_COMPONENT:
+                localName = document.NS_2IMMERSE_COMPONENT.localTag(k)
                 rv[localName] = self.elt.attrib[k]
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)

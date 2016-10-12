@@ -34,10 +34,13 @@ NS_TIMELINE = NameSpace("tl", "http://jackjansen.nl/timelines")
 NS_TIMELINE_INTERNAL = NameSpace("tls", "http://jackjansen.nl/timelines/internal")
 NS_TIMELINE_CHECK = NameSpace("tlcheck", "http://jackjansen.nl/timelines/check")
 NS_2IMMERSE = NameSpace("tim", "http://jackjansen.nl/2immerse")
+NS_2IMMERSE_COMPONENT = NameSpace("tic", "http://jackjansen.nl/2immerse/component")
 NAMESPACES = {}
 NAMESPACES.update(NS_TIMELINE.ns())
-NAMESPACES.update(NS_2IMMERSE.ns())
 NAMESPACES.update(NS_TIMELINE_INTERNAL.ns())
+NAMESPACES.update(NS_TIMELINE_CHECK.ns())
+NAMESPACES.update(NS_2IMMERSE.ns())
+NAMESPACES.update(NS_2IMMERSE_COMPONENT.ns())
 for k, v in NAMESPACES.items():
     ET.register_namespace(k, v)
 

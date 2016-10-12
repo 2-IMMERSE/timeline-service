@@ -1,5 +1,6 @@
 <tl:document xmlns:tl="http://jackjansen.nl/timelines" 
              xmlns:tim="http://jackjansen.nl/2immerse" 
+             xmlns:tic="http://jackjansen.nl/2immerse/component" 
              xmlns:tlcheck="http://jackjansen.nl/timelines/check"
              title="Hello World document, similar to previously hardcoded timelineServer example">
     <tl:par tl:end="master">
@@ -7,8 +8,8 @@
         <tl:sleep tl:dur="60" title="Kep presentation running for a minute, for now" tl:prio="high"/>
         <tl:ref tim:class="video"
                 tim:dmappcid="masterVideo"
-                tim:syncMode="master"
-                tim:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/bunny.mp4"
+                tic:syncMode="master"
+                tic:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/bunny.mp4"
                 />
         <tl:seq>
             <tl:par tl:end="master">
