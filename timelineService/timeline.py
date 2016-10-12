@@ -125,10 +125,15 @@ class BaseTimeline:
     def clockChanged(self, contextClock, contextClockRate, wallClock):
         logger.debug("Timeline(%s): clockChanged(contextClock=%s, contextClockRate=%f, wallClock=%s)", self.contextId, contextClock, contextClockRate, wallClock)
         # self.document.clock.setxxxxx(contextClock, wallClock)
-        if contextClockRate:
-            self.document.clock.start()
+        if contextClockRate != self.document.clock.getRate():
+            if contextClockRate:
+                self.document.report(logging.INFO, 'CLOCK', 'start', self.document.clock.now())
+                self.document.clock.start()
+            else:
+                self.document.report(logging.INFO, 'CLOCK', 'stop', self.document.clock.now())
+                self.document.clock.stop()
         else:
-            self.document.clock.stop()
+            print 'xxxjack clockChanged no change', contextClock, contextClockRate, wallClock
         self._updateTimeline()
         return None
 
@@ -150,11 +155,7 @@ class BaseTimeline:
             self.document.runDocumentInit()
         elif curState == document.State.inited:
             # We need to start the document
-            #self.document.clock.start()
             self.document.runDocumentStart()
-        elif curState == document.State.started and self.document.clock.now() == 0:
-            self.document.report(logging.DEBUG, 'RUN', 'startClock')
-            self.document.clock.start()
         self.document.runAvailable()
         self.layoutService.forwardActions()
 
@@ -186,10 +187,8 @@ class TimelineThreadedRunnerMixin:
                 self.timelineCondition.wait(10)
             
     def _updateTimeline(self):
-        print 'xxxjack _updateTimeline'
         with self.timelineCondition:
             self.timelineCondition.notify()
-        print 'xxxjack updateTimeline done'
 
 if THREADED:
     class Timeline(BaseTimeline, TimelineThreadedRunnerMixin):

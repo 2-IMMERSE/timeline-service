@@ -77,6 +77,11 @@ class PausableClock:
             self.epoch = self.underlyingClock.now() - self.epoch
             self.running = False
             
+    def getRate(self):
+        if self.running:
+            return 1.0
+        return 0.0
+        
 class CallbackPausableClock(PausableClock):
     """A pausable clock that also stores callbacks with certain times"""
     
