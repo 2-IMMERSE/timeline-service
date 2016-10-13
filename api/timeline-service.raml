@@ -24,6 +24,11 @@ documentation:
 						example: |
 							["1234"]
 	/{contextId}:
+		delete:
+			description: destroy context
+			responses:
+				204:
+				404:
 		/dump:
 			get:
 				description: Dump some debugging info about this context

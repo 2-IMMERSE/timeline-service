@@ -51,9 +51,9 @@ class BaseTimeline:
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         # Do other initialization
 
-    def destroyTimeline(self):
+    def delete(self):
         """Destructor, sort-of"""
-        logger.info("Timeline(%s): destroyTimeline()" % self.contextId)
+        logger.info("Timeline(%s): delete()" % self.contextId)
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
         self.timelineDocUrl = None

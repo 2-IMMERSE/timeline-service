@@ -13,6 +13,7 @@ DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,WARNING"
 urls = (
     '/timeline/v1/context', 'timelineServerServer',
     '/timeline/v1/context/(.*)/(.*)', 'timelineServer',
+    '/timeline/v1/context/(.*)', 'timelineServer',
 )
 
 app = web.application(urls, globals())
@@ -42,7 +43,9 @@ class timelineServerServer:
 class timelineServer:
     """Per-timeline service. Need to work out which verbs allow get/put/post and how to encode that."""
 
-    def GET(self, contextId, verb):
+    def GET(self, contextId, verb=None):
+        if not verb:
+            return web.badrequest()
         args = web.input()
         tl = timeline.Timeline.get(contextId)
         if not tl:
@@ -54,7 +57,9 @@ class timelineServer:
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
-    def PUT(self, contextId, verb):
+    def PUT(self, contextId, verb=None):
+        if not verb:
+            return web.badrequest()
         args = dict(web.input())
         # PUT gets data as a JSON body, sometimes?
         if not args:
@@ -74,7 +79,9 @@ class timelineServer:
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
-    def POST(self, contextId, verb):
+    def POST(self, contextId, verb=None):
+        if not verb:
+            return web.badrequest()
         args = web.input()
         tl = timeline.Timeline.get(contextId)
         if not tl:
@@ -88,6 +95,17 @@ class timelineServer:
             return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
+
+    def DELETE(self, contextId, verb=None):
+        args = web.input()
+        if verb != None or args:
+            return web.badrequest()
+        tl = timeline.Timeline.get(contextId)
+        if not tl:
+            return web.notfound("404 No such context: %s" % contextId)
+        tl.delete()
+        web.ctx.status = '204 No Content'
+        return ''
 
 def main():
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
