@@ -461,7 +461,7 @@ class RefDelegate(TimeElementDelegate):
     
     def initTimelineElement(self):
     	if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
-    		self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters())
+    		self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
     		self.setState(State.skipped)
     		return
     	TimeElementDelegate.initTimelineElement(self)
@@ -474,7 +474,7 @@ class RefDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report(logging.INFO, '>', 'START', self.document.getXPath(self.elt), self._getParameters())
+        self.document.report(logging.INFO, '>', 'START', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
         # XXXJACK test code. Assume text/image nodes finish straight away, masterVideo takes forever and others take 42 seconds
         cl = self.elt.get(NS_2IMMERSE("class"), "unknown")
         if cl == "mastervideo":
@@ -502,6 +502,13 @@ class RefDelegate(TimeElementDelegate):
         for k in self.elt.attrib:
             if k in NS_2IMMERSE:
                 rv[NS_2IMMERSE.localTag(k)] = self.elt.attrib[k]
+        return rv
+        
+    def _getDmappcParameters(self):
+        rv = {}
+        for k in self.elt.attrib:
+            if k in NS_2IMMERSE_COMPONENT:
+                rv[NS_2IMMERSE_COMPONENT.localTag(k)] = self.elt.attrib[k]
         return rv
         
 class ConditionalDelegate(SingleChildDelegate):
