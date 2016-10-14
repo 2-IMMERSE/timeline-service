@@ -5,6 +5,7 @@ import logging
 import urllib
 import os
 import threading
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class BaseTimeline:
 
     def __init__(self, contextId, layoutServiceUrl):
         """Initializer, creates a new context and stores it for global reference"""
+        self.creationTime = time.time() # Mainly for debugging, so we can tell contexts apart
         self.contextId = contextId
         self.timelineDocUrl = None
         self.layoutServiceUrl = layoutServiceUrl
@@ -49,9 +51,9 @@ class BaseTimeline:
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         # Do other initialization
 
-    def destroyTimeline(self):
+    def delete(self):
         """Destructor, sort-of"""
-        logger.info("Timeline(%s): destroyTimeline()" % self.contextId)
+        logger.info("Timeline(%s): delete()" % self.contextId)
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
         self.timelineDocUrl = None
@@ -66,6 +68,8 @@ class BaseTimeline:
     def dump(self):
         rv = dict(
             contextId=self.contextId,
+            creationTime=self.creationTime,
+            currentPresentationTime=self.clockService.now(),
             timelineDocUrl=self.timelineDocUrl,
             dmappTimeline=self.dmappTimeline,
             dmappId=self.dmappId,
