@@ -5,6 +5,19 @@ import json
 import argparse
 import logging
 
+# Make stdout unbuffered
+class Unbuffered(object):
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
+
+import sys
+sys.stdout = Unbuffered(sys.stdout)
+
 logging.basicConfig()
 
 # Default logging configuration: INFO for document and timeline (useful to app developers), WARNING for everything else.
