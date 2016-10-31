@@ -81,7 +81,7 @@ class BaseTimeline:
         return rv
 
     def dmappComponentDelegateFactory(self, elt, document, clock):
-        rv = ProxyDMAppComponent(elt, document, clock, self.layoutService)
+        rv = ProxyDMAppComponent(elt, document, self.timelineDocUrl, clock, self.layoutService)
         self.dmappComponents[rv.dmappcId] = rv
         return rv
 
@@ -236,12 +236,15 @@ class ProxyLayoutService:
         self.actionsTimestamp = None
 
 class ProxyDMAppComponent(document.TimeElementDelegate):
-    def __init__(self, elt, doc, clock, layoutService):
+    def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
+        self.timelineDocUrl = timelineDocUrl
         self.layoutService = layoutService
         self.dmappcId = self.elt.get(document.NS_2IMMERSE("dmappcid"))
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
+        # Allow relative URLs by doing a basejoin to the timeline document URL.
+        self.url = urllib.basejoin(self.timelineDocUrl, self.url)
         if not self.dmappcId:
             self.dmappcId = "unknown%d" % id(self)
             logger.error("Element %s: missing tim:dmappcid attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId)
@@ -305,7 +308,10 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         r.raise_for_status()
 
     def scheduleAction(self, verb, config=None, parameters=None):
-        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, self.clock.now())
+        extraLogArgs = ()
+        if config != None or parameters != None:
+            extraLogArgs = (config, parameters)
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, self.clock.now(), *extraLogArgs)
         self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
 
     def statusReport(self, state):
@@ -347,8 +353,14 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         for k in self.elt.attrib:
             if k in document.NS_2IMMERSE_COMPONENT:
                 localName = document.NS_2IMMERSE_COMPONENT.localTag(k)
-                rv[localName] = self.elt.attrib[k]
+                value = self.elt.attrib[k]
+                if 'url' in localName.lower():
+                    value = urllib.basejoin(self.timelineDocUrl, value)
+                rv[localName] = value
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)
-                rv['debug-2immerse-' + localName] = self.elt.attrib[k]
+                value = self.elt.attrib[k]
+                if 'url' in localName.lower():
+                    value = urllib.basejoin(self.timelineDocUrl, value)
+                rv['debug-2immerse-' + localName] = value
         return rv

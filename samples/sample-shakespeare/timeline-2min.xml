@@ -4,7 +4,7 @@
         <tl:ref tim:dmappcid="masterVideo"
                 tim:class="video" 
                 tic:syncMode="master"
-                tic:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/mainfeed.mp4"
+                tic:mediaUrl="../../sandbox/sample-shakespeare/mainfeed.mp4"
                 title="20sec preshow + 21sec part1 + 22sec interval + 23sec part2"
                 tl:prio="high"
                 />
@@ -16,15 +16,15 @@
         </tl:par>
         <!-- Synchronised script can be brought up at any point in time, its timeline is the full 214 minutes -->
         <tl:conditional tl:expr="enableScript">
-            <tl:ref tim:dmappcid="scriptWidget" tim:class="ScriptWidget" tic:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/script.vtt"/>
+            <tl:ref tim:dmappcid="scriptWidget" tim:class="ScriptWidget" tic:mediaUrl="../../sandbox/sample-shakespeare/script.vtt"/>
         </tl:conditional>
         <!-- Subtitles can only be brought up during the actual play, their timeline is the 180 minutes of the play -->
         <tl:conditional tl:expr="enableSubtitles">
             <tl:seq>
                 <tl:sleep tl:dur="00:00:20"/>
-                <tl:ref tim:dmappcid="subtitleWidget1" tim:class="SubtitleWidget" tic:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/subtitles.vtt#t=,00:00:21"/>
+                <tl:ref tim:dmappcid="subtitleWidget1" tim:class="SubtitleWidget" tic:mediaUrl="../../sandbox/sample-shakespeare/subtitles.vtt#t=,00:00:21"/>
                 <tl:sleep tl:dur="00:00:22"/>
-                <tl:ref tim:dmappcid="subtitleWidget2" tim:class="SubtitleWidget" tic:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/subtitles.vtt#t=00:00:21"/>
+                <tl:ref tim:dmappcid="subtitleWidget2" tim:class="SubtitleWidget" tic:mediaUrl="../../sandbox/sample-shakespeare/subtitles.vtt#t=00:00:21"/>
             </tl:seq>
         </tl:conditional>
         <!-- Trailer can be viewed (unsynchronised) only during the interval -->
@@ -35,7 +35,7 @@
                 <tl:sleep tl:dur="00:00:22" tl:prio="high"/> <!-- interval -->
                 <tl:seq>
                     <tl:wait tl:event="startTrailer"/>
-                    <tl:ref tim:dmappcid="auxVideo" tim:class="video" tic:mediaUrl="http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/trailer.mp4"/>
+                    <tl:ref tim:dmappcid="auxVideo" tim:class="video" tic:mediaUrl="../../sandbox/sample-shakespeare/trailer.mp4"/>
                 </tl:seq>
             </tl:par>
         </tl:seq>
