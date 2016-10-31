@@ -93,8 +93,6 @@ class BaseTimeline:
         assert self.dmappTimeline is None
         assert self.dmappId is None
         self.timelineDocUrl = timelineDocUrl
-        # XXXJACK for debugging purposes, if the URL is a partial URL get it from the samples directory
-        self.timelineDocUrl = urllib.basejoin(os.path.dirname(os.path.abspath(__file__)) + "/../samples/", self.timelineDocUrl)
         self.dmappId = dmappId
 
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
