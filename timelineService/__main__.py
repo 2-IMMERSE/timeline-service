@@ -1,5 +1,7 @@
 import sys
 import web
+import time
+import datetime
 import timeline
 import json
 import argparse
@@ -48,6 +50,7 @@ class MyFormatter(logging.Formatter):
             rvList.append('contextID:%s' % contextID)
         if dmappID:
             rvList.append('dmappID:%s' % dmappID)
+        rvList.append('sourcetime:%s' % datetime.datetime.fromtimestamp(time.time()).isoformat())
         rvList.append('logmessage:%s' % logmessage)
         return ' '.join(rvList)
         
