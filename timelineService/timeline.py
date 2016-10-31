@@ -244,7 +244,8 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         # Allow relative URLs by doing a basejoin to the timeline document URL.
-        self.url = urllib.basejoin(self.timelineDocUrl, self.url)
+        if self.url:
+            self.url = urllib.basejoin(self.timelineDocUrl, self.url)
         if not self.dmappcId:
             self.dmappcId = "unknown%d" % id(self)
             logger.error("Element %s: missing tim:dmappcid attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId)
@@ -354,13 +355,13 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             if k in document.NS_2IMMERSE_COMPONENT:
                 localName = document.NS_2IMMERSE_COMPONENT.localTag(k)
                 value = self.elt.attrib[k]
-                if 'url' in localName.lower():
+                if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocUrl, value)
                 rv[localName] = value
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)
                 value = self.elt.attrib[k]
-                if 'url' in localName.lower():
+                if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocUrl, value)
                 rv['debug-2immerse-' + localName] = value
         return rv
