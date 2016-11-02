@@ -11,7 +11,7 @@
 		<tl:seq title="Sequence of all known dmapp component types, shown one by one for 10 seconds each">
 			<tl:par tl:end="master" title="1. image">
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="ImageDMAppComponent"
+			    <tl:ref tim:class="image"
 			            tim:dmappcid="dmappcid_image"
 			            tim:url="../../dmapp-components/image/image.html"
 			            tim:mediaUrl="../../sandbox/backdrop.jpg"
@@ -19,7 +19,7 @@
 			</tl:par>
 			<tl:par tl:end="master" title="2. scrolling text">
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
-				<tl:ref tim:class="ScrollTextDMAppComponent"
+				<tl:ref tim:class="scroll-text"
 				        tim:url="../../dmapp-components/scroll-text/scroll-text.html"
 						tim:dmappcid="dmappcid_scrollingtext"
 						tic:scriptUrl="../../sandbox/sample-demo-stratford/assets/transcripts/hamlet/script.json"
