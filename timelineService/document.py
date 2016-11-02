@@ -46,6 +46,21 @@ for k, v in NAMESPACES.items():
 
 PRIO_TO_INT = dict(low=0, normal=50, high=100)
 
+#
+# Specific for 2immerse, needs to be updated as DMApp Component Classes are added and extended.
+#
+REQUIRED_TIC_ATTRIBUTES={
+    "video" : ["mediaUrl"],
+    "scroll-text" : [],
+    "image" : ["mediaUrl"],
+    }
+    
+ALLOWED_TIC_ATTRIBUTES={
+    "video" : ["mediaUrl", "offset", "startMediaTime", "syncMode", "showControls"],
+    "scroll-text" : ["scriptUrl", "clipMapUrl", "clipId", "offset"],
+    "image" : ["mediaUrl", "objectFit"],
+    }
+    
 class State:
     idle = "idle"
     initing = "initing"
@@ -69,7 +84,10 @@ class DummyDelegate:
         self.clock = clock
         
     def __repr__(self):
-        return 'Delegate(%s)' % self.document.getXPath(self.elt)
+        return 'Delegate(%s)' % self.getXPath()
+        
+    def getXPath(self):
+        return self.document.getXPath(self.elt)
         
     def checkAttributes(self):
         pass
@@ -140,18 +158,18 @@ class TimelineDelegate(DummyDelegate):
         for attrName in self.elt.keys():
             if attrName in NS_TIMELINE:
                 if not attrName in self.ALLOWED_ATTRIBUTES:
-                    print >>sys.stderr, "* Error: element", self.elt.tag, "has unknown attribute", attrName
+                    print >>sys.stderr, "* Error: element", self.getXPath(), "has unknown attribute", attrName
             # Remove state attributes
             if attrName in NS_TIMELINE_INTERNAL:
                 del self.elt.attrs[attrName]
                     
     def checkChildren(self):
         if not self.EXACT_CHILD_COUNT is None and len(self.elt) != self.EXACT_CHILD_COUNT:
-            print >>sys.stderr, "* Error: element", self.elt.tag, "expects", self.EXACT_CHILD_COUNT, "children but has", len(self.elt)
+            print >>sys.stderr, "* Error: element", self.getXPath(), "expects", self.EXACT_CHILD_COUNT, "children but has", len(self.elt)
         if not self.ALLOWED_CHILDREN is None:
             for child in self.elt:
                 if child.tag in NS_2IMMERSE and not child.tag in self.ALLOWED_CHILDREN:
-                    print >>sys.stderr, "* Error: element", self.elt.tag, "cannot have child of type", child.tag
+                    print >>sys.stderr, "* Error: element", self.getXPath(), "cannot have child of type", child.tag
          
 class SingleChildDelegate(TimelineDelegate):
     EXACT_CHILD_COUNT=1
@@ -511,6 +529,29 @@ class RefDelegate(TimeElementDelegate):
                 rv[NS_2IMMERSE_COMPONENT.localTag(k)] = self.elt.attrib[k]
         return rv
         
+class RefDelegate2Immerse(RefDelegate):
+    """2-Immerse specific RefDelegate that checks the attributes"""
+    
+    def checkAttributes(self):
+        RefDelegate.checkAttributes(self)
+        if not NS_2IMMERSE("class") in self.elt.keys():
+            print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:class attribute"
+        if not NS_2IMMERSE("dmappcid") in self.elt.keys():
+            print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:dmappcid attribute"
+        className = self.elt.get(NS_2IMMERSE("class"))
+        if not className in REQUIRED_TIC_ATTRIBUTES:
+            print >>sys.stderr, "* Warning: element", self.getXPath(), " has unknown tim:class", className
+            return
+        requiredAttributes = REQUIRED_TIC_ATTRIBUTES[className]
+        allowedAttributes = ALLOWED_TIC_ATTRIBUTES[className]
+        for attrName in requiredAttributes:
+            if not NS_2IMMERSE_COMPONENT(attrName) in self.elt.keys():
+                print >>sys.stderr, "* Warning: element", self.getXPath(), "of tim:class", className, "misses expected attribute tic:"+attrName
+        for attrName in self.elt.keys():
+            if attrName in NS_2IMMERSE_COMPONENT:
+                if not NS_2IMMERSE_COMPONENT.localTag(attrName) in allowedAttributes:
+                    print >>sys.stderr, "* Warning: element", self.getXPath(), "of tim:class", className, "has unexpected attribute tic:"+NS_2IMMERSE_COMPONENT.localTag(attrName)
+        
 class ConditionalDelegate(SingleChildDelegate):
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("expr")
@@ -733,8 +774,9 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Print detailed state machine progression output")
     parser.add_argument("--trace", action="store_true", help="Print less detailed externally visible progression output")
     parser.add_argument("--dump", action="store_true", help="Dump document to stdout on exceptions and succesful termination")
-    parser.add_argument("--fast", action="store_true", help="Use fast-forward clock in stead of realtime clock")
+    parser.add_argument("--realtime", action="store_true", help="Use realtime clock in stead of fast-forward clock")
     parser.add_argument("--recursive", action="store_true", help="Debugging: use recursion for callbacks, not queueing")
+    parser.add_argument("--attributes", action="store_true", help="Check 2immerse tim: and tic: atributes")
     args = parser.parse_args()
     DEBUG = args.debug
     if DEBUG:
@@ -743,12 +785,14 @@ def main():
         logger.setLevel(logging.INFO)
     if args.recursive: Document.RECURSIVE=True
     
-    if args.fast:
+    if not args.realtime:
         clock = clocks.CallbackPausableClock(clocks.FastClock())
     else:
         clock = clocks.CallbackPausableClock(clocks.SystemClock())
     
     d = Document(clock)
+    if args.attributes:
+        d.setDelegateFactory(RefDelegate2Immerse)
     try:
         d.load(args.document)
         d.addDelegates()
