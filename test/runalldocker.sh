@@ -6,6 +6,11 @@ dirname=`cd $dirname; pwd`
 basedir=`cd $dirname/../..; pwd`
 
 hostname=`hostname`
+case x$hostname in
+*.local)
+	hostname=`ipconfig getifaddr en0`
+	;;
+esac
 
 case `uname` in
 Darwin)
