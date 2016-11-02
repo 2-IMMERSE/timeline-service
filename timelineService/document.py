@@ -125,6 +125,22 @@ class DummyDelegate:
         
     def getCurrentPriority(self):
         return PRIO_TO_INT["low"]
+
+    def moveStateToConform(self, oldDelegate):
+        """Fast-forward an element so that it is in the same state as its old delegate was"""
+        assert self.state == State.idle
+        if oldDelegate.state == State.idle:
+            return
+        if oldDelegate.state in (State.initing, State.inited):
+            self.initTimelineElement(self)
+            return
+        if oldDelegate.state in (State.starting, State.started):
+            assert 0
+            return
+        if oldDelegate.state in (State.finished, State.stopping, State.skipped):
+            # xxxjack unsure here, if I remain in idle will everything just work?
+            return
+        assert 0
         
 class ErrorDelegate(DummyDelegate):
     def __init__(self, elt, document, clock):
@@ -570,7 +586,7 @@ class WaitDelegate(TimelineDelegate):
         self.document.report(logging.DEBUG, 'WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
         self.setState(State.finished)
     
-    
+   
 DELEGATE_CLASSES = {
     NS_TIMELINE("document") : DocumentDelegate,
     NS_TIMELINE("par") : ParDelegate,
@@ -579,6 +595,16 @@ DELEGATE_CLASSES = {
     NS_TIMELINE("conditional") : ConditionalDelegate,
     NS_TIMELINE("sleep") : SleepDelegate,
     NS_TIMELINE("wait") : WaitDelegate,
+    }
+   
+DELEGATE_CLASSES_FASTFORWARD = {
+    NS_TIMELINE("document") : DocumentDelegate,
+    NS_TIMELINE("par") : ParDelegate,
+    NS_TIMELINE("seq") : SeqDelegate,
+    NS_TIMELINE("ref") : DummyDelegate,
+    NS_TIMELINE("conditional") : ConditionalDelegate,
+    NS_TIMELINE("sleep") : DummyDelegate,
+    NS_TIMELINE("wait") : DummyDelegate,
     }
     
 class Document:
@@ -653,10 +679,26 @@ class Document:
                 elt.delegate.checkAttributes()
                 elt.delegate.checkChildren()
                 
-    def _getDelegate(self, tag):
+    def replaceDelegates(self, newDelegateClasses):
+        assert self.root is not None
+        for elt in self.tree.iter():
+            assert hasattr(elt, 'delegate')
+            # Remember old delegate
+            oldDelegate = elt.delegate
+            # Create new delegate
+            klass = self._getDelegate(elt.tag, newDelegateClasses)
+            elt.delegate = klass(elt, self, self.clock)
+            elt.delegate.checkAttributes()
+            elt.delegate.checkChildren()
+            # Make new delegate go to same state as the old delegate was in
+            elt.delegate.moveStateToConform(oldDelegate)
+                
+    def _getDelegate(self, tag, delegateClasses=None):
         if not tag in NS_TIMELINE:
-                return DummyDelegate
-        return self.delegateClasses.get(tag, ErrorDelegate)
+            return DummyDelegate
+        if delegateClasses is None:
+            delegateClasses =  self.delegateClasses       
+        return delegateClasses.get(tag, ErrorDelegate)
             
     def runDocument(self):
         self.runDocumentInit()
