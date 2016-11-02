@@ -14,7 +14,7 @@
 			    <tl:ref tim:class="image"
 			            tim:dmappcid="dmappcid_image"
 			            tim:url="../../dmapp-components/image/image.html"
-			            tic:mediaUrl="../../sandbox/backdrop.jpg"
+			            tim:mediaUrl="../../sandbox/backdrop.jpg"
 			            />
 			</tl:par>
 			<tl:par tl:end="master" title="2. scrolling text">
@@ -22,8 +22,9 @@
 				<tl:ref tim:class="scroll-text"
 				        tim:url="../../dmapp-components/scroll-text/scroll-text.html"
 						tim:dmappcid="dmappcid_scrollingtext"
-						tic:scriptUrl="../../sandbox/sample-demo-stratford/assets/transcripts/hamlet/script.json"
+						tim:scriptUrl="../../sandbox/sample-demo-stratford/assets/transcripts/hamlet/script.json"
 						tic:offset="120"
+						tim:unknown="unknown"
 						/>
 			</tl:par>
 			<tl:par tl:end="master" title="3. video element">
@@ -31,18 +32,19 @@
             <tl:ref tim:class="video"
                     tim:dmappcid="dmappcid_video"
                     tic:mediaUrl="../../sandbox/bunny.mp4"
+                    tic:unknown="unknown"
                     tlcheck:dur="13"
                     />
 			</tl:par>
 			<tl:par tl:end="master" title="4. timed text">
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
 			    <tl:ref tim:class="NameToBeDecidedTimedTextComponent"
-			            tim:dmappcid="dmappcid_timedtext"
+			            tic:dmappcid="dmappcid_timedtext"
 			            />
 			</tl:par>
 			<tl:par tl:end="master" title="5. title card">
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="NameToBeDecidedTitleCardComponent"
+			    <tl:ref tic:class="NameToBeDecidedTitleCardComponent"
 			            tim:dmappcid="dmappcid_titlecard"
 			            />
 			</tl:par>
