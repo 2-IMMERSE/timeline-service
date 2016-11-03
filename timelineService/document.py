@@ -69,6 +69,8 @@ class State:
     STOP_NEEDED = {initing, inited, starting, started, finished, skipped}
     
 class DummyDelegate:
+    """Baseclass for delegates, also used for non-timeline elements."""
+    
     def __init__(self, elt, document, clock):
         self.elt = elt
         self.document = document
@@ -82,16 +84,20 @@ class DummyDelegate:
         return self.document.getXPath(self.elt)
         
     def checkAttributes(self):
+        """Check XML attributes for validity"""
         pass
         
     def checkChildren(self):
+        """Check XML children for validity"""
         pass
         
     def storeStateForSave(self):
+        """Store internal state in XML, prior to serialisation"""
         if self.state != State.idle:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
             
     def setState(self, state):
+        """Advance element state to a new one. Subclasses will add side effects (such as actually playing media)"""
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
         if self.state == state:
             logger.warn('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
@@ -105,22 +111,27 @@ class DummyDelegate:
             parentElement.delegate.reportChildState(self.elt, self.state)
            
     def assertState(self, action, *allowedStates):
+        """Check that the element is in an expected state."""
         assert self.state in set(allowedStates), "%s: %s: state==%s, expected %s" % (self, action, self.state, set(allowedStates))
         
     def assertDescendentState(self, action, *allowedStates):
+        """Check that all descendents of the element are in an expected state"""
         for desc in self.elt.iter():
             assert desc.delegate.state in set(allowedStates), "%s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
          
     def reportChildState(self, child, childState):
+        """Called by direct children when they change their state"""
         pass
         
     def initTimelineElement(self):
+        """Called by parent or outer control to initialize the element"""
         self.assertState('initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         #self.setState(State.initing)
         self.setState(State.inited)
         
     def startTimelineElement(self):
+        """Called by parent or outer control to start the element"""
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         #self.setState(State.starting)
@@ -129,11 +140,13 @@ class DummyDelegate:
         self.setState(State.finished)
         
     def stopTimelineElement(self):
+        """Called by parent or outer control to stop the element"""
         if self.state == State.idle:
             return
         self.setState(State.idle)
         
     def getCurrentPriority(self):
+        """Return current priority of this element for clock arbitration"""
         return PRIO_TO_INT["low"]
 
     def moveStateToConform(self, oldDelegate):
@@ -153,11 +166,15 @@ class DummyDelegate:
         assert 0
         
 class ErrorDelegate(DummyDelegate):
+    """<tl:...> element of unknown type. Prints an error and handles the rest as a non-tl: element."""
+    
     def __init__(self, elt, document, clock):
         DummyDelegate.__init__(self, elt, document, clock)
         print >>sys.stderr, "* Error: unknown tag", elt.tag
 
 class TimelineDelegate(DummyDelegate):
+    """Baseclass for all <tl:...> elements."""
+    
     ALLOWED_ATTRIBUTES = set()
     ALLOWED_CHILDREN = None
     EXACT_CHILD_COUNT = None
@@ -180,6 +197,8 @@ class TimelineDelegate(DummyDelegate):
                     print >>sys.stderr, "* Error: element", self.getXPath(), "cannot have child of type", child.tag
          
 class SingleChildDelegate(TimelineDelegate):
+    """Baseclass for elements that have exactly one child."""
+    
     EXACT_CHILD_COUNT=1
 
     def reportChildState(self, child, childState):
@@ -240,12 +259,15 @@ class SingleChildDelegate(TimelineDelegate):
             self.setState(State.idle)
 
 class DocumentDelegate(SingleChildDelegate):
+    """<tl:document> element."""
     ALLOWED_CHILDREN={
         NS_TIMELINE("par"),
         NS_TIMELINE("seq"),
         }
 
 class TimeElementDelegate(TimelineDelegate):
+    """Baseclass for elements that have a clock, and therefore a prio attribute."""
+    
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("prio")
         }
@@ -261,6 +283,8 @@ class TimeElementDelegate(TimelineDelegate):
         return val
         
 class ParDelegate(TimeElementDelegate):
+    """<tl:par> element. Runs all its children in parallel."""
+    
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
         NS_TIMELINE("end"),
         NS_TIMELINE("sync"),
@@ -394,6 +418,7 @@ class ParDelegate(TimeElementDelegate):
             self.setState(State.idle)
 
 class SeqDelegate(TimeElementDelegate):
+    """<tl:seq> element. Runs its children in succession."""
 
     def reportChildState(self, child, childState):
         assert len(self.elt)
@@ -483,6 +508,8 @@ class SeqDelegate(TimeElementDelegate):
         return None
     
 class RefDelegate(TimeElementDelegate):
+    """<tl:ref> element. Handles actual media playback. Usually subclassed to actually do something."""
+    
     EXACT_CHILD_COUNT=0
     
     def initTimelineElement(self):
@@ -545,6 +572,8 @@ class RefDelegate2Immerse(RefDelegate):
         attributeChecker.checkAttributes(self)
         
 class ConditionalDelegate(SingleChildDelegate):
+    """<tl:condition> element. Runs it child if the condition is true."""
+    
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("expr")
         }
@@ -557,6 +586,8 @@ class ConditionalDelegate(SingleChildDelegate):
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
         
 class SleepDelegate(TimeElementDelegate):
+    """<tl:sleep> element. Waits for a specified duration (on the elements clock)"""
+    
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
         NS_TIMELINE("dur")
         }
@@ -585,6 +616,8 @@ class SleepDelegate(TimeElementDelegate):
         return tval.tm_sec + 60*(tval.tm_min+60*tval.tm_hour)
         
 class WaitDelegate(TimelineDelegate):
+    """<tl:wait> element. Waits for an incoming event."""
+    
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("event")
         }
@@ -624,6 +657,23 @@ DELEGATE_CLASSES_FASTFORWARD = {
     NS_TIMELINE("wait") : DummyDelegate,
     }
     
+#
+# Adapters
+#
+
+class DelegateAdapter:
+    """Baseclass for delegate adapters, transparent."""
+    
+    def __init__(self, delegate):
+        self._adapter_delegate = delegate
+        
+    def __getattr__(self, attrname):
+        return getattr(self._adapter_delegate, attrname)
+
+class WaitForStartAdapter(DelegateAdapter):
+    def startTimelineElement(self):
+        assert 0
+        
 class Document:
     RECURSIVE = False
         
