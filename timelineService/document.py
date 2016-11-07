@@ -1,5 +1,5 @@
 import sys
-import urllib
+import urllib2
 import argparse
 import time
 import xml.etree.ElementTree as ET
@@ -693,7 +693,7 @@ class Document:
         
     def load(self, url):
         assert not self.root
-        fp = urllib.urlopen(url)
+        fp = urllib2.urlopen(url)
         self.tree = ET.parse(fp)
         self.root = self.tree.getroot()
         self.parentMap = {c:p for p in self.tree.iter() for c in p}        
@@ -862,7 +862,11 @@ def main():
     if args.attributes:
         d.setDelegateFactory(RefDelegate2Immerse)
     try:
-        d.load(args.document)
+        url = args.document
+        if not ':' in url:
+            # Shortcut to allow specifying local files
+            url = 'file:' + url
+        d.load(url)
         d.addDelegates()
 #         if args.dump:
 #             d.dump(sys.stdout)
