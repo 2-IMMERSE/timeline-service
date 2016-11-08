@@ -671,9 +671,15 @@ class DelegateAdapter:
     def __getattr__(self, attrname):
         return getattr(self._adapter_delegate, attrname)
 
-class WaitForStartAdapter(DelegateAdapter):
+class SeekToElementAdapter(DelegateAdapter):
+    def __init__(self, delegate):
+        DelegateAdapter.__init__(self, delegate)
+        self.seekPositionReached = False
+        
     def startTimelineElement(self):
-        assert 0
+        self._adapter_delegate.startTimelineElement()
+        self.seekPositionReached = True
+        print 'xxxjack seekPositionReached has triggered'
         
 class Document:
     RECURSIVE = False
@@ -710,9 +716,9 @@ class Document:
             if len(elements) == 0:
                 logger.log(logging.ERROR, "Fragment #%s does not match any element" % up.fragment)
             elif len(elements) > 1:
-                logger.log(logging.ERROR, "Fragment #%s matchws %d elements" % (up.fragment, len(elements)))
+                logger.log(logging.ERROR, "Fragment #%s matches %d elements" % (up.fragment, len(elements)))
             else:
-                logger.log(logging.INFO, "Starting at element %s" % self.getXPath(elements[0]))
+                logger.log(logging.INFO, "Will start at element %s" % self.getXPath(elements[0]))
                 self.fragment = elements[0]  
         
     def getParent(self, elt):
@@ -754,7 +760,50 @@ class Document:
         xmlstr = ET.tostring(self.root, encoding='utf8', method='xml')
         return xmlstr
     
-    def addDelegates(self):
+    def prepareDocument(self):
+        if self.fragment is None:
+            #
+            # No positioning needed. Add the real delegates and run all elegible
+            # init methods.
+            #
+            self._addDelegates()
+            self.runDocumentInit()
+            if not self.RECURSIVE:
+                self.runloop(lambda : self.root.delegate.state == State.inited)
+            self.runDocumentStart()
+            return
+        #
+        # Positioning needed. Start with providing all elements with the
+        # fastforward delegates.
+        #
+        self._addDelegates(DELEGATE_CLASSES_FASTFORWARD)
+        assert self.fragment.delegate
+        #
+        # Monitor the target element.
+        #
+        self.fragment.delegate = SeekToElementAdapter(self.fragment.delegate)
+        #
+        # Call the init methods
+        #
+        self.report(logging.DEBUG, 'FFWD', 'goto', self.fragment.delegate.getXPath())
+        self.runDocumentInit()
+        if not self.RECURSIVE:
+            self.runloop(lambda : self.root.delegate.state == State.inited)
+        #
+        # fastforward the document until we get to the target element.
+        #
+        assert self.fragment.delegate.seekPositionReached == False
+        self.clock.start()
+        self.runDocumentStart()
+        self.runloop(lambda : self.fragment.delegate.seekPositionReached)
+        self.report(logging.DEBUG, 'FFWD', 'reached', self.fragment.delegate.getXPath())
+        #
+        # Now replace the fastforward delegates with the real ones.
+        #
+        self.dump(sys.stdout)
+        assert 0        
+        
+    def _addDelegates(self, delegateClasses=None):
         assert self.root is not None
         for elt in self.tree.iter():
             if not hasattr(elt, 'delegate'):
@@ -785,17 +834,13 @@ class Document:
         return delegateClasses.get(tag, ErrorDelegate)
             
     def runDocument(self):
-        self.runDocumentInit()
-        if not self.RECURSIVE:
-            self.runloop(State.inited)
         self.clock.start()
-        self.runDocumentStart()
-        self.runloop(State.finished)
+        self.runloop(lambda : self.root.delegate.state == State.finished)
         self.report(logging.DEBUG, 'RUN', 'stop')
         self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
 #        self.terminating = True
         self.root.delegate.stopTimelineElement()
-        self.runloop(State.idle)
+        self.runloop(lambda : self.root.delegate.state == State.idle)
         self.root.delegate.assertDescendentState("run()", State.idle)
         self.report(logging.DEBUG, 'RUN', 'done')
             
@@ -821,9 +866,9 @@ class Document:
         else:
             self.toDo.append((callback, args, kwargs))
             
-    def runloop(self, stopstate):
+    def runloop(self, stopCondition):
         assert self.root is not None
-        while self.root.delegate.state != stopstate or len(self.toDo):
+        while not stopCondition() or len(self.toDo):
             if len(self.toDo):
                 callback, args, kwargs = self.toDo.pop(0)
                 callback(*args, **kwargs)
@@ -831,7 +876,7 @@ class Document:
                 self.sleepUntilNextEvent()
                 self.clock.handleEvents(self)
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
-        assert self.root.delegate.state == stopstate, 'Document root did not reach state %s' % stopstate
+        assert stopCondition(), 'Document root did not reach expected state'
         
     def sleepUntilNextEvent(self):
         self.clock.sleepUntilNextEvent()
@@ -884,7 +929,7 @@ def main():
             # Shortcut to allow specifying local files
             url = 'file:' + url
         d.load(url)
-        d.addDelegates()
+        d.prepareDocument()
 #         if args.dump:
 #             d.dump(sys.stdout)
 #             print '--------------------'
