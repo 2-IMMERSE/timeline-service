@@ -77,6 +77,7 @@ class DummyDelegate:
         self.document = document
         self.state = State.idle
         self.clock = clock
+        self.startTime = None
         
     def __repr__(self):
         return 'Delegate(%s)' % self.getXPath()
@@ -92,10 +93,16 @@ class DummyDelegate:
         """Check XML children for validity"""
         pass
         
+    def isCurrentTimingMaster(self):
+        """Return True if this element currently has control over its own clock"""
+        return False
+        
     def storeStateForSave(self):
         """Store internal state in XML, prior to serialisation"""
         if self.state != State.idle:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
+        if self.isCurrentTimingMaster() and self.startTime != None:
+            self.elt.set(NS_TIMELINE_INTERNAL("progress"), str(self.clock.now()-self.startTime))
             
     def setState(self, state):
         """Advance element state to a new one. Subclasses will add side effects (such as actually playing media)"""
@@ -107,6 +114,12 @@ class DummyDelegate:
 #                 pdb.set_trace()
             return
         self.state = state
+        if self.state == State.started:
+            assert self.startTime == None
+            self.startTime = self.clock.now()
+            print 'xxxjack set startTime for ', self.getXPath(), 'to', self.startTime
+        else:
+            self.startTime = None
         parentElement = self.document.getParent(self.elt)
         if parentElement is not None:
             parentElement.delegate.reportChildState(self.elt, self.state)
@@ -282,6 +295,15 @@ class TimeElementDelegate(TimelineDelegate):
         val = PRIO_TO_INT.get(val, val)
         val = int(val)
         return val
+
+    def isCurrentTimingMaster(self):
+        # xxxjack only correct for 2immerse....
+        if self.state != State.started:
+            return False
+        syncMode = self.elt.get(NS_2IMMERSE_COMPONENT("syncMode"), "unspecified")
+        if syncMode != "master":
+            return False
+        return True
         
 class ParDelegate(TimeElementDelegate):
     """<tl:par> element. Runs all its children in parallel."""
@@ -652,9 +674,9 @@ DELEGATE_CLASSES_FASTFORWARD = {
     NS_TIMELINE("document") : DocumentDelegate,
     NS_TIMELINE("par") : ParDelegate,
     NS_TIMELINE("seq") : SeqDelegate,
-    NS_TIMELINE("ref") : DummyDelegate,
-    NS_TIMELINE("conditional") : ConditionalDelegate,
-    NS_TIMELINE("sleep") : DummyDelegate,
+    NS_TIMELINE("ref") : TimeElementDelegate,
+    NS_TIMELINE("conditional") : ConditionalDelegate, # xxxjack should return True depending on tree position?
+    NS_TIMELINE("sleep") : SleepDelegate,
     NS_TIMELINE("wait") : DummyDelegate,
     }
     
