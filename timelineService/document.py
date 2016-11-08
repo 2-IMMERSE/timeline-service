@@ -1,5 +1,6 @@
 import sys
 import urllib2
+import urlparse
 import argparse
 import time
 import xml.etree.ElementTree as ET
@@ -680,6 +681,7 @@ class Document:
     def __init__(self, clock):
         self.tree = None
         self.root = None
+        self.fragment = None
         self.clock = clock
         self.parentMap = {}
         self.toDo = []
@@ -696,7 +698,22 @@ class Document:
         fp = urllib2.urlopen(url)
         self.tree = ET.parse(fp)
         self.root = self.tree.getroot()
-        self.parentMap = {c:p for p in self.tree.iter() for c in p}        
+        self.parentMap = {c:p for p in self.tree.iter() for c in p}
+        up = urlparse.urlparse(url)
+        if up.fragment:
+            xpathExpression = up.fragment
+            if not ('/' in xpathExpression or '.' in xpathExpression or '@' in xpathExpression or '[' in xpathExpression):
+                # If it is an identifier search for the element with tim:dmappcid equal to that identifier
+                xpathExpression = ".//*[@tim:dmappcid='%s']" % xpathExpression
+                print 'xxxjack', xpathExpression
+            elements = self.tree.findall(xpathExpression, NAMESPACES)
+            if len(elements) == 0:
+                logger.log(logging.ERROR, "Fragment #%s does not match any element" % up.fragment)
+            elif len(elements) > 1:
+                logger.log(logging.ERROR, "Fragment #%s matchws %d elements" % (up.fragment, len(elements)))
+            else:
+                logger.log(logging.INFO, "Starting at element %s" % self.getXPath(elements[0]))
+                self.fragment = elements[0]  
         
     def getParent(self, elt):
         return self.parentMap.get(elt)
