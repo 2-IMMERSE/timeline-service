@@ -22,7 +22,7 @@ ALLOWED_TIC_ATTRIBUTES={
     "video" : ["mediaUrl", "offset", "startMediaTime", "syncMode", "showControls"],
     "scroll-text" : ["scriptUrl", "clipMapUrl", "clipId", "offset"],
     "timed-text" : [],
-    "title-card" : ["title", "author", "synopsis", "brandImageUrlc", "brand", "posterUrl"],
+    "title-card" : ["title", "author", "synopsis", "brandImageUrl", "brand", "posterUrl"],
     "article" : [],
     "image" : ["mediaUrl", "objectFit"],
     "text-chat" : [],
