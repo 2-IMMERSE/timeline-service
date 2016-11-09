@@ -119,6 +119,7 @@
             "deviceType": "default",
             "layout": {
                 "communal" : {
+                    "portrait" : [],
                     "landscape": [
                         { "region": { "tag": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
                         { "region": { "tag": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
@@ -147,6 +148,7 @@
           "deviceType": "tv",
           "layout": {
               "communal" : {
+                  "portrait" : [],
                   "landscape": [
                     { "region": { "tag": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
                     { "region": { "tag": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
@@ -156,6 +158,7 @@
                   ]
               },
               "personal" : {
+                "portrait" : [],
                 "landscape": [
                   { "region": { "tag": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
                   { "region": { "tag": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
