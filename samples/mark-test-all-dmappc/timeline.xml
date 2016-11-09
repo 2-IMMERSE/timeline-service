@@ -1,0 +1,81 @@
+<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tlcheck="http://jackjansen.nl/timelines/check" title="Hello World document, similar to previously hardcoded timelineServer example">
+	<!-- Actually we don't need this outer par at the moment, but may in the future -->
+	<tl:par tl:end="master">
+		<tl:seq title="Demo">
+
+			<tl:par tl:end="master" title="Title card">
+				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback" tic:syncMode="master" title="Keep the clock going when there is no video" />
+			    <tl:sleep tl:dur="10" tl:prio="high"/>
+			    <tl:ref tim:dmappcid="dmappcid_titlecard1" 
+				    tim:class="title-card" 
+				    tim:url="../../dmapp-components/title-card/title-card.html" 
+				    tic:title="Hamlet" 
+				    tic:author="William Shakespeare" 
+				    tic:brand="Royal Shakespeare Company" 
+				    tic:brand-image-src="/media/rsc/rsc_logo.tmb-logo-200.png" 
+				    tic:synopsis="The searing tragedy of young student Hamlet, tormented by his father's death and confronting each of us with the mirror of our own mortality in an imperfect world" 
+				    tic:poster="/media/rsc/hamlet/hamlet-production-king-queen-l.jpg"/>
+			</tl:par>
+
+			<tl:par tl:end="master" title="Video chat">
+				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback1" tic:syncMode="master" title="Keep the clock going when there is no video" />
+			    <tl:sleep tl:dur="30" tl:prio="high"/>
+			    <tl:ref tim:class="video-chat"
+				    tim:dmappcid="dmappcid_videochat1"
+				    tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"/>
+
+			    <tl:ref tim:class="video-chat-view"
+				    tim:dmappcid="dmappcid_videochat_view1"
+				    tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"/>
+
+			    <tl:ref tim:class="video-chat-controls"
+				    tim:dmappcid="dmappcid_videochat_controls1"
+				    tim:url="../../dmapp-components/video-chat/video-chat-controls/video-chat-controls.html"/>
+			</tl:par>
+
+			<tl:par tl:end="master" title="Hamlet Act 1">
+			    <tl:sleep tl:dur="60" tl:prio="high"/>
+		        <tl:ref tim:class="video"
+		                tim:dmappcid="dmappcid_masterVideo"
+		                tic:syncMode="master"
+		                tic:mediaUrl="../../sandbox/hamlet/client_manifest.mpd"
+		                tlcheck:dur="3600"
+		                title="Master video that runs all the time"
+		                />
+		    </tl:par>
+
+			<tl:par tl:end="master" title="Video chat">
+				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback2" tic:syncMode="master" title="Keep the clock going when there is no video" />
+			    <tl:sleep tl:dur="30" tl:prio="high"/>
+			    <tl:ref tim:class="video-chat"
+				    tim:dmappcid="dmappcid_videochat2"
+				    tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"/>
+
+			    <tl:ref tim:class="video-chat-view"
+				    tim:dmappcid="dmappcid_videochat_view2"
+				    tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"/>
+
+			    <tl:ref tim:class="video-chat-controls"
+				    tim:dmappcid="dmappcid_videochat_controls2"
+				    tim:url="../../dmapp-components/video-chat/video-chat-controls/video-chat-controls.html"/>
+			</tl:par>
+
+			<tl:par tl:end="master" title="Finish">
+				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback3" tic:syncMode="master" title="Keep the clock going when there is no video" />
+			    <tl:sleep tl:dur="10" tl:prio="high"/>
+			    <tl:ref tim:dmappcid="dmappcid_titlecard2" 
+				    tim:class="title-card" 
+				    tim:url="../../dmapp-components/title-card/title-card.html" 
+				    tic:title="Hamlet" 
+				    tic:author="William Shakespeare" 
+				    tic:brand="Royal Shakespeare Company" 
+				    tic:brand-image-src="/media/rsc/rsc_logo.tmb-logo-200.png" 
+				    tic:synopsis="The searing tragedy of young student Hamlet, tormented by his father's death and confronting each of us with the mirror of our own mortality in an imperfect world" 
+				    tic:poster="/media/rsc/hamlet/hamlet-production-king-queen-l.jpg"/>
+			</tl:par>
+
+			<tl:sleep tl:dur="1" title="Workaround for timeline scheduler bug"/>
+
+		</tl:seq>
+	</tl:par>
+</tl:document>
