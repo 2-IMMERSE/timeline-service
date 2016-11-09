@@ -6,14 +6,30 @@ import sys
 REQUIRED_TIC_ATTRIBUTES={
     "video" : ["mediaUrl"],
     "scroll-text" : [],
+    "timed-text" : [],
+    "title-card" : [],
+    "article" : [],
     "image" : ["mediaUrl"],
+    "text-chat" : [],
+    "video-chat" : [],
+    "video-chat-view" : [],
+    "video-chat-controls" : [],
+    "component-switcher" : [],
     "FallbackClock" : [],
     }
     
 ALLOWED_TIC_ATTRIBUTES={
     "video" : ["mediaUrl", "offset", "startMediaTime", "syncMode", "showControls"],
     "scroll-text" : ["scriptUrl", "clipMapUrl", "clipId", "offset"],
+    "timed-text" : [],
+    "title-card" : ["title", "author", "synopsis", "brandImageUrlc", "brand", "posterUrl"],
+    "article" : [],
     "image" : ["mediaUrl", "objectFit"],
+    "text-chat" : [],
+    "video-chat" : [],
+    "video-chat-view" : [],
+    "video-chat-controls" : [],
+    "component-switcher" : [],
     "FallbackClock" : ["syncMode", "offset", "startMediaTime"],
     }
     
