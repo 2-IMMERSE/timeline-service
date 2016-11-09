@@ -1,0 +1,385 @@
+{
+    "version": 2,
+    "dmapp": "200",
+    "constraints": [
+      {
+          "componentId" : "masterVideo",
+          "personal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "priority": 0,
+              "audio": true
+          },
+          "communal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "priority": 10,
+              "audio": true
+          }
+      },
+      {
+          "componentId" : "video",
+          "personal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "priority": 0,
+              "audio": true
+          },
+          "communal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "priority": 10,
+              "audio": true
+          }
+      },
+      {
+          "componentId" : "timedtext",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "titlecard",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "article",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "image",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "button",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "textchat",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "videochat",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "componentswitcher",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          }
+      }
+    ],
+    "layoutModel" : "template",
+    "templates" : [
+        {
+            "deviceType": "default",
+            "layout": {
+                "communal" : {
+                  "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  ],
+                    "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ]
+                },
+                "personal" : {
+                    "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ],
+                    "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ]
+                }
+            }
+        },
+        {
+            "deviceType": "generic",
+            "layout": {
+                "communal" : {
+                  "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  ],
+                    "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ]
+                },
+                "personal" : {
+                    "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ],
+                    "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ]
+                }
+            }
+        },
+        {
+          "deviceType": "TV",
+          "layout": {
+              "communal" : {
+                "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                ],
+                  "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  ]
+              },
+              "personal" : {
+                "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                ],
+                "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                ]
+              }
+          }
+      },
+      {
+        "deviceType": "tv",
+        "layout": {
+            "communal" : {
+              "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+              ],
+                "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                ]
+            },
+            "personal" : {
+              "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+              ],
+              "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+              ]
+            }
+        }
+    },
+      {
+          "deviceType": "companion",
+          "layout": {
+              "communal" : {
+                "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                ],
+                "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                ]
+              },
+              "personal" : {
+                  "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  ],
+                  "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  ]
+              }
+          }
+      },
+        {
+            "deviceType": "handheld",
+            "layout": {
+                "communal" : {
+                  "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  ],
+                  "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  ]
+                },
+                "personal" : {
+                    "portrait": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ],
+                    "landscape": [
+                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    ]
+                }
+            }
+        }
+    ]
+}
