@@ -76,15 +76,19 @@
 				<tl:sleep tl:dur="10" tl:prio="high"/>
 				<tl:ref tim:class="video-chat"
 					tim:dmappcid="dmappcid_videochat"
-					tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"/>
+					tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"
+					tic:lobby="12345"
+					tic:groupStateId="abc123"/>
 
 				<tl:ref tim:class="video-chat-view"
 					tim:dmappcid="dmappcid_videochat_view"
-					tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"/>
+					tim:url="../../dmapp-components/video-chat/video-chat/video-chat.html"
+					tic:groupStateId="abc123"/>
 
 				<tl:ref tim:class="video-chat-controls"
 					tim:dmappcid="dmappcid_videochat_controls"
-					tim:url="../../dmapp-components/video-chat/video-chat-controls/video-chat-controls.html"/>
+					tim:url="../../dmapp-components/video-chat/video-chat-controls/video-chat-controls.html"
+					tic:groupStateId="abc123"/>
 			</tl:par>
 			<tl:par tl:end="master" title="10. component switcher">
 				<tl:sleep tl:dur="10" tl:prio="high"/>
