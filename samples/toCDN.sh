@@ -8,4 +8,4 @@ x)
 	;;
 esac
 set -x
-rsync -avz -e "ssh -p 52225" $1/ cwi@origin.2immerse.advdev.tv:2immerse_live/sandbox/$1/
+rsync -rlvz -e "ssh -p 52225" $1/ cwi@origin.2immerse.advdev.tv:2immerse_live/sandbox/$1/
