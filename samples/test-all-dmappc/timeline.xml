@@ -14,7 +14,7 @@
 			    <tl:ref tim:class="image"
 			            tim:dmappcid="dmappcid_image"
 			            tim:url="../../dmapp-components/image/image.html"
-			            tim:mediaUrl="../../sandbox/backdrop.jpg"
+			            tic:mediaUrl="../../sandbox/backdrop.jpg"
 			            />
 			</tl:par>
 			<tl:par tl:end="master" title="2. scrolling text">
