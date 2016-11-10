@@ -4,7 +4,6 @@
 		<tl:seq title="Demo">
 
 			<tl:par tl:end="master" title="Title card">
-				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback" tic:syncMode="master" title="Keep the clock going when there is no video" />
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
 			    <tl:ref tim:dmappcid="dmappcid_titlecard1" 
 				    tim:class="title-card" 
@@ -18,7 +17,6 @@
 			</tl:par>
 
 			<tl:par tl:end="master" title="Video chat">
-				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback1" tic:syncMode="master" title="Keep the clock going when there is no video" />
 			    <tl:sleep tl:dur="30" tl:prio="high"/>
 			    <tl:ref tim:class="video-chat"
 				    tim:dmappcid="dmappcid_videochat1"
@@ -45,7 +43,6 @@
 		    </tl:par>
 
 			<tl:par tl:end="master" title="Video chat">
-				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback2" tic:syncMode="master" title="Keep the clock going when there is no video" />
 			    <tl:sleep tl:dur="30" tl:prio="high"/>
 			    <tl:ref tim:class="video-chat"
 				    tim:dmappcid="dmappcid_videochat2"
@@ -61,7 +58,6 @@
 			</tl:par>
 
 			<tl:par tl:end="master" title="Finish">
-				<tl:ref tim:class="FallbackClock" tim:dmappcid="fallback3" tic:syncMode="master" title="Keep the clock going when there is no video" />
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
 			    <tl:ref tim:dmappcid="dmappcid_titlecard2" 
 				    tim:class="title-card" 
