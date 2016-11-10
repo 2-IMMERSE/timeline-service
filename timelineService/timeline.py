@@ -111,8 +111,8 @@ class BaseTimeline:
         self.dmappId = None
         return None
 
-    def dmappcStatus(self, dmappId, componentId, status):
-        logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s)" % (self.contextId, dmappId, componentId, status))
+    def dmappcStatus(self, dmappId, componentId, status, fromLayout=False, duration=None):
+        logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout, duration)" % (self.contextId, dmappId, componentId, status))
         assert dmappId == self.dmappId
         c = self.dmappComponents[componentId]
         c.statusReport(status)

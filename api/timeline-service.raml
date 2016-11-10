@@ -4,7 +4,29 @@ baseUri: http://2immerse.eu/timeline/{version}
 documentation:
   - title: Timeline Service
     content: !include timeline-service.md
-
+schemas:
+  - ComponentStatus: |
+      {
+        "title": "ComponentStatus",
+        "type": "object",
+        "properties":{
+          "status" : {
+            "type": "string",
+            "description": "Current component execution state, as per timeline service documentation"
+          },
+          "fromLayout" : {
+            "type": "boolean",
+            "default" : false,
+            "description": "True if this status update was invented by the layout service"
+          },
+          "duration" : {
+            "type": "number",
+            "description": "Filled in by client if (and only if) it knows the intrinsic duration of the underlying media element"
+          }
+        },
+        "required": ["status"]
+      }
+  
 /context:
 	post:
 		description: Create a timeline for the given context
@@ -67,6 +89,15 @@ documentation:
 						required: true
 					status:
 						description: The status report
+				body:
+				    application/json:
+				        schema: ComponentStatus
+				        example: | 
+				            {
+				                "status" : "started",
+				                "fromLayout" : false,
+				                "duration" : 123.45
+				            }
 				responses:
 					204:
 		/timelineEvent:
