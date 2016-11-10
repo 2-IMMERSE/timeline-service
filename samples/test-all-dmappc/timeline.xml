@@ -42,15 +42,15 @@
 			</tl:par>
 			<tl:par tl:end="master" title="5. title card">
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:dmappcid="dmappcid_titlecard" 
-				    tim:class="title-card" 
-				    tim:url="../../dmapp-components/title-card/title-card.html" 
+			    <tl:ref tim:dmappcid="dmappcid_titlecard"
+				    tim:class="title-card"
+				    tim:url="../../dmapp-components/title-card/title-card.html"
 				    tic:title="Hamlet" 
-				    tic:author="William Shakespeare" 
-				    tic:brand="Royal Shakespeare Company" 
-				    tic:brand-image-src="../../media/rsc/rsc_logo.tmb-logo-200.png" 
-				    tic:synopsis="The searing tragedy of young student Hamlet, tormented by his father's death and confronting each of us with the mirror of our own mortality in an imperfect world" 
-				    tic:poster="../../media/rsc/hamlet/hamlet-production-king-queen-l.jpg"/>
+				    tic:author="William Shakespeare"
+				    tic:brand="Royal Shakespeare Company"
+				    tic:brandImageUrl="../../media/rsc/rsc_logo.tmb-logo-200.png"
+				    tic:synopsis="The searing tragedy of young student Hamlet, tormented by his father's death and confronting each of us with the mirror of our own mortality in an imperfect world"
+				    tic:posterUrl="../../media/rsc/hamlet/hamlet-production-king-queen-l.jpg"/>
 			</tl:par>
 			<tl:par tl:end="master" title="6. article">
 			    <tl:sleep tl:dur="10" tl:prio="high"/>
