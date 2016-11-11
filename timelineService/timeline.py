@@ -20,7 +20,8 @@ class BaseTimeline:
     def createTimeline(cls, contextId, layoutServiceUrl):
         """Factory function: create a new context"""
         if contextId in cls.ALL_CONTEXTS:
-            logger.error("Creating timeline for context %s but it already exists" % contextId)
+            la = logging.LoggerAdapter(logger, extra=dict(contextID=contextId))
+            la.error("Creating timeline for context %s but it already exists" % contextId)
         assert not contextId in cls.ALL_CONTEXTS
         new = cls(contextId, layoutServiceUrl)
         cls.ALL_CONTEXTS[contextId] = new
@@ -40,6 +41,7 @@ class BaseTimeline:
     def __init__(self, contextId, layoutServiceUrl):
         """Initializer, creates a new context and stores it for global reference"""
         self.creationTime = time.time() # Mainly for debugging, so we can tell contexts apart
+        self.logger = logging.LoggerAdapter(logger, dict(contextID=contextId))
         self.contextId = contextId
         self.timelineDocUrl = None
         self.layoutServiceUrl = layoutServiceUrl
@@ -47,13 +49,13 @@ class BaseTimeline:
         self.dmappId = None
         self.dmappComponents = {}
         self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
-        self.document = document.Document(self.clockService)
+        self.document = document.Document(self.clockService, extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         # Do other initialization
 
     def delete(self):
         """Destructor, sort-of"""
-        logger.info("Timeline(%s): delete()" % self.contextId)
+        self.logger.info("Timeline(%s): delete()" % self.contextId)
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
         self.timelineDocUrl = None
@@ -94,15 +96,18 @@ class BaseTimeline:
         assert self.dmappId is None
         self.timelineDocUrl = timelineDocUrl
         self.dmappId = dmappId
+        self.logger = logging.LoggerAdapter(logger, dict(contextID=self.contextId, dmappID=dmappId))
+        assert self.document
+        self.document.setExtraLoggerArgs(dict(contextID=self.contextId, dmappID=dmappId))
 
-        self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId)
+        self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId, self.logger)
         self._populateTimeline()
         self._startTimeline()
         self._updateTimeline()
         return None
 
     def unloadDMAppTimeline(self, dmappId):
-        logger.info("Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId))
+        self.logger.info("Timeline(%s): unloadDMAppTimeline(%s)" % (self.contextId, dmappId))
         assert self.timelineDocUrl
         assert self.dmappTimeline
         assert self.dmappId == dmappId
@@ -112,7 +117,7 @@ class BaseTimeline:
         return None
 
     def dmappcStatus(self, dmappId, componentId, status, fromLayout=False, duration=None):
-        logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout, duration)" % (self.contextId, dmappId, componentId, status))
+        self.logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout, duration)" % (self.contextId, dmappId, componentId, status))
         assert dmappId == self.dmappId
         c = self.dmappComponents[componentId]
         c.statusReport(status)
@@ -120,12 +125,12 @@ class BaseTimeline:
         return None
 
     def timelineEvent(self, eventId):
-        logger.debug("Timeline(%s): timelineEvent(%s)" % (self.contextId, eventId))
+        self.logger.debug("Timeline(%s): timelineEvent(%s)" % (self.contextId, eventId))
         pass
         return None
 
     def clockChanged(self, contextClock, contextClockRate, wallClock):
-        logger.debug("Timeline(%s): clockChanged(contextClock=%s, contextClockRate=%f, wallClock=%s)", self.contextId, contextClock, contextClockRate, wallClock)
+        self.logger.debug("Timeline(%s): clockChanged(contextClock=%s, contextClockRate=%f, wallClock=%s)", self.contextId, contextClock, contextClockRate, wallClock)
         # self.document.clock.setxxxxx(contextClock, wallClock)
         if contextClockRate != self.document.clock.getRate():
             if contextClockRate:
@@ -135,7 +140,7 @@ class BaseTimeline:
                 self.document.report(logging.INFO, 'CLOCK', 'stop', self.document.clock.now())
                 self.document.clock.stop()
         else:
-            print 'xxxjack clockChanged no change', contextClock, contextClockRate, wallClock
+            pass # print 'xxxjack clockChanged no change', contextClock, contextClockRate, wallClock
         self._updateTimeline()
         return None
 
@@ -144,12 +149,12 @@ class BaseTimeline:
         try:
             self.document.load(self.timelineDocUrl)
         except:
-            logger.error("Timeline(%s): %s: Error loading document", self.contextId, self.timelineDocUrl)
+            self.logger.error("Timeline(%s): %s: Error loading document", self.contextId, self.timelineDocUrl)
             raise
         self.document.addDelegates()
 
     def _stepTimeline(self):
-        logger.debug("Timeline(%s): stepTimeline at %f", self.contextId, self.document.clock.now())
+        self.logger.debug("Timeline(%s): stepTimeline at %f", self.contextId, self.document.clock.now())
         curState = self.document.getDocumentState()
         if not curState: return
         if curState == document.State.idle:
@@ -205,7 +210,8 @@ else:
         
         
 class ProxyLayoutService:
-    def __init__(self, contactInfo, contextId, dmappId):
+    def __init__(self, contactInfo, contextId, dmappId, logger):
+        self.logger = logger
         self.contactInfo = contactInfo
         self.contextId = contextId
         self.dmappId = dmappId
@@ -226,7 +232,7 @@ class ProxyLayoutService:
 
     def forwardActions(self):
         if not self.actions: return
-        logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(self.actions), repr(self.actions))
+        self.logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(self.actions), repr(self.actions))
         entryPoint = self.getContactInfo() + '/transaction'
         body = dict(time=self.actionsTimestamp, actions=self.actions)
         r = requests.post(entryPoint, json=body)
@@ -238,6 +244,7 @@ class ProxyLayoutService:
 class ProxyDMAppComponent(document.TimeElementDelegate):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
+        self.logger = layoutService.logger
         self.timelineDocUrl = timelineDocUrl
         self.layoutService = layoutService
         self.dmappcId = self.elt.get(document.NS_2IMMERSE("dmappcid"))
@@ -248,11 +255,11 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             self.url = urllib.basejoin(self.timelineDocUrl, self.url)
         if not self.dmappcId:
             self.dmappcId = "unknown%d" % id(self)
-            logger.error("Element %s: missing tim:dmappcid attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId)
+            self.logger.error("Element %s: missing tim:dmappcid attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId)
         assert self.dmappcId
         if not self.klass:
             self.klass = "unknownClass"
-            logger.error("Element %s: missing tim:class attribute, invented %s", self.document.getXPath(self.elt), self.klass)
+            self.logger.error("Element %s: missing tim:class attribute, invented %s", self.document.getXPath(self.elt), self.klass)
         assert self.klass
 
     def _getContactInfo(self):
@@ -325,27 +332,27 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         #
         if state == document.State.inited:
             if self.state != document.State.initing:
-                logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state))
+                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state))
                 return
         elif state == document.State.skipped:
             if self.state != document.State.initing:
-                logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state))
+                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state))
                 return
         elif state == document.State.started:
             if self.state != document.State.starting:
-                logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state))
+                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state))
                 return
         elif state == document.State.finished:
             if self.state not in {document.State.starting, document.State.started}:
-                logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state))
+                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state))
                 return
         elif state == document.State.idle:
             pass
         else:
-            logger.error('Unknown "%s" state update for node %s (in state %s)' %( state, self.document.getXPath(self.elt), self.state))
+            self.logger.error('Unknown "%s" state update for node %s (in state %s)' %( state, self.document.getXPath(self.elt), self.state))
             return
         if state == 'skipped' and self.state == document.State.idle:
-            logger.warn('Ignoring "skipped" state update for idle node %s'% ( self.document.getXPath(self.elt)))
+            self.logger.warning('Ignoring "skipped" state update for idle node %s'% ( self.document.getXPath(self.elt)))
             return
         self.setState(state)
 

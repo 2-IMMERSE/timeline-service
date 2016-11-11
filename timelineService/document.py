@@ -94,7 +94,7 @@ class DummyDelegate:
     def setState(self, state):
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
         if self.state == state:
-            self.logger.warn('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
+            self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
 #             if DEBUG:
 #                 import pdb
 #                 pdb.set_trace()
@@ -331,7 +331,7 @@ class ParDelegate(TimeElementDelegate):
             if not childState in State.NOT_DONE:
                 return
         # If we get here we got an unexpected state change from a child. Report.
-        self.logger.warn('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
+        self.logger.warning('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -470,16 +470,16 @@ class RefDelegate(TimeElementDelegate):
     EXACT_CHILD_COUNT=0
     
     def initTimelineElement(self):
-    	if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
-    		self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
-    		self.setState(State.skipped)
-    		return
-    	TimeElementDelegate.initTimelineElement(self)
+        if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
+            self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
+            self.setState(State.skipped)
+            return
+        TimeElementDelegate.initTimelineElement(self)
 
     def startTimelineElement(self):
-    	if self.state == State.skipped:
-    		self.setState(State.finished)
-    		return
+        if self.state == State.skipped:
+            self.setState(State.finished)
+            return
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         self.setState(State.starting)
@@ -610,11 +610,13 @@ class Document:
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
         self.terminating = False
-		logger = logging.getLogger(__name__)
-		if extraLoggerArgs:
-			logger = logging.LoggerAdapter(logger, extra)
-        self.logger = logger
+        self.logger = logging.getLogger(__name__)
+        if extraLoggerArgs:
+            self.logger = logging.LoggerAdapter(self.logger, extraLoggerArgs)
         
+    def setExtraLoggerArgs(self, extraLoggerArgs):
+            self.logger = logging.LoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
+    
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
         assert not self.root
         self.delegateClasses[tag] = klass
@@ -758,6 +760,7 @@ def main():
     parser.add_argument("--recursive", action="store_true", help="Debugging: use recursion for callbacks, not queueing")
     parser.add_argument("--attributes", action="store_true", help="Check 2immerse tim: and tic: atributes")
     args = parser.parse_args()
+    logger = logging.getLogger(__name__)
     DEBUG = args.debug
     if DEBUG:
         logger.setLevel(logging.DEBUG)

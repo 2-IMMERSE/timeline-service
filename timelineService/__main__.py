@@ -28,9 +28,13 @@ DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,WARNING"
 class MyFormatter(logging.Formatter):
 
     def format(self, record):
-        import pdb ; pdb.set_trace()
         contextID = None
         dmappID = None
+        if hasattr(record, 'contextID'):
+            contextID = record.contextID
+        if hasattr(record, 'dmappID'):
+            dmappID = record.dmappID
+        print 'xxxjack format', dir(record)
         source = "TimelineService"
         level = record.levelname
         subSource = record.module
