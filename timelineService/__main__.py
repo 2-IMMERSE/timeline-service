@@ -28,6 +28,7 @@ DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,WARNING"
 class MyFormatter(logging.Formatter):
 
     def format(self, record):
+        import pdb ; pdb.set_trace()
         contextID = None
         dmappID = None
         source = "TimelineService"

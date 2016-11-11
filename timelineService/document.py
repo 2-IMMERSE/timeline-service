@@ -7,7 +7,6 @@ import logging
 import clocks
 
 logging.basicConfig()
-logger = logging.getLogger(__name__)
 
 DEBUG=True
 
@@ -72,6 +71,7 @@ class DummyDelegate:
     def __init__(self, elt, document, clock):
         self.elt = elt
         self.document = document
+        self.logger = self.document.logger
         self.state = State.idle
         self.clock = clock
         
@@ -94,7 +94,7 @@ class DummyDelegate:
     def setState(self, state):
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
         if self.state == state:
-            logger.warn('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
+            self.logger.warn('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
 #             if DEBUG:
 #                 import pdb
 #                 pdb.set_trace()
@@ -331,7 +331,7 @@ class ParDelegate(TimeElementDelegate):
             if not childState in State.NOT_DONE:
                 return
         # If we get here we got an unexpected state change from a child. Report.
-        logger.warn('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
+        self.logger.warn('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -601,7 +601,7 @@ DELEGATE_CLASSES = {
 class Document:
     RECURSIVE = False
         
-    def __init__(self, clock):
+    def __init__(self, clock, extraLoggerArgs=None):
         self.tree = None
         self.root = None
         self.clock = clock
@@ -610,6 +610,10 @@ class Document:
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
         self.terminating = False
+		logger = logging.getLogger(__name__)
+		if extraLoggerArgs:
+			logger = logging.LoggerAdapter(logger, extra)
+        self.logger = logger
         
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
         assert not self.root
@@ -741,7 +745,7 @@ class Document:
             args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
         else:
             args = ''
-        logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args)
+        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args)
              
 def main():
     global DEBUG
