@@ -62,36 +62,32 @@ def main():
     parser = argparse.ArgumentParser(description="Run 2immerse test client app, as tv or handheld")
     parser.add_argument('--tsserver', metavar="HOST", help="Run DVB TSS server on IP-address HOST, port 7681 (usually tv only)")
     parser.add_argument('--tsclient', metavar="URL", help="Contact DVB TSS server on URL, for example ws://127.0.0.1:7681/ts (usually handheld only)")
-    parser.add_argument('--layout', metavar="URL", help="Create context and app at layout server endpoint URL (default: %s)" % DEFAULT_LAYOUT, default=DEFAULT_LAYOUT)
+    parser.add_argument('--layoutServer', metavar="URL", help="Create context and app at layout server endpoint URL (default: %s)" % DEFAULT_LAYOUT, default=DEFAULT_LAYOUT)
     parser.add_argument('--layoutDoc', metavar="URL", help="Layout document")
-    parser.add_argument('--timeline', metavar="URL", help="Tell layout server about timeline server endpoint URL (default: %s)" % DEFAULT_TIMELINE, default=DEFAULT_TIMELINE)
+    parser.add_argument('--timelineServer', metavar="URL", help="Tell layout server about timeline server endpoint URL (default: %s)" % DEFAULT_TIMELINE, default=DEFAULT_TIMELINE)
     parser.add_argument('--timelineDoc', metavar="URL", help="Timeline document")
     parser.add_argument('--context', metavar="URL", help="Connect to layout context at URL (usually handheld only)")
-    parser.add_argument('--kibana', action="store_true", help="Open a browser window with the Kibana log for this run")
+    parser.add_argument('--kibana', action="store_true", help="Open a browser window with the Kibana log for this run (tv only)")
     
     args = parser.parse_args()
     if args.context:
         # Client mode.
-        if args.layout or args.timeline:
-            print "Specify either --context (handheld) or both --layout and --timeline (tv)"
+        if args.layoutServer or args.timelineServer:
+            print "Specify either --context (handheld) or both --layoutServer and --timelineServer (tv)"
             sys.exit(1)
-        if args.kibana:
-            kibana_url = KIBANA_URL % args.context
-            webbrowser.open(kibana_url)
-            
         dmapp = dmapp_for_handheld(args.context, args.tsclient)
     else:
-        if not args.layout or not args.timeline:
-            print "Specify either --context (handheld) or both --layout and --timeline (tv)"
+        if not args.layoutServer or not args.timelineServer:
+            print "Specify either --context (handheld) or both --layoutServer and --timelineServer (tv)"
             sys.exit(1)
             
         if not args.layoutDoc:
             print "Must specify --layoutDoc"
             sys.exit(1)
-        context = context_for_tv(args.layout)
+        context = context_for_tv(args.layoutServer)
 
         if args.kibana:
-            kibana_url = KIBANA_URL % context.layoutServiceContextURL
+            kibana_url = KIBANA_URL % context.contextId
             webbrowser.open(kibana_url)
         
         tsargsforclient = ""
@@ -102,7 +98,7 @@ def main():
         print 'Press return when done -',
         _ = sys.stdin.readline()
         
-        dmapp = dmapp_for_tv(context, args.layout, args.timeline, args.tsserver, args.timelineDoc, args.layoutDoc)
+        dmapp = dmapp_for_tv(context, args.layoutServer, args.timelineServer, args.tsserver, args.timelineDoc, args.layoutDoc)
             
     dmapp.start()
     dmapp.wait()
