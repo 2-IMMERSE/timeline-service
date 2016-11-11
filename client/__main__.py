@@ -2,6 +2,7 @@ import sys
 import argparse
 import application
 import webbrowser
+import urlparse
 
 DEFAULT_LAYOUT="https://layout-service.2immerse.advdev.tv/layout/v2"
 DEFAULT_TIMELINE="https://timeline-service.2immerse.advdev.tv/layout/v1"
@@ -84,6 +85,24 @@ def main():
         if not args.layoutDoc:
             print "Must specify --layoutDoc"
             sys.exit(1)
+        # Sanity check that all URLs are correct
+        up = urlparse.urlparse(args.layoutServer)
+        if not up.scheme in {'http', 'https'}:
+            print 'Only absolute http/https URL allowed:', args.layoutServer
+            sys.exit(1)
+        up = urlparse.urlparse(args.timelineServer)
+        if not up.scheme in {'http', 'https'}:
+            print 'Only absolute http/https URL allowed:', args.timelineServer
+            sys.exit(1)
+        up = urlparse.urlparse(args.layoutDoc)
+        if not up.scheme in {'http', 'https'}:
+            print 'Only absolute http/https URL allowed:', args.layoutDoc
+            sys.exit(1)
+        if args.timelineDoc:
+            up = urlparse.urlparse(args.timelineDoc)
+            if not up.scheme in {'http', 'https'}:
+                print 'Only absolute http/https URL allowed:', args.timelineDoc
+                sys.exit(1)
         context = context_for_tv(args.layoutServer)
 
         if args.kibana:
