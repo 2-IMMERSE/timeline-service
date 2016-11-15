@@ -1,4 +1,5 @@
 import sys
+import os
 import argparse
 import application
 import webbrowser
@@ -8,6 +9,8 @@ DEFAULT_LAYOUT="https://layout-service.2immerse.advdev.tv/layout/v2"
 DEFAULT_TIMELINE="https://timeline-service.2immerse.advdev.tv/timeline/v1"
 
 KIBANA_URL="https://2immerse.advdev.tv/kibana/app/kibana#/discover/All-2-Immerse-prefixed-logs-without-Websocket-Service?_g=(refreshInterval:(display:'10%%20seconds',pause:!f,section:1,value:10000),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(sourcetime,source,subSource,verb,logmessage,contextID,message),filters:!(),index:'logstash-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'rawmessage:%%22%%2F%%5E2-Immerse%%2F%%22%%20AND%%20NOT%%20source:%%22WebsocketService%%22%%20AND%%20contextID:%%22%s%%22')),sort:!(sourcetime,desc))"
+
+LAYOUTRENDERER_URL='file://%s#contextID=%%s' % os.path.realpath(os.path.join(os.path.dirname(__file__), '../../layout-service/renderer/render.html'))
 
 def context_for_tv(layoutServiceURL):
     caps = dict(
@@ -69,6 +72,7 @@ def main():
     parser.add_argument('--timelineDoc', metavar="URL", help="Timeline document")
     parser.add_argument('--context', metavar="URL", help="Connect to layout context at URL (usually handheld only)")
     parser.add_argument('--kibana', action="store_true", help="Open a browser window with the Kibana log for this run (tv only)")
+    parser.add_argument('--layoutRenderer', action="store_true", help="Open a browser window that renders the layout for this run (tv only)")
     
     args = parser.parse_args()
     if args.context:
@@ -109,6 +113,11 @@ def main():
             kibana_url = KIBANA_URL % context.contextId
             webbrowser.open(kibana_url)
         
+        if args.layoutRenderer:
+            renderer_url = LAYOUTRENDERER_URL % context.contextId
+            print 'xxxjack', renderer_url
+            webbrowser.open(renderer_url)
+            
         tsargsforclient = ""
         if args.tsserver:
             tsargsforclient = "--tsclient ws://%s:7681/ts" % args.tsserver
