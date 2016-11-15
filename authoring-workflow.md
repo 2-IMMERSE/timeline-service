@@ -36,7 +36,7 @@ Here is a tentative workflow for creating new DMApp documents.
 
 - It is possible to use the dry-run script to test tv/handheld, check the source.
 
-- If you want to actually play back your document in Chrome, using the real client, run: *(does not work yet)*
+- If you want to actually play back your document in Chrome, using the real client, run:
 
 ```
 ./bin/play.sh https://origin.2immerse.advdev.tv/dmapps/sample-dmapp/layout.json https://origin.2immerse.advdev.tv/dmapps/sample-dmapp/timeline.xml

@@ -43,6 +43,6 @@ esac
 
 url="https://origin.2immerse.advdev.tv/client-api/dist/test/general-test/dist/index.html"
 
-fullUrl="$url#layoutDocUrl=`urlencode $1`&timelineDocUrl=`urlencode $2`"
+fullUrl="$url#?layout=`urlencode $1`&timeline=`urlencode $2`"
 
 exec "$chrome" --disable-web-security "$fullUrl"
