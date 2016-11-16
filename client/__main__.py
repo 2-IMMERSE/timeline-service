@@ -4,6 +4,7 @@ import argparse
 import application
 import webbrowser
 import urlparse
+import logging
 
 DEFAULT_LAYOUT="https://layout-service.2immerse.advdev.tv/layout/v2"
 DEFAULT_TIMELINE="https://timeline-service.2immerse.advdev.tv/timeline/v1"
@@ -73,8 +74,16 @@ def main():
     parser.add_argument('--context', metavar="URL", help="Connect to layout context at URL (usually handheld only)")
     parser.add_argument('--kibana', action="store_true", help="Open a browser window with the Kibana log for this run (tv only)")
     parser.add_argument('--layoutRenderer', action="store_true", help="Open a browser window that renders the layout for this run (tv only)")
+    parser.add_argument('--logLevel', action='store', help="Log level (default: INFO)", default="INFO")
     
     args = parser.parse_args()
+    
+    logging.basicConfig()
+    logger = logging.getLogger()
+    #logger.setLevel(getattr(logging, args.logLevel))
+    application.logLevel = getattr(logging, args.logLevel)
+    logger.debug("client started")
+    
     if args.context:
         # Client mode.
         if args.layoutServer or args.timelineServer:

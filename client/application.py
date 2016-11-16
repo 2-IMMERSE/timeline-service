@@ -2,10 +2,17 @@ import requests
 import requests
 import time
 import dvbclock
+import logging
+
+logLevel = None
 
 class Context:
     def __init__(self, deviceId, caps):
         self.deviceId = deviceId
+        self.logger = logging.getLogger(deviceId)
+        if logLevel:
+            self.logger.setLevel(logLevel)
+        self.logger.debug("Device %s created" % deviceId)
         self.caps = caps
         self.orientation = self.caps['orientations'][0]
         self.contextId = None
@@ -17,8 +24,7 @@ class Context:
                 params=dict(reqDeviceId=self.deviceId), 
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
-            print 'Error', r.status_code
-            print r.text
+            self.logger.error('create: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
         reply = r.json()
         self.contextId = reply["contextId"]
@@ -33,12 +39,11 @@ class Context:
                 json=self.caps
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
-            print 'Error', r.status_code
-            print r.text
+            self.logger.error('join: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
         reply = r.json()
         self.contextId = reply["contextId"]
-        print "contextId:", self.contextId
+        self.logger.info("Join: ContextId: %s"%self.contextId)
         
     def createDMApp(self, urls):
         r = requests.post(
@@ -47,12 +52,11 @@ class Context:
                 json=urls
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
-            print 'Error', r.status_code
-            print r.text
+            self.logger.error('createDMApp: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
         reply = r.json()
         dmappId = reply["DMAppId"]
-        print 'dmappId:', dmappId
+        self.logger.info("createDMApp: dmappId=%s" % dmappId)
         return Application(self, dmappId, True)
 
     def getDMApp(self):
@@ -61,18 +65,18 @@ class Context:
                 params=dict(reqDeviceId=self.deviceId)
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
-            print 'Error', r.status_code
-            print r.text
+            self.logger.error('getDMApp: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
         reply = r.json()
         if type(reply) != type([]) or len(reply) != 1:
-            print 'Error: excepted array with one dmappId but got:', repr(reply)
+            self.logger.error('getDMApp: Error: excepted array with one dmappId but got: %s'%repr(reply))
         dmappId = reply[0]
         return Application(self, dmappId, False)
         
 class Application:
     def __init__(self, context, dmappId, isMaster, clockParams={}):
         self.context = context
+        self.logger = self.context.logger
         self.dmappId = dmappId
         self.isMaster = isMaster
         self.currentMasterClockComponent = None
@@ -107,7 +111,7 @@ class Application:
     def run(self):
         # Non-threaded polling. But interface (start/run/wait) is ready for threading and event-based reports.
         while True:
-            print '%s (wallclock=%s):' % (self.clock.now(), time.time())
+            self.logger.debug("run: clock=%s, wallclock=%s" % (self.clock.now(), time.time()))
             inst = self._getLayoutInstruction()
             self._doLayoutInstruction(inst)
             self.clock.report()
@@ -118,8 +122,7 @@ class Application:
     def _getLayoutInstruction(self):
         r = requests.get(self.layoutServiceApplicationURL, params=dict(reqDeviceId=self.context.deviceId))
         if r.status_code not in (requests.codes.ok, requests.codes.created):
-            print 'Error', r.status_code
-            print r.text
+            self.logger.error('_getLayoutInstructions: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
         reply = r.json()
         return reply
@@ -133,14 +136,14 @@ class Application:
                 self.components[componentId].update(componentInfo)
                 oldComponents.remove(componentId)
             else:
-            	# Debug: if the component has debug=skip we simply return "skipped"
-            	# u'parameters': {u'debug-2immerse-debug': u'skip'}
-            	if 'parameters' in componentInfo:
-            		p = componentInfo['parameters']
-            		if p.get('debug-2immerse-debug') == 'skip':
-            			c = debugSkipComponent(self, componentId, componentInfo)
-            			self.components[componentId] = c
-            			continue
+                # Debug: if the component has debug=skip we simply return "skipped"
+                # u'parameters': {u'debug-2immerse-debug': u'skip'}
+                if 'parameters' in componentInfo:
+                    p = componentInfo['parameters']
+                    if p.get('debug-2immerse-debug') == 'skip':
+                        c = debugSkipComponent(self, componentId, componentInfo)
+                        self.components[componentId] = c
+                        continue
                 # Create new components
                 c = Component(self, componentId, componentInfo)
                 self.components[componentId] = c
@@ -150,36 +153,37 @@ class Application:
             del self.components[componentId]
 
 class debugSkipComponent:
-	def __init__(self, application, componentId, componentInfo):
-		print 'Status for', componentId, 'is now', 'skipped'
-		# Report status for new component
-		layoutServiceComponentURL = application.layoutServiceApplicationURL + '/component/' + componentId
-		r = requests.post(layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=application.context.deviceId),
-				json=dict(status='skipped'))
-		if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
-			print 'Error', r.status_code
-			print r.text
-			r.raise_for_status()
+    def __init__(self, application, componentId, componentInfo):
+        self.logger = application.logger
+        self.logger.info("%f: component %s: skipped" % (self.application.clock.now(), componentId))
+        # Report status for new component
+        layoutServiceComponentURL = application.layoutServiceApplicationURL + '/component/' + componentId
+        r = requests.post(layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=application.context.deviceId),
+                json=dict(status='skipped'))
+        if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
+            self.logger.error('status: Error %s: %s' % (r.status_code, r.text))
+            r.raise_for_status()
  
- 	def update(self, componentInfo):
- 		pass
- 		
- 	def destroy(self):
- 		pass
- 		
- 	def tick(self):
- 		pass
- 		
+    def update(self, componentInfo):
+        pass
+        
+    def destroy(self):
+        pass
+        
+    def tick(self):
+        pass
+        
 class Component:
     def __init__(self, application, componentId, componentInfo):
         self.application = application
+        self.logger = application.logger
         params = componentInfo.get('parameters')
         if not params: params = {}
         syncMode = params.get('syncMode')
         if not syncMode: syncMode = None
         self.canBeMasterClock = syncMode == 'master'
         if self.canBeMasterClock: 
-        	self.application.currentMasterClockComponent = self
+            self.application.currentMasterClockComponent = self
         self.layoutServiceComponentURL = self.application.layoutServiceApplicationURL + '/component/' + componentId
         self.componentId = componentId
         self.componentInfo = componentInfo
@@ -190,7 +194,7 @@ class Component:
         if componentInfo != self.componentInfo:
             self.componentInfo = componentInfo
         if self.canBeMasterClock and self.status == 'started':
-        	self.application.currentMasterClockComponent = self
+            self.application.currentMasterClockComponent = self
         if self.application.currentMasterClockComponent == self:
             if self.status == 'started':
                 self.application.clock.start()
@@ -217,13 +221,12 @@ class Component:
             self._reportStatus()
             
     def _reportStatus(self):
-        print 'Status for', self.componentId, 'is now', self.status
+        self.logger.info("%f: component %s: %s" % (self.application.clock.now(), self.componentId, self.status))
         # Report status for new component
         r = requests.post(self.layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=self.application.context.deviceId),
                 json=dict(status=self.status))
         if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
-            print 'Error', r.status_code
-            print r.text
+            self.logger.error('_reportStatus: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
         
         
@@ -268,11 +271,12 @@ class GlobalClock:
 class MasterClockMixin:
     def __init__(self, application):
         self.application = application
+        self.logger = self.application.logger
         
     def report(self):
         # Should also broadcast to the slave clocks or something
         url = self.application.layoutServiceApplicationURL
-        print 'clockChanged(contextClock=%s, wallClock=%s, contextClockRate=%f)' % (self.now(), time.time(), self.getSpeed())
+        self.logger.info("%f: clock rate=%d wallClock=%f" % (self.now(), self.getSpeed(), time.time()))
         r = requests.post(
                 url+"/actions/clockChanged", 
                 #params=dict(reqDeviceId=self.application.context.deviceId), 
@@ -283,8 +287,7 @@ class MasterClockMixin:
                     )
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
-            print 'Error', r.status_code
-            print r.text
+            self.logger.error('_clockChanged: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
 
 class MasterClock(MasterClockMixin, GlobalClock):
