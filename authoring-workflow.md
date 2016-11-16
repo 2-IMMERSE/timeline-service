@@ -45,7 +45,8 @@ Workflow:
 
 ```
 
-- It is possible to use the dry-run script to test tv/handheld, check the source.
+- It is possible to use the `dry-run` script to test multiple devices at the same time,
+  use `--help` for more information. Look at `--start` and `--wait` options.
 
 - If you want to actually play back your document in Chrome, using the real client, run:
 

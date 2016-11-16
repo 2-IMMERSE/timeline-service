@@ -5,6 +5,7 @@ import application
 import webbrowser
 import urlparse
 import logging
+import subprocess
 
 DEFAULT_LAYOUT="https://layout-service.2immerse.advdev.tv/layout/v2"
 DEFAULT_TIMELINE="https://timeline-service.2immerse.advdev.tv/timeline/v1"
@@ -13,7 +14,9 @@ KIBANA_URL="https://2immerse.advdev.tv/kibana/app/kibana#/discover/All-2-Immerse
 
 LAYOUTRENDERER_URL="http://origin.2immerse.advdev.tv/test/layout-renderer/render.html#contextId=%s"
 
-def context_for_tv(layoutServiceURL):
+def context_for_tv(layoutServiceURL, deviceType=None):
+    if deviceType == None:
+        deviceType = "TV"
     caps = dict(
         displayWidth=1920, 
         displayHeight=1080,
@@ -22,9 +25,9 @@ def context_for_tv(layoutServiceURL):
         touchInteraction=False,
         communalDevice=True,
         orientations=["landscape"],
-        deviceType="TV",
+        deviceType=deviceType,
         )
-    context = application.Context("TV", caps)
+    context = application.Context(deviceType, caps)
 
     context.create(layoutServiceURL)
     return context
@@ -43,7 +46,9 @@ def dmapp_for_tv(context, layoutServiceURL, timelineServiceURL, tsserver, timeli
         dmapp.selectClock({})
     return dmapp
     
-def dmapp_for_handheld(layoutServiceContextURL, tsclient):
+def dmapp_for_handheld(layoutServiceContextURL, tsclient, deviceType=None):
+    if deviceType == None:
+        deviceType = "handheld"
     caps = dict(
         displayWidth=720, 
         displayHeight=1280,
@@ -52,9 +57,9 @@ def dmapp_for_handheld(layoutServiceContextURL, tsclient):
         touchInteraction=True,
         communalDevice=False,
         orientations=['landscape', 'portrait'],
-        deviceType="handheld",
+        deviceType=deviceType,
         )
-    context = application.Context("handheld", caps)
+    context = application.Context(deviceType, caps)
     context.join(layoutServiceContextURL)
     dmapp = context.getDMApp()
     if tsclient:
@@ -75,6 +80,9 @@ def main():
     parser.add_argument('--kibana', action="store_true", help="Open a browser window with the Kibana log for this run (tv only)")
     parser.add_argument('--layoutRenderer', action="store_true", help="Open a browser window that renders the layout for this run (tv only)")
     parser.add_argument('--logLevel', action='store', help="Log level (default: INFO)", default="INFO")
+    parser.add_argument('--wait', action='store_true', help='After creating the context wait for a newline, so other devices can be started (tv only)')
+    parser.add_argument('--start', action='append', metavar='DEV', help='After creating the context, start another instance of %(prog)s for device DEV (tv only)')
+    parser.add_argument('--dev', action='store', metavar='DEV', help='Use deviceId DEV (default: TV or handheld)')
     
     args = parser.parse_args()
     
@@ -86,14 +94,8 @@ def main():
     
     if args.context:
         # Client mode.
-        if args.layoutServer or args.timelineServer:
-            print "Specify either --context (handheld) or both --layoutServer and --timelineServer (tv)"
-            sys.exit(1)
-        dmapp = dmapp_for_handheld(args.context, args.tsclient)
+        dmapp = dmapp_for_handheld(args.context, args.tsclient, args.dev)
     else:
-        if not args.layoutServer or not args.timelineServer:
-            print "Specify either --context (handheld) or both --layoutServer and --timelineServer (tv)"
-            sys.exit(1)
             
         if not args.layoutDoc:
             print "Must specify --layoutDoc"
@@ -116,7 +118,7 @@ def main():
             if not up.scheme in {'http', 'https'}:
                 print 'Only absolute http/https URL allowed:', args.timelineDoc
                 sys.exit(1)
-        context = context_for_tv(args.layoutServer)
+        context = context_for_tv(args.layoutServer, args.dev)
 
         if args.kibana:
             kibana_url = KIBANA_URL % context.contextId
@@ -124,7 +126,6 @@ def main():
         
         if args.layoutRenderer:
             renderer_url = LAYOUTRENDERER_URL % context.contextId
-            print 'xxxjack', renderer_url
             webbrowser.open(renderer_url)
             
         tsargsforclient = ""
@@ -132,8 +133,16 @@ def main():
             tsargsforclient = "--tsclient ws://%s:7681/ts" % args.tsserver
         print 'For handheld(s) run: %s %s --context %s' % (sys.argv[0], tsargsforclient, context.layoutServiceContextURL)
         print
-        print 'Press return when done -',
-        _ = sys.stdin.readline()
+        if args.start:
+            for dev in args.start:
+                cmd = ["python", sys.argv[0], "--context", context.layoutServiceContextURL, "--dev", dev, "--logLevel", args.logLevel]
+                if args.tsserver:
+                    cmd += ["--tsclient", "ws://%s:7681/ts" % args.tsserver]
+                print 'Starting:', ' '.join(cmd)
+                p = subprocess.Popen(cmd)
+        if args.wait:
+            print 'Press return when done -',
+            _ = sys.stdin.readline()
         
         dmapp = dmapp_for_tv(context, args.layoutServer, args.timelineServer, args.tsserver, args.timelineDoc, args.layoutDoc)
             
