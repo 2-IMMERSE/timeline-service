@@ -1,5 +1,16 @@
 Here is a tentative workflow for creating new DMApp documents.
 
+Prerequisites:
+
+- You should install pydvbcss (and possibly its dependencies) into your Python.
+  See https://pypi.python.org/pypi/pydvbcss/0.4.0 , I think the following should do the trick:
+  
+```
+sudo pip install pydvbcss
+```
+
+Workflow:
+
 - Create a folder with a `timeline.xml` and `layout.json`, or copy them from somewhere.
   The folder name is what is going to appear on the CDN. I'll use `sample-dmapp` here.
 
