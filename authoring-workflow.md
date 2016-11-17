@@ -3,7 +3,8 @@ Here is a tentative workflow for creating new DMApp documents.
 Prerequisites:
 
 - You should install pydvbcss (and possibly its dependencies) into your Python.
-  See https://pypi.python.org/pypi/pydvbcss/0.4.0 , I think the following should do the trick:
+  See https://pypi.python.org/pypi/pydvbcss/0.4.0 , I think the following should do the trick, possibly with either the
+  `--user` option, or with `sudo`:
   
 ```
 sudo pip install pydvbcss

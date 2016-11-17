@@ -12,14 +12,16 @@ DEFAULT_TIMELINE="https://timeline-service.2immerse.advdev.tv/timeline/v1"
 
 KIBANA_URL="https://2immerse.advdev.tv/kibana/app/kibana#/discover/All-2-Immerse-prefixed-logs-without-Websocket-Service?_g=(refreshInterval:(display:'10%%20seconds',pause:!f,section:1,value:10000),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(sourcetime,source,subSource,verb,logmessage,contextID,message),filters:!(),index:'logstash-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'rawmessage:%%22%%2F%%5E2-Immerse%%2F%%22%%20AND%%20NOT%%20source:%%22WebsocketService%%22%%20AND%%20contextID:%%22%s%%22')),sort:!(sourcetime,desc))"
 
-LAYOUTRENDERER_URL="http://origin.2immerse.advdev.tv/test/layout-renderer/render.html#contextId=%s"
+LAYOUTRENDERER_URL="http://origin.2immerse.advdev.tv/test/layout-renderer/render.html?contextId=%s&layoutUrl=%s"
 
-def context_for_tv(layoutServiceURL, deviceType=None):
+def context_for_tv(layoutServiceURL, deviceType=None, width=None, height=None):
+    if width == None: width = 1920
+    if height == None: height = 1080
     if deviceType == None:
         deviceType = "TV"
     caps = dict(
-        displayWidth=1920, 
-        displayHeight=1080,
+        displayWidth=width, 
+        displayHeight=height,
         audioChannels=1,
         concurrentVideo=1,
         touchInteraction=False,
@@ -46,12 +48,14 @@ def dmapp_for_tv(context, layoutServiceURL, timelineServiceURL, tsserver, timeli
         dmapp.selectClock({})
     return dmapp
     
-def dmapp_for_handheld(layoutServiceContextURL, tsclient, deviceType=None):
+def context_for_handheld(layoutServiceContextURL, tsclient, deviceType=None, width=None, height=None):
     if deviceType == None:
         deviceType = "handheld"
+    if width == None: width = 720
+    if height == None: height = 1280
     caps = dict(
-        displayWidth=720, 
-        displayHeight=1280,
+        displayWidth=width, 
+        displayHeight=height,
         audioChannels=2,
         concurrentVideo=2,
         touchInteraction=True,
@@ -82,7 +86,9 @@ def main():
     parser.add_argument('--logLevel', action='store', help="Log level (default: INFO)", default="INFO")
     parser.add_argument('--wait', action='store_true', help='After creating the context wait for a newline, so other devices can be started (tv only)')
     parser.add_argument('--start', action='append', metavar='DEV', help='After creating the context, start another instance of %(prog)s for device DEV (tv only)')
-    parser.add_argument('--dev', action='store', metavar='DEV', help='Use deviceId DEV (default: TV or handheld)')
+    parser.add_argument('--dev', metavar='DEV', help='Use deviceId DEV (default: TV or handheld)')
+    parser.add_argument('--width', type=int, metavar='W', help='Report device width as W (default 1920 for TV, 720 for handheld)')
+    parser.add_argument('--height', type=int, metavar='H', help='Report device height as H (default 1080 for TV, 1280 for handheld)')
     
     args = parser.parse_args()
     
@@ -94,7 +100,7 @@ def main():
     
     if args.context:
         # Client mode.
-        dmapp = dmapp_for_handheld(args.context, args.tsclient, args.dev)
+        dmapp = context_for_handheld(args.context, args.tsclient, args.dev, width=args.width, height=args.height)
     else:
             
         if not args.layoutDoc:
@@ -118,14 +124,14 @@ def main():
             if not up.scheme in {'http', 'https'}:
                 print 'Only absolute http/https URL allowed:', args.timelineDoc
                 sys.exit(1)
-        context = context_for_tv(args.layoutServer, args.dev)
+        context = context_for_tv(args.layoutServer, args.dev, width=args.width, height=args.height)
 
         if args.kibana:
             kibana_url = KIBANA_URL % context.contextId
             webbrowser.open(kibana_url)
         
         if args.layoutRenderer:
-            renderer_url = LAYOUTRENDERER_URL % context.contextId
+            renderer_url = LAYOUTRENDERER_URL % (context.contextId, args.layoutServer)
             webbrowser.open(renderer_url)
             
         tsargsforclient = ""
