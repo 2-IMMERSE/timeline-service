@@ -1,0 +1,215 @@
+{
+    "version": 3,
+    "dmapp": "200",
+    "constraints": [
+      {
+          "componentId" : "dmappcid_masterVideo",
+          "personal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "priority": 0,
+              "audio": true
+          },
+          "communal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "targetRegions": [
+        				"r1"
+        			],
+              "priority": 10,
+              "audio": true
+          }
+      },
+      {
+          "componentId" : "dmappcid_video",
+          "personal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "priority": 0,
+              "audio": true
+          },
+          "communal" : {
+              "aspect": "16:9",
+              "minSize": {
+                  "width": 80,
+                  "height": 45
+              },
+              "targetRegions": [
+        				"r2"
+        			],
+              "priority": 10,
+              "audio": true
+          }
+      },
+      {
+          "componentId" : "dmappcid_timedtext",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r3"
+        			],
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "dmappcid_titlecard",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r4"
+        			],
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "dmappcid_article",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r3"
+        			],
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "dmappcid_image",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r4"
+        			],
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "dmappcid_button",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r3"
+        			],
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "dmappcid_textchat",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r4"
+        			],
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "dmappcid_videochat",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r3"
+        			],
+              "priority": 0
+          }
+      },
+      {
+          "componentId" : "dmappcid_componentswitcher",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 9
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r4"
+        			],
+              "priority": 0
+          }
+      }
+    ],
+    "layoutModel" : "dynamic"
+}
