@@ -40,7 +40,7 @@ def checkAttributes(self):
         print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:dmappcid attribute"
     className = self.elt.get(NS_2IMMERSE("class"))
     if not className in REQUIRED_TIC_ATTRIBUTES:
-        print >>sys.stderr, "* Warning: element", self.getXPath(), " has unknown tim:class", className
+        print >>sys.stderr, "* Warning: element", self.getXPath(), "has unknown tim:class", className
         return
     requiredAttributes = REQUIRED_TIC_ATTRIBUTES[className]
     allowedAttributes = ALLOWED_TIC_ATTRIBUTES[className]

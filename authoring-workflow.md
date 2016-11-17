@@ -1,6 +1,6 @@
 Here is a tentative workflow for creating new DMApp documents.
 
-Prerequisites:
+### Prerequisites:
 
 - You should install pydvbcss (and possibly its dependencies) into your Python.
   See https://pypi.python.org/pypi/pydvbcss/0.4.0 , I think the following should do the trick, possibly with either the
@@ -10,7 +10,11 @@ Prerequisites:
 sudo pip install pydvbcss
 ```
 
-Workflow:
+- If you want to test on an Odroid you must first install the 2immerse Odroid image. Jack or Jonathan can help you with this.
+- Then, you use Chrome to download http://origin.2immerse.advdev.tv/client-api/android-general-test.apk and you install it.
+- On a "normal" Android device (phone, tablet) you only follow the second step.
+
+### Workflow:
 
 - Create a folder with a `timeline.xml` and `layout.json`, or copy them from somewhere.
   The folder name is what is going to appear on the CDN. I'll use `sample-dmapp` here.
@@ -19,6 +23,12 @@ Workflow:
 
 ```
 ./bin/validate-timeline.sh --attributes --trace sample-dmapp/timeline.xml
+```
+
+- if you also want to validate that all dmapp components are mentioned in the layout specification you use
+
+```
+./bin/validate-timeline.sh --attributes --trace --layout sample-dmapp/layout.json sample-dmapp/timeline.xml
 ```
 
 - validate your layout document with
@@ -39,7 +49,7 @@ Workflow:
   different errors than the real playback engine. The `--layoutRenderer` opens a browser
   window that will give you a live preview of where things will be rendered.
   The `--kibana` option opens a browser window that will show you all the output of the timeline and
-  layout services for this run. *(the --layoutRenderer option doesn't fuly work yet)*
+  layout services for this run.
   
 ```
 ./bin/dryrun.sh --layoutRenderer --kibana --layoutDoc https://origin.2immerse.advdev.tv/dmapps/sample-dmapp/layout.json --timelineDoc https://origin.2immerse.advdev.tv/dmapps/sample-dmapp/timeline.xml

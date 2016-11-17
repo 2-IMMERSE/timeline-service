@@ -523,10 +523,15 @@ class RefDelegate(TimeElementDelegate):
         
 class RefDelegate2Immerse(RefDelegate):
     """2-Immerse specific RefDelegate that checks the attributes"""
+    allowedDmappcIds = None # May be set by main program to enable checking that all refs have a layout
     
     def checkAttributes(self):
         RefDelegate.checkAttributes(self)
         attributeChecker.checkAttributes(self)
+        if self.allowedDmappcIds != None:
+            dmappcId = self.elt.get(NS_2IMMERSE("dmappcid"))
+            if dmappcId and not dmappcId in self.allowedDmappcIds:
+                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:dmappcId="'+dmappcId+'" but this does not exist in the layout document'
         
 class ConditionalDelegate(SingleChildDelegate):
     ALLOWED_ATTRIBUTES = {
@@ -759,6 +764,7 @@ def main():
     parser.add_argument("--realtime", action="store_true", help="Use realtime clock in stead of fast-forward clock")
     parser.add_argument("--recursive", action="store_true", help="Debugging: use recursion for callbacks, not queueing")
     parser.add_argument("--attributes", action="store_true", help="Check 2immerse tim: and tic: atributes")
+    parser.add_argument("--layout", metavar="URL", help="Check against 2immerse layout document, make sure that all dmappcid are specified in the layout")
     args = parser.parse_args()
     logger = logging.getLogger(__name__)
     DEBUG = args.debug
@@ -768,6 +774,16 @@ def main():
         logger.setLevel(logging.INFO)
     if args.recursive: Document.RECURSIVE=True
     
+    if args.layout:
+        import json
+        args.attributes = True
+        # Open the document, read the JSON
+        timelineDoc = urllib.urlopen(args.layout)
+        timelineData = json.load(timelineDoc)
+        # Get all componentIds mentioned in the constraints
+        layoutDmappcIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
+        # Store a set of these into the ref-checker class
+        RefDelegate2Immerse.allowedDmappcIds = set(layoutDmappcIds)
     if not args.realtime:
         clock = clocks.CallbackPausableClock(clocks.FastClock())
     else:
