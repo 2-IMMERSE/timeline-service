@@ -44,7 +44,7 @@
                   "height": 45
               },
               "targetRegions": [
-        				"r2"
+        				"r1"
         			],
               "priority": 19,
               "audio": true
@@ -185,9 +185,49 @@
                   "height": 100
               },
               "targetRegions": [
-        				"r3"
+        				"r2"
         			],
               "priority": 12
+          }
+      },
+      {
+          "componentId" : "dmappcid_videochat_view",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r2"
+        			],
+              "priority": 11
+          }
+      },
+      {
+          "componentId" : "dmappcid_videochat_controls",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r2"
+        			],
+              "priority": 10
           }
       },
       {
@@ -207,7 +247,27 @@
               "targetRegions": [
         				"r4"
         			],
-              "priority": 11
+              "priority": 9
+          }
+      },
+      {
+          "componentId" : "dmappcid_scrollingtext",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 0
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r3"
+        			],
+              "priority": 8
           }
       }
     ],
