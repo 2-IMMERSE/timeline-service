@@ -19,7 +19,7 @@
                   "width": 80,
                   "height": 45
               },
-              "priority": 10,
+              "priority": 20,
               "audio": true
           }
       },
@@ -40,7 +40,7 @@
                   "width": 80,
                   "height": 45
               },
-              "priority": 10,
+              "priority": 19,
               "audio": true
           }
       },
@@ -51,14 +51,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 18
           }
       },
       {
@@ -68,14 +68,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 17
           }
       },
       {
@@ -85,14 +85,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 16
           }
       },
       {
@@ -102,14 +102,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 15
           }
       },
       {
@@ -119,14 +119,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 14
           }
       },
       {
@@ -136,14 +136,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 13
           }
       },
       {
@@ -153,14 +153,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 12
           }
       },
       {
@@ -170,14 +170,14 @@
                   "width": 100,
                   "height": 100
               },
-              "priority": 9
+              "priority": 0
           },
           "communal": {
               "minSize": {
                   "width": 100,
                   "height": 100
               },
-              "priority": 0
+              "priority": 11
           }
       }
     ],
