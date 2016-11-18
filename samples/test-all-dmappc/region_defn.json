@@ -1,26 +1,26 @@
 [
     {
       "regionId": "r1",
-      "displayWidth": 960,
-      "displayHeight": 540,
+      "displayWidth": 1152,
+      "displayHeight": 810,
       "resizable": false
     },
     {
       "regionId": "r2",
-      "displayWidth": 960,
-      "displayHeight": 540,
+      "displayWidth": 384,
+      "displayHeight": 1080,
       "resizable": false
     },
     {
       "regionId": "r3",
-      "displayWidth": 480,
+      "displayWidth": 384,
       "displayHeight": 1080,
       "resizable": false
     },
     {
       "regionId": "r4",
-      "displayWidth": 480,
-      "displayHeight": 1080,
+      "displayWidth": 1152,
+      "displayHeight": 270,
       "resizable": false
     }
 ]
