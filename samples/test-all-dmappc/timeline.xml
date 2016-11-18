@@ -54,8 +54,10 @@
 			</tl:par>
 			<tl:par tl:end="master" title="6. article">
 				<tl:sleep tl:dur="10" tl:prio="high"/>
-				<tl:ref tim:class="NameToBeDecidedArticleComponent"
+				<tl:ref tim:class="article"
 						tim:dmappcid="dmappcid_article"
+						tim:url="../../dmapp-components/article/article.html"
+						tic:url="../../media/rsc/hamlet/the-limbo-between-worlds.md"
 						/>
 			</tl:par>
 			<tl:par tl:end="master" title="7. button">

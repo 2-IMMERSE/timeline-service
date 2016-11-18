@@ -17,13 +17,13 @@ REQUIRED_TIC_ATTRIBUTES={
     "component-switcher" : [],
     "FallbackClock" : [],
     }
-    
+
 ALLOWED_TIC_ATTRIBUTES={
     "video" : ["mediaUrl", "offset", "startMediaTime", "syncMode", "showControls"],
     "scroll-text" : ["scriptUrl", "clipMapUrl", "clipId", "offset"],
     "timed-text" : [],
     "title-card" : ["title", "author", "synopsis", "brandImageUrl", "brand", "posterUrl"],
-    "article" : [],
+    "article" : ["url","markdown"],
     "image" : ["mediaUrl", "objectFit"],
     "text-chat" : [],
     "video-chat" : [],
@@ -32,7 +32,7 @@ ALLOWED_TIC_ATTRIBUTES={
     "component-switcher" : [],
     "FallbackClock" : ["syncMode", "offset", "startMediaTime"],
     }
-    
+
 def checkAttributes(self):
     if not NS_2IMMERSE("class") in self.elt.keys():
         print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:class attribute"
@@ -51,4 +51,3 @@ def checkAttributes(self):
         if attrName in NS_2IMMERSE_COMPONENT:
             if not NS_2IMMERSE_COMPONENT.localTag(attrName) in allowedAttributes:
                 print >>sys.stderr, "* Warning: element", self.getXPath(), "of tim:class", className, "has unexpected attribute tic:"+NS_2IMMERSE_COMPONENT.localTag(attrName)
-        
