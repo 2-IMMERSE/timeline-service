@@ -57,7 +57,7 @@
 				<tl:ref tim:class="article"
 						tim:dmappcid="dmappcid_article"
 						tim:url="../../dmapp-components/article/article.html"
-						tic:url="../../media/rsc/hamlet/the-limbo-between-worlds.md"
+						tic:url="../../media/rsc/hamlet/articles/the-limbo-between-worlds.md"
 						/>
 			</tl:par>
 			<tl:par tl:end="master" title="7. button">
