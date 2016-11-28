@@ -132,6 +132,19 @@ class BaseTimeline:
     def clockChanged(self, contextClock, contextClockRate, wallClock):
         self.logger.debug("Timeline(%s): clockChanged(contextClock=%s, contextClockRate=%f, wallClock=%s)", self.contextId, contextClock, contextClockRate, wallClock)
         # self.document.clock.setxxxxx(contextClock, wallClock)
+
+        #
+        # Adjust clock position, if needed
+        #
+        delta = contextClock - self.document.clock.now()
+        MAX_CLOCK_DISCREPANCY = 0.1 # xxxjack pretty random number, 100ms....
+        if abs(delta) > MAX_CLOCK_DISCREPANCY:
+            self.document.report(logging.INFO, 'CLOCK', 'forward', delta)
+            self.document.clock.set(contextClock)
+            
+        #
+        # Adjust clock rate, if needed
+        #
         if contextClockRate != self.document.clock.getRate():
             if contextClockRate:
                 self.document.report(logging.INFO, 'CLOCK', 'start', self.document.clock.now())
@@ -139,8 +152,7 @@ class BaseTimeline:
             else:
                 self.document.report(logging.INFO, 'CLOCK', 'stop', self.document.clock.now())
                 self.document.clock.stop()
-        else:
-            pass # print 'xxxjack clockChanged no change', contextClock, contextClockRate, wallClock
+
         self._updateTimeline()
         return None
 
