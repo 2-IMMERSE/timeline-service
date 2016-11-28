@@ -14,6 +14,7 @@ class Context:
             self.logger.setLevel(logLevel)
         self.logger.debug("Device %s created" % deviceId)
         self.caps = caps
+#        self.regionList = {}
         self.orientation = self.caps['orientations'][0]
         self.contextId = None
         self.layoutServiceContextURL = None
@@ -36,7 +37,10 @@ class Context:
         r = requests.post(
                 self.layoutServiceContextURL+"/devices", 
                 params=dict(reqDeviceId=self.deviceId, deviceId=self.deviceId, orientation=self.orientation), 
-                json=self.caps
+                json={
+                    'capabilities' : self.caps,
+#                   'regionList' : self.regionList,
+                    }
                 )
         if r.status_code not in (requests.codes.ok, requests.codes.created):
             self.logger.error('join: Error %s: %s' % (r.status_code, r.text))
