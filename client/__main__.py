@@ -89,6 +89,7 @@ def main():
     parser.add_argument('--dev', metavar='DEV', help='Use deviceId DEV (default: TV or handheld)')
     parser.add_argument('--width', type=int, metavar='W', help='Report device width as W (default 1920 for TV, 720 for handheld)')
     parser.add_argument('--height', type=int, metavar='H', help='Report device height as H (default 1080 for TV, 1280 for handheld)')
+    parser.add_argument('--timeOffset', type=int, metavar='SEC', help='Start the document clock at SEC seconds into the video, to simulate late joining of a shared session (tv only)')
     
     args = parser.parse_args()
     
@@ -151,6 +152,8 @@ def main():
             _ = sys.stdin.readline()
         
         dmapp = dmapp_for_tv(context, args.layoutServer, args.timelineServer, args.tsserver, args.timelineDoc, args.layoutDoc)
+        if args.timeOffset:
+            dmapp.clock.set(args.timeOffset)
             
     dmapp.start()
     dmapp.wait()
