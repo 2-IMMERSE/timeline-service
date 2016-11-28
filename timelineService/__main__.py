@@ -34,7 +34,6 @@ class MyFormatter(logging.Formatter):
             contextID = record.contextID
         if hasattr(record, 'dmappID'):
             dmappID = record.dmappID
-        print 'xxxjack format', dir(record)
         source = "TimelineService"
         level = record.levelname
         subSource = record.module
