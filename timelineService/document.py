@@ -609,6 +609,7 @@ class Document:
     def __init__(self, clock, extraLoggerArgs=None):
         self.tree = None
         self.root = None
+        self.url = None
         self.clock = clock
         self.parentMap = {}
         self.toDo = []
@@ -628,6 +629,7 @@ class Document:
         
     def load(self, url):
         assert not self.root
+        self.url = url
         fp = urllib.urlopen(url)
         self.tree = ET.parse(fp)
         self.root = self.tree.getroot()
