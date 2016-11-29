@@ -30,6 +30,10 @@ class MyFormatter(logging.Formatter):
     def format(self, record):
         contextID = None
         dmappID = None
+        if hasattr(record, 'contextID'):
+            contextID = record.contextID
+        if hasattr(record, 'dmappID'):
+            dmappID = record.dmappID
         source = "TimelineService"
         level = record.levelname
         subSource = record.module
@@ -171,6 +175,12 @@ def main():
     rootLogger = logging.getLogger()
     rootLogger.handlers[0].setFormatter(MyFormatter())
 
+    if True:
+        # Temporary measure: the origin server certificate is untrusted on our docker containers.
+        rootLogger.log(logging.WARN, "https verification disabled for now (Nov 2016)")
+        import ssl
+        ssl._create_default_https_context = ssl._create_unverified_context
+        
     if args.noTransactions:
         timeline.TRANSACTIONS = False
     if args.layoutService:

@@ -82,6 +82,14 @@ class PausableClock:
             return 1.0
         return 0.0
         
+    @synchronized
+    def set(self, now):
+        wasRunning = self.running
+        self.stop()
+        self.epoch = now
+        if wasRunning:
+            self.start()
+        
 class CallbackPausableClock(PausableClock):
     """A pausable clock that also stores callbacks with certain times"""
     

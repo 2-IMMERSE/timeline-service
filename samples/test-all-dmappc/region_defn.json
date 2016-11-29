@@ -1,0 +1,26 @@
+[
+    {
+      "regionId": "r1",
+      "displayWidth": 1152,
+      "displayHeight": 810,
+      "resizable": false
+    },
+    {
+      "regionId": "r2",
+      "displayWidth": 384,
+      "displayHeight": 1080,
+      "resizable": false
+    },
+    {
+      "regionId": "r3",
+      "displayWidth": 384,
+      "displayHeight": 1080,
+      "resizable": false
+    },
+    {
+      "regionId": "r4",
+      "displayWidth": 1152,
+      "displayHeight": 270,
+      "resizable": false
+    }
+]

@@ -1,26 +1,26 @@
 <tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tlcheck="http://jackjansen.nl/timelines/check" title="Hello World document, similar to previously hardcoded timelineServer example">
 	<!-- Actually we don't need this outer par at the moment, but may in the future -->
 	<tl:par tl:end="master">
-        <tl:ref tim:class="video"
-                tim:dmappcid="dmappcid_masterVideo"
-                tic:syncMode="master"
-                tic:mediaUrl="../../sandbox/hamlet/client_manifest.mpd"
-                tlcheck:dur="3600"
-                title="Master video that runs all the time"
-                />
+		<tl:ref tim:class="video"
+				tim:dmappcid="dmappcid_masterVideo"
+				tic:syncMode="master"
+				tic:mediaUrl="../../sandbox/hamlet/client_manifest.mpd"
+				tlcheck:dur="3600"
+				title="Master video that runs all the time"
+				/>
 		<tl:seq title="Sequence of all known dmapp component types, shown one by one for 10 seconds each">
 			<tl:par tl:end="master" title="1. image">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="image"
-			            tim:dmappcid="dmappcid_image"
-			            tim:url="../../dmapp-components/image/image.html"
-			            tim:mediaUrl="../../sandbox/backdrop.jpg"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tim:class="image"
+						tim:dmappcid="dmappcid_image"
+						tim:url="../../dmapp-components/image/image.html"
+						tim:mediaUrl="../../sandbox/backdrop.jpg"
+						/>
 			</tl:par>
 			<tl:par tl:end="master" title="2. scrolling text">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:sleep tl:dur="10" tl:prio="high"/>
 				<tl:ref tim:class="scroll-text"
-				        tim:url="../../dmapp-components/scroll-text/scroll-text.html"
+						tim:url="../../dmapp-components/scroll-text/scroll-text.html"
 						tim:dmappcid="dmappcid_scrollingtext"
 						tim:scriptUrl="../../sandbox/sample-demo-stratford/assets/transcripts/hamlet/script.json"
 						tic:offset="120"
@@ -28,55 +28,55 @@
 						/>
 			</tl:par>
 			<tl:par tl:end="master" title="3. video element">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-            <tl:ref tim:class="video"
-                    tim:dmappcid="dmappcid_video"
-                    tic:mediaUrl="../../sandbox/bunny.mp4"
-                    tic:unknown="unknown"
-                    tlcheck:dur="13"
-                    />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+			<tl:ref tim:class="video"
+					tim:dmappcid="dmappcid_video"
+					tic:mediaUrl="../../sandbox/bunny.mp4"
+					tic:unknown="unknown"
+					tlcheck:dur="13"
+					/>
 			</tl:par>
 			<tl:par tl:end="master" title="4. timed text">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="NameToBeDecidedTimedTextComponent"
-			            tic:dmappcid="dmappcid_timedtext"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tim:class="NameToBeDecidedTimedTextComponent"
+						tic:dmappcid="dmappcid_timedtext"
+						/>
 			</tl:par>
 			<tl:par tl:end="master" title="5. title card">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tic:class="NameToBeDecidedTitleCardComponent"
-			            tim:dmappcid="dmappcid_titlecard"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tic:class="NameToBeDecidedTitleCardComponent"
+						tim:dmappcid="dmappcid_titlecard"
+						/>
 			</tl:par>
 			<tl:par tl:end="master" title="6. article">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="NameToBeDecidedArticleComponent"
-			            tim:dmappcid="dmappcid_article"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tim:class="NameToBeDecidedArticleComponent"
+						tim:dmappcid="dmappcid_article"
+						/>
 			</tl:par>
 			<tl:par tl:end="master" title="7. button">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="NameToBeDecidedButtonComponent"
-			            tim:dmappcid="dmappcid_button"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tim:class="NameToBeDecidedButtonComponent"
+						tim:dmappcid="dmappcid_button"
+						/>
 			</tl:par>
 			<tl:par tl:end="master" title="8. text chat">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="NameToBeDecidedTextChatComponent"
-			            tim:dmappcid="dmappcid_textchat"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tim:class="NameToBeDecidedTextChatComponent"
+						tim:dmappcid="dmappcid_textchat"
+						/>
 			</tl:par>
 			<tl:par tl:end="master" title="9. video chat">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="NameToBeDecidedVideoChatComponent"
-			            tim:dmappcid="dmappcid_videochat"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tim:class="NameToBeDecidedVideoChatComponent"
+						tim:dmappcid="dmappcid_videochat"
+						/>
 			</tl:par>
 			<tl:par tl:end="master" title="10. component switcher">
-			    <tl:sleep tl:dur="10" tl:prio="high"/>
-			    <tl:ref tim:class="NameToBeDecidedComponentSwitchComponent"
-			            tim:dmappcid="dmappcid_componentswitcher"
-			            />
+				<tl:sleep tl:dur="10" tl:prio="high"/>
+				<tl:ref tim:class="NameToBeDecidedComponentSwitchComponent"
+						tim:dmappcid="dmappcid_componentswitcher"
+						/>
 			</tl:par>
 			<tl:sleep tl:dur="1" title="Workaround for timeline scheduler bug"/>
 		</tl:seq>

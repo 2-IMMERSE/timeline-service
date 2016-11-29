@@ -8,7 +8,6 @@ import logging
 import clocks
 
 logging.basicConfig()
-logger = logging.getLogger(__name__)
 
 DEBUG=True
 
@@ -75,6 +74,7 @@ class DummyDelegate:
     def __init__(self, elt, document, clock):
         self.elt = elt
         self.document = document
+        self.logger = self.document.logger
         self.state = State.idle
         self.clock = clock
         self.startTime = None
@@ -108,7 +108,7 @@ class DummyDelegate:
         """Advance element state to a new one. Subclasses will add side effects (such as actually playing media)"""
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
         if self.state == state:
-            logger.warn('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
+            self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
 #             if DEBUG:
 #                 import pdb
 #                 pdb.set_trace()
@@ -394,7 +394,7 @@ class ParDelegate(TimeElementDelegate):
             if not childState in State.NOT_DONE:
                 return
         # If we get here we got an unexpected state change from a child. Report.
-        logger.warn('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
+        self.logger.warning('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -536,16 +536,16 @@ class RefDelegate(TimeElementDelegate):
     EXACT_CHILD_COUNT=0
     
     def initTimelineElement(self):
-    	if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
-    		self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
-    		self.setState(State.skipped)
-    		return
-    	TimeElementDelegate.initTimelineElement(self)
+        if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
+            self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
+            self.setState(State.skipped)
+            return
+        TimeElementDelegate.initTimelineElement(self)
 
     def startTimelineElement(self):
-    	if self.state == State.skipped:
-    		self.setState(State.finished)
-    		return
+        if self.state == State.skipped:
+            self.setState(State.finished)
+            return
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         self.setState(State.starting)
@@ -589,10 +589,15 @@ class RefDelegate(TimeElementDelegate):
         
 class RefDelegate2Immerse(RefDelegate):
     """2-Immerse specific RefDelegate that checks the attributes"""
+    allowedDmappcIds = None # May be set by main program to enable checking that all refs have a layout
     
     def checkAttributes(self):
         RefDelegate.checkAttributes(self)
         attributeChecker.checkAttributes(self)
+        if self.allowedDmappcIds != None:
+            dmappcId = self.elt.get(NS_2IMMERSE("dmappcid"))
+            if dmappcId and not dmappcId in self.allowedDmappcIds:
+                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:dmappcId="'+dmappcId+'" but this does not exist in the layout document'
         
 class ConditionalDelegate(SingleChildDelegate):
     """<tl:condition> element. Runs it child if the condition is true."""
@@ -706,7 +711,7 @@ class SeekToElementAdapter(DelegateAdapter):
 class Document:
     RECURSIVE = False
         
-    def __init__(self, clock):
+    def __init__(self, clock, extraLoggerArgs=None):
         self.tree = None
         self.root = None
         self.fragment = None
@@ -716,7 +721,13 @@ class Document:
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
         self.terminating = False
+        self.logger = logging.getLogger(__name__)
+        if extraLoggerArgs:
+            self.logger = logging.LoggerAdapter(self.logger, extraLoggerArgs)
         
+    def setExtraLoggerArgs(self, extraLoggerArgs):
+            self.logger = logging.LoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
+    
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
         assert not self.root
         self.delegateClasses[tag] = klass
@@ -917,7 +928,7 @@ class Document:
             args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
         else:
             args = ''
-        logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args)
+        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args)
              
 def main():
     global DEBUG
@@ -929,7 +940,9 @@ def main():
     parser.add_argument("--realtime", action="store_true", help="Use realtime clock in stead of fast-forward clock")
     parser.add_argument("--recursive", action="store_true", help="Debugging: use recursion for callbacks, not queueing")
     parser.add_argument("--attributes", action="store_true", help="Check 2immerse tim: and tic: atributes")
+    parser.add_argument("--layout", metavar="URL", help="Check against 2immerse layout document, make sure that all dmappcid are specified in the layout")
     args = parser.parse_args()
+    logger = logging.getLogger(__name__)
     DEBUG = args.debug
     if DEBUG:
         logger.setLevel(logging.DEBUG)
@@ -937,6 +950,16 @@ def main():
         logger.setLevel(logging.INFO)
     if args.recursive: Document.RECURSIVE=True
     
+    if args.layout:
+        import json
+        args.attributes = True
+        # Open the document, read the JSON
+        timelineDoc = urllib.urlopen(args.layout)
+        timelineData = json.load(timelineDoc)
+        # Get all componentIds mentioned in the constraints
+        layoutDmappcIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
+        # Store a set of these into the ref-checker class
+        RefDelegate2Immerse.allowedDmappcIds = set(layoutDmappcIds)
     if not args.realtime:
         clock = clocks.CallbackPausableClock(clocks.FastClock())
     else:

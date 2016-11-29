@@ -4,7 +4,7 @@ import json
 import time
 import argparse
 
-TSURL="http://timeline-service.2immerse.advdev.tv/timeline/v1"
+TSURL="https://timeline-service.2immerse.advdev.tv/timeline/v1"
 
 def restGet(url):
     f = urllib.urlopen(url)
@@ -13,13 +13,17 @@ def restGet(url):
     
 def main():
     parser = argparse.ArgumentParser(description="Dump 2immerse timeline service status")
-    parser.add_argument("--timeline", "-s", help="Specify timeline service URL (default=%s)" % TSURL, default=TSURL)
+    parser.add_argument("--timelineServer", "-s", metavar="URL", help="Specify timeline service URL (default: %s)" % TSURL, default=TSURL)
+    parser.add_argument("context", nargs="*", help="Context to dump (default: all)")
     
     args = parser.parse_args()
     
-    tsUrl = args.timeline
+    tsUrl = args.timelineServer
     
-    contextIds = restGet(tsUrl + "/context")
+    if args.context:
+        contextIds = args.context
+    else:
+        contextIds = restGet(tsUrl + "/context")
     
     print 'Number of contextts active:', len(contextIds)
     for c in contextIds:

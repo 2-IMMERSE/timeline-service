@@ -12,12 +12,12 @@ case x$hostname in
 	;;
 esac
 
-timelineDoc=http://origin.2immerse.advdev.tv/sandbox/sample-hello/timeline.xml
+timelineDoc=https://origin.2immerse.advdev.tv/sandbox/sample-hello/timeline.xml
 layoutDoc=http://origin.2immerse.advdev.tv/sandbox/sample-hello/layout.json
 
 python $basedir/timeline-service/client \
-	--layout http://$hostname:8000/layout/v2 \
-	--timeline http://$hostname:8001/timeline/v1 \
+	--layoutServer http://$hostname:8000/layout/v2 \
+	--timelineServer http://$hostname:8001/timeline/v1 \
 	--layoutDoc $layoutDoc \
 	--timelineDoc $timelineDoc \
 	--tsserver $hostname
