@@ -747,11 +747,11 @@ class Document:
                 print 'xxxjack', xpathExpression
             elements = self.tree.findall(xpathExpression, NAMESPACES)
             if len(elements) == 0:
-                logger.log(logging.ERROR, "Fragment #%s does not match any element" % up.fragment)
+                self.logger.log(logging.ERROR, "Fragment #%s does not match any element" % up.fragment)
             elif len(elements) > 1:
-                logger.log(logging.ERROR, "Fragment #%s matches %d elements" % (up.fragment, len(elements)))
+                self.logger.log(logging.ERROR, "Fragment #%s matches %d elements" % (up.fragment, len(elements)))
             else:
-                logger.log(logging.INFO, "Will start at element %s" % self.getXPath(elements[0]))
+                self.logger.log(logging.INFO, "Will start at element %s" % self.getXPath(elements[0]))
                 self.fragment = elements[0]  
         
     def getParent(self, elt):
@@ -954,7 +954,7 @@ def main():
         import json
         args.attributes = True
         # Open the document, read the JSON
-        timelineDoc = urllib.urlopen(args.layout)
+        timelineDoc = urllib2.urlopen(args.layout)
         timelineData = json.load(timelineDoc)
         # Get all componentIds mentioned in the constraints
         layoutDmappcIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
