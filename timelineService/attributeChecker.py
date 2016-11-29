@@ -25,7 +25,7 @@ ALLOWED_TIC_ATTRIBUTES={
     "scroll-text" : ["scriptUrl", "clipMapUrl", "clipId", "offset"],
     "timed-text" : [],
     "title-card" : ["title", "author", "synopsis", "brandImageUrl", "brand", "posterUrl"],
-    "article" : ["url","markdown","position","groupStateId"],
+    "article" : ["mediaUrl", "markdown", "position", "groupStateId"],
     "article-controls" : ["groupStateId"],
     "image" : ["mediaUrl", "objectFit"],
     "text-chat" : ["lobby"],
@@ -33,7 +33,7 @@ ALLOWED_TIC_ATTRIBUTES={
     "video-chat" : ["lobby", "groupStateId"],
     "video-chat-view" : ["groupStateId"],
     "video-chat-controls" : ["groupStateId"],
-    "component-switcher" : [],
+    "component-switcher" : ["groupStateId"],
     "FallbackClock" : ["syncMode", "offset", "startMediaTime"],
     }
 
