@@ -27,13 +27,13 @@ ALLOWED_TIC_ATTRIBUTES={
     "title-card" : ["title", "author", "synopsis", "brandImageUrl", "brand", "posterUrl"],
     "article" : ["mediaUrl", "markdown", "position", "groupStateId"],
     "article-controls" : ["groupStateId"],
-    "image" : ["mediaUrl", "objectFit"],
+    "image" : ["mediaUrl", "objectFit", "caption"],
     "text-chat" : ["lobby"],
     "text-chat-controls" : ["lobby"],
     "video-chat" : ["lobby", "groupStateId"],
     "video-chat-view" : ["groupStateId"],
     "video-chat-controls" : ["groupStateId"],
-    "component-switcher" : ["groupStateId"],
+    "component-switcher" : ["articlegroupid", "imagegroupid", "videogroupid"],
     "FallbackClock" : ["syncMode", "offset", "startMediaTime"],
     }
 
