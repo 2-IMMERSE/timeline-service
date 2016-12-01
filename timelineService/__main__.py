@@ -6,6 +6,7 @@ import timeline
 import json
 import argparse
 import logging
+import traceback
 
 # Make stdout unbuffered
 class Unbuffered(object):
@@ -101,7 +102,14 @@ class timelineServer:
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
-        rv = method(**args)
+        try:
+            rv = method(**args)
+        except web.HTTPError:
+            raise
+        except:
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            traceback.print_exc()
+            return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
@@ -120,7 +128,14 @@ class timelineServer:
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
-        rv = method(**args)
+        try:
+            rv = method(**args)
+        except web.HTTPError:
+            raise
+        except:
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            traceback.print_exc()
+            return ''
         if rv == None or rv == '':
             web.ctx.status = '204 No Content'
             return ''
@@ -137,7 +152,14 @@ class timelineServer:
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
-        rv = method(**args)
+        try:
+            rv = method(**args)
+        except web.HTTPError:
+            raise
+        except:
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            traceback.print_exc()
+            return ''
         if rv == None or rv == '':
             web.ctx.status = '204 No Content'
             return ''
