@@ -10,6 +10,9 @@ logging.basicConfig()
 
 DEBUG=True
 
+class TimelineParseError(ValueError):
+    pass
+    
 class NameSpace:
     def __init__(self, namespace, url):
         self.namespace = namespace
@@ -606,12 +609,14 @@ DELEGATE_CLASSES = {
 class Document:
     RECURSIVE = False
         
-    def __init__(self, clock, extraLoggerArgs=None):
+    def __init__(self, clock, extraLoggerArgs=None, idAttribute=None):
         self.tree = None
         self.root = None
         self.url = None
         self.clock = clock
         self.parentMap = {}
+        self.idAttribute = idAttribute
+        self.idMap = {}
         self.toDo = []
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
@@ -633,7 +638,15 @@ class Document:
         fp = urllib.urlopen(url)
         self.tree = ET.parse(fp)
         self.root = self.tree.getroot()
-        self.parentMap = {c:p for p in self.tree.iter() for c in p}        
+        self.parentMap = {c:p for p in self.tree.iter() for c in p}
+        if self.idAttribute:
+            self.idMap = {}
+            for p in self.tree.iter():
+                id = p.get(self.idAttribute)
+                if id:
+                    if id in self.idMap:
+                        raise TimelineParseError("Duplicate id %s in element %s" % (id, self.getXPath(p)))
+                    self.idMap[id] = p 
         
     def getParent(self, elt):
         return self.parentMap.get(elt)
@@ -791,7 +804,7 @@ def main():
     else:
         clock = clocks.CallbackPausableClock(clocks.SystemClock())
     
-    d = Document(clock)
+    d = Document(clock, idAttribute=NS_2IMMERSE("dmappcid"))
     if args.attributes:
         d.setDelegateFactory(RefDelegate2Immerse)
     try:

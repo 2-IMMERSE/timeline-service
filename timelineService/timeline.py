@@ -6,6 +6,8 @@ import urllib
 import os
 import threading
 import time
+import traceback
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +51,7 @@ class BaseTimeline:
         self.dmappId = None
         self.dmappComponents = {}
         self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
-        self.document = document.Document(self.clockService, extraLoggerArgs=dict(contextID=contextId))
+        self.document = document.Document(self.clockService, idAttribute=document.NS_2IMMERSE("dmappcid"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         # Do other initialization
 
@@ -161,7 +163,8 @@ class BaseTimeline:
         try:
             self.document.load(self.timelineDocUrl)
         except:
-            self.logger.error("Timeline(%s): %s: Error loading document", self.contextId, self.timelineDocUrl)
+            errorStr = '\n'.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            self.logger.error("Timeline(%s): %s: Error loading document: %s", self.contextId, self.timelineDocUrl, errorStr)
             raise
         self.document.addDelegates()
 
