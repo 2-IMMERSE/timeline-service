@@ -28,7 +28,7 @@ ALLOWED_TIC_ATTRIBUTES={
     "title-card" : ["title", "author", "synopsis", "brandImageUrl", "brand", "posterUrl"],
     "article" : ["mediaUrl", "markdown", "position", "groupStateId"],
     "article-controls" : ["groupStateId"],
-    "image" : ["mediaUrl", "objectFit", "caption"],
+    "image" : ["mediaUrl", "objectFit", "caption", "groupStateId"],
     "text-chat" : ["lobby"],
     "text-chat-controls" : ["lobby"],
     "video-chat" : ["lobby", "groupStateId"],
