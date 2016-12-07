@@ -34,12 +34,14 @@
 					tlcheck:dur="13"
 					/>
 			</tl:par>
+			<!--
 			<tl:par tl:end="master" title="4. timed text">
 				<tl:sleep tl:dur="10" tl:prio="high"/>
 				<tl:ref tim:class="NameToBeDecidedTimedTextComponent"
 						tim:dmappcid="dmappcid_timedtext"
 						/>
 			</tl:par>
+			-->
 			<tl:par tl:end="master" title="5. title card">
 				<tl:sleep tl:dur="10" tl:prio="high"/>
 				<tl:ref tim:dmappcid="dmappcid_titlecard"
@@ -57,7 +59,7 @@
 				<tl:ref tim:class="article"
 						tim:dmappcid="dmappcid_article"
 						tim:url="../../dmapp-components/article/article.html"
-						tic:url="../../media/rsc/hamlet/articles/the-limbo-between-worlds.md"
+						tic:mediaUrl="../../media/rsc/hamlet/articles/the-limbo-between-worlds.md"
 						/>
 			</tl:par>
 			<tl:par tl:end="master" title="7. button">
@@ -68,8 +70,15 @@
 			</tl:par>
 			<tl:par tl:end="master" title="8. text chat">
 				<tl:sleep tl:dur="10" tl:prio="high"/>
-				<tl:ref tim:class="NameToBeDecidedTextChatComponent"
+				<tl:ref tim:class="text-chat-controls"
+						tim:dmappcid="dmappcid_textchat_controls"
+						tim:url="../../dmapp-components/text-chat-controls/text-chat-controls.html"
+						tic:groupStateId="def456"
+						/>
+				<tl:ref tim:class="text-chat"
 						tim:dmappcid="dmappcid_textchat"
+						tim:url="../../dmapp-components/text-chat/text-chat.html"
+						tic:groupStateId="def456"
 						/>
 			</tl:par>
 			<tl:par tl:end="master" title="9. video chat">
@@ -92,7 +101,8 @@
 			</tl:par>
 			<tl:par tl:end="master" title="10. component switcher">
 				<tl:sleep tl:dur="10" tl:prio="high"/>
-				<tl:ref tim:class="NameToBeDecidedComponentSwitchComponent"
+				<tl:ref tim:class="component-switcher"
+						tim:url="../../dmapp-components/component-switcher/component-switcher.html"
 						tim:dmappcid="dmappcid_componentswitcher"
 						/>
 			</tl:par>
