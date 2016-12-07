@@ -206,7 +206,8 @@ class TimelineThreadedRunnerMixin:
         with self.timelineCondition:
             while self.document and self.document.getDocumentState():
                 self._stepTimeline()
-                self.timelineCondition.wait(10)
+                maxSleep = self.document.clock.nextEventTime(default=None)
+                self.timelineCondition.wait(maxSleep)
             
     def _updateTimeline(self):
         with self.timelineCondition:

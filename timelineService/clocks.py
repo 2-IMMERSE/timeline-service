@@ -98,12 +98,12 @@ class CallbackPausableClock(PausableClock):
         self.queue = Queue.PriorityQueue()
 
     @synchronized
-    def nextEventTime(self):
+    def nextEventTime(self, default=never):
         """Return delta-T until earliest callback, or never"""
         try:
             peek = self.queue.get(False)
-        except Queue.empty:
-            return never
+        except Queue.Empty:
+            return default
         self.queue.put(peek)
         t, callback, args, kwargs = peek
         return t-self._now()
@@ -137,6 +137,8 @@ class CallbackPausableClock(PausableClock):
             if not peek: return
             t, callback, args, kwargs = peek
             if self._now() >= t:
+                if self._now() > t + 0.1:
+                    print 'xxxjack scheduling', self.now() - t, 'seconds too late...'
                 handler.schedule(callback, *args, **kwargs)
             else:
                 assert not self.queue.full()
