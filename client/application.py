@@ -117,8 +117,10 @@ class Application:
         while True:
             self.logger.debug("run: clock=%s, wallclock=%s" % (self.clock.now(), time.time()))
             inst = self._getLayoutInstruction()
+            oldClockStatus = self.clock.status()
             self._doLayoutInstruction(inst)
-            self.clock.report()
+            if self.clock.status() != oldClockStatus:
+                self.clock.report()
             for component in self.components.values():
                 component.tick()
             time.sleep(1)
@@ -277,6 +279,9 @@ class GlobalClock:
         
     def report(self):
         pass
+        
+    def status(self):
+        return self.epoch, self.running
         
 class MasterClockMixin:
     def __init__(self, application):
