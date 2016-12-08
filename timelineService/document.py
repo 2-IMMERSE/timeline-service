@@ -113,6 +113,8 @@ class DummyDelegate:
     def assertDescendentState(self, action, *allowedStates):
         for desc in self.elt.iter():
             assert desc.delegate.state in set(allowedStates), "%s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
+            #if not desc.delegate.state in set(allowedStates):
+            #    print "WARNING XXXJACK: %s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
          
     def reportChildState(self, child, childState):
         pass
@@ -295,11 +297,15 @@ class ParDelegate(TimeElementDelegate):
             # The ultimate answer may be to add a freezeTimelineElement call
             # so we can get SMIL-like semantics.
             #
-            self.setState(State.finished)
             for ch in self.elt:
                 if not ch in relevantChildren:
                     if ch.delegate.state in State.STOP_NEEDED:
                         self.document.schedule(ch.delegate.stopTimelineElement)
+            # If all terminate calls and such have been emitted we are finished
+            for ch in self.elt:
+                if ch.delegate.state in State.NOT_DONE:
+                    return
+            self.setState(State.finished)
             return
 #            self.setState(State.stopping)
 #             needToWait = False

@@ -78,8 +78,6 @@
 					tic:poster="/media/rsc/hamlet/hamlet-production-king-queen-l.jpg"/>
 			</tl:par>
 
-			<tl:sleep tl:dur="1" title="Workaround for timeline scheduler bug"/>
-
 		</tl:seq>
 	</tl:par>
 </tl:document>
