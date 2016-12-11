@@ -33,6 +33,27 @@ def genImages(pattern, width, height, bgColor, fgColor, fontSize, firstTime, las
         count += 1
     return count
     
+def genImagesElement(prefix, pattern, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
+    count = genImages(fileName, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
+    if not count:
+        return None
+    seqElt = ET.Element(timeline.NS_TIMELINE("seq"))
+    for i in range(len(count)):
+        attrs = {
+            timeline.NS_2IMMERSE("dmappcid") : prefix + '_' + str(i),
+            timeline.NS_2IMMERSE("class") : "image",
+            timeline.NS_2IMMERSE("url") : "http://origin.2immerse.advdev.tv/dmapp-components/image/image.html",
+            timeline.NS_2IMMERSE_COMPONENT("mediaUrl") : fileName,
+            }
+        
+        elt = ET.Element(timeline.NS_TIMELINE("ref"),attrs)
+        sleepElt = ET.Element(timeline.NS_TIMELINE("sleep"), {NS_TIMELINE("dur") : str(interval)})
+        parElt = ET.Element(timeline.NS_TIMELINE("par"))
+        parElt.append(sleepElt)
+        parElt.append(elt)
+        seqElt.append(parElt)
+    return seqElt
+    
 def main():
     if len(sys.argv) != 10:
         print "Usage: %s pattern width height bgColor fgColor fontSize starttime endtime interval" % sys.argv[0]
