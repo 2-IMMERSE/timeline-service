@@ -25,28 +25,28 @@ def main():
     
     tree, mainPar = timeline.genDocument()
     
-#     mainVideo, ids = movie.genMovieElement("mainVideo", True, "media/mainVideo.mp4", 1280, 720, 0xf0f000, 0x101020, 80, BEGIN, END, INTERVAL)
-#     mainPar.append(mainVideo)
-#     for i in ids:
-#         c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
-#         layoutConstraints.append(c)
-#     
-#     auxVideo, ids = movie.genMovieElement("auxVideo", False, "media/auxVideo.mp4", 1280, 720, 0x00f0f0, 0x101020, 80, BEGIN, END, INTERVAL)
-#     mainPar.append(auxVideo)
-#     for i in ids:
-#         c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
-#         layoutConstraints.append(c)
-#     
-#     scrollText, ids = scrolltext.genScrollTextElement("scrollingTimecodes", "media/scrolltext.json", BEGIN, END, INTERVAL)
-#     mainPar.append(scrollText)
-#     for i in ids:
-#         c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
-#         layoutConstraints.append(c)
+    mainVideo, ids = movie.genMovieElement("mainVideo", True, "media/mainVideo.mp4", 1280, 720, 0xf0f000, 0x101020, 80, BEGIN, END, INTERVAL)
+    mainPar.append(mainVideo)
+    for i in ids:
+        c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
+        layoutConstraints.append(c)
+    
+    auxVideo, ids = movie.genMovieElement("auxVideo", False, "media/auxVideo.mp4", 1280, 720, 0x00f0f0, 0x101020, 80, BEGIN, END, INTERVAL)
+    mainPar.append(auxVideo)
+    for i in ids:
+        c = dict(componentId=i, personal=dict(priority=10, minSize=dict(width=100,height=100)), communal=dict(priority=0))
+        layoutConstraints.append(c)
+    
+    scrollText, ids = scrolltext.genScrollTextElement("scrollingTimecodes", "media/scrolltext.json", BEGIN, END, INTERVAL)
+    mainPar.append(scrollText)
+    for i in ids:
+        c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
+        layoutConstraints.append(c)
     
     scrollText2, ids = scrolltext.genScrollTextElement("scrollingTimecodesHH", "media/scrolltextHH.json", BEGIN, END, INTERVAL)
     mainPar.append(scrollText2)
     for i in ids:
-        c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
+        c = dict(componentId=i, personal=dict(priority=20, minSize=dict(width=100,height=100)), communal=dict(priority=0))
         layoutConstraints.append(c)
     
     tree.write(fpTimeline)
@@ -71,6 +71,7 @@ def main():
 
     layout = dict(
         version=3, 
+        dmapp=sys.argv[1],
         constraints=layoutConstraints,
         layoutModel="template",
         templates=[

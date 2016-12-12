@@ -25,7 +25,7 @@ def genMovieElement(prefix, isMaster, fileName,  width, height, bgColor, fgColor
         return None
     attrs = {
         timeline.NS_2IMMERSE("dmappcid") : prefix,
-        timeline.NS_2IMMERSE("class") : "movie",
+        timeline.NS_2IMMERSE("class") : "video",
         timeline.NS_2IMMERSE_COMPONENT("mediaUrl") : fileName,
         timeline.NS_TIMELINE_CHECK("dur") : str(lastTime-firstTime),
         }
