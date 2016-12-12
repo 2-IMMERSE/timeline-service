@@ -25,13 +25,13 @@ def main():
     
     tree, mainPar = timeline.genDocument()
     
-    mainVideo, ids = movie.genMovieElement("mainVideo", True, "media/mainVideo.mp4", 1280, 720, 0xf0f000, 0x101020, 80, BEGIN, END, INTERVAL)
+    mainVideo, ids = movie.genMovieElement("mainVideo", True, "media/mainVideo.mp4", "mainVideo", 1280, 720, 0xf0f000, 0x101020, 80, BEGIN, END, INTERVAL)
     mainPar.append(mainVideo)
     for i in ids:
         c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
         layoutConstraints.append(c)
     
-    auxVideo, ids = movie.genMovieElement("auxVideo", False, "media/auxVideo.mp4", 1280, 720, 0x00f0f0, 0x101020, 80, BEGIN, END, INTERVAL)
+    auxVideo, ids = movie.genMovieElement("auxVideo", False, "media/auxVideo.mp4", "auxVideo", 1280, 720, 0x00f0f0, 0x101020, 80, BEGIN, END, INTERVAL)
     mainPar.append(auxVideo)
     for i in ids:
         c = dict(componentId=i, personal=dict(priority=10, minSize=dict(width=100,height=100)), communal=dict(priority=0))
@@ -45,6 +45,18 @@ def main():
     
     scrollText2, ids = scrolltext.genScrollTextElement("scrollingTimecodesHH", "media/scrolltextHH.json", BEGIN, END, INTERVAL)
     mainPar.append(scrollText2)
+    for i in ids:
+        c = dict(componentId=i, personal=dict(priority=20, minSize=dict(width=100,height=100)), communal=dict(priority=0))
+        layoutConstraints.append(c)
+    
+    imgs, ids = images.genImagesElement("image", "media/images%04d.png", "image", 500, 500, 0xf000f0, 0x101020, 40, BEGIN, END, INTERVAL*10)
+    mainPar.append(imgs)
+    for i in ids:
+        c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
+        layoutConstraints.append(c)
+    
+    images2, ids = images.genImagesElement("imageHH", "media/imagesHH%04d.png", "imageHH", 500, 500, 0xf0f0f0, 0x101020, 40, BEGIN, END, INTERVAL*10)
+    mainPar.append(images2)
     for i in ids:
         c = dict(componentId=i, personal=dict(priority=20, minSize=dict(width=100,height=100)), communal=dict(priority=0))
         layoutConstraints.append(c)
@@ -77,6 +89,18 @@ def main():
         templates=[
             dict(
                 deviceType="default",
+                layout=commonLayout,
+                ),
+            dict(
+                deviceType="standalone",
+                layout=commonLayout,
+                ),
+            dict(
+                deviceType="tv",
+                layout=commonLayout,
+                ),
+            dict(
+                deviceType="handheld",
                 layout=commonLayout,
                 ),
             ],

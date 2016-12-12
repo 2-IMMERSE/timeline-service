@@ -3,10 +3,12 @@ import sys
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+import xml.etree.ElementTree as ET
+import timeline
 
 FONT="/Library/Fonts/Andale Mono.ttf"
 
-def genImages(pattern, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
+def genImages(pattern, heading, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
     font = ImageFont.truetype(FONT, fontSize)
     im = Image.new("RGB", (width, height))
     count = 0
@@ -16,7 +18,7 @@ def genImages(pattern, width, height, bgColor, fgColor, fontSize, firstTime, las
         h = int(ct / 3600)
         m = int((ct / 60) % 60)
         s = int(ct % 60)
-        tc = "%02d:%02d:%02d" % (h, m, s)
+        tc = "%s %02d:%02d:%02d" % (heading, h, m, s)
     
         im = Image.new("RGB", (width, height), bgColor)
         draw = ImageDraw.Draw(im)
@@ -33,29 +35,30 @@ def genImages(pattern, width, height, bgColor, fgColor, fontSize, firstTime, las
         count += 1
     return count
     
-def genImagesElement(prefix, pattern, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
-    count = genImages(fileName, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
+def genImagesElement(prefix, pattern, heading, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
+    count = genImages(pattern, heading, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
     if not count:
         return None
     seqElt = ET.Element(timeline.NS_TIMELINE("seq"))
     allids = []
-    for i in range(len(count)):
+    for i in range(count):
         thisId = prefix + '_' + str(i)
+        fileName = pattern % i
         allids.append(thisId)
         attrs = {
             timeline.NS_2IMMERSE("dmappcid") : thisId,
             timeline.NS_2IMMERSE("class") : "image",
-            timeline.NS_2IMMERSE("url") : "http://origin.2immerse.advdev.tv/dmapp-components/image/image.html",
+            timeline.NS_2IMMERSE("url") : "https://origin.2immerse.advdev.tv/dmapp-components/image/image.html",
             timeline.NS_2IMMERSE_COMPONENT("mediaUrl") : fileName,
             }
         
         elt = ET.Element(timeline.NS_TIMELINE("ref"),attrs)
-        sleepElt = ET.Element(timeline.NS_TIMELINE("sleep"), {NS_TIMELINE("dur") : str(interval)})
+        sleepElt = ET.Element(timeline.NS_TIMELINE("sleep"), {timeline.NS_TIMELINE("dur") : str(interval)})
         parElt = ET.Element(timeline.NS_TIMELINE("par"))
         parElt.append(sleepElt)
         parElt.append(elt)
         seqElt.append(parElt)
-    return seqElt, [allids]
+    return seqElt, allids
     
 def main():
     if len(sys.argv) != 10:

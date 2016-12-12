@@ -7,20 +7,20 @@ import shutil
 import timeline
 import xml.etree.ElementTree as ET
 
-def genMovie(fileName, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
+def genMovie(fileName, heading, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
     tmpDir = fileName + '.tmpdir'
     shutil.rmtree(tmpDir, True)
     os.mkdir(tmpDir)
     pattern = os.path.join(tmpDir, 'img%06d.png')
-    count = images.genImages(pattern, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
+    count = images.genImages(pattern, heading, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
     status = subprocess.call(["ffmpeg", "-y", "-framerate", str(1.0/interval), "-i", pattern, "-c:v", "libx264", "-vf", "fps=25,format=yuv420p", fileName])
     if status == 0:
         shutil.rmtree(tmpDir)
         return 1
     return 0
     
-def genMovieElement(prefix, isMaster, fileName,  width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
-    count = genMovie(fileName,  width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
+def genMovieElement(prefix, isMaster, fileName,  heading, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
+    count = genMovie(fileName,  heading, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
     if not count:
         return None
     attrs = {
