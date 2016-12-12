@@ -13,26 +13,27 @@ def genMovie(fileName, width, height, bgColor, fgColor, fontSize, firstTime, las
     os.mkdir(tmpDir)
     pattern = os.path.join(tmpDir, 'img%06d.png')
     count = images.genImages(pattern, width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
-    status = subprocess.call(["ffmpeg", "-framerate", str(1.0/interval), "-i", pattern, "-c:v", "libx264", "-vf", "fps=25,format=yuv420p", fileName])
+    status = subprocess.call(["ffmpeg", "-y", "-framerate", str(1.0/interval), "-i", pattern, "-c:v", "libx264", "-vf", "fps=25,format=yuv420p", fileName])
     if status == 0:
         shutil.rmtree(tmpDir)
         return 1
     return 0
     
-def genMovieElement(prefix, isMaster, fileName, *args, **kwargs):
-    count = genMovie(fileName, *args, **kwargs)
+def genMovieElement(prefix, isMaster, fileName,  width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval):
+    count = genMovie(fileName,  width, height, bgColor, fgColor, fontSize, firstTime, lastTime, interval)
     if not count:
         return None
     attrs = {
         timeline.NS_2IMMERSE("dmappcid") : prefix,
         timeline.NS_2IMMERSE("class") : "movie",
         timeline.NS_2IMMERSE_COMPONENT("mediaUrl") : fileName,
+        timeline.NS_TIMELINE_CHECK("dur") : str(lastTime-firstTime),
         }
     if isMaster:
-        attrs[NS_2IMMERSE_COMPONENT("syncMode")] = "master"
+        attrs[timeline.NS_2IMMERSE_COMPONENT("syncMode")] = "master"
         
     elt = ET.Element(timeline.NS_TIMELINE("ref"),attrs)
-    return elt
+    return elt, [prefix]
     
 def main():
     if len(sys.argv) != 10:

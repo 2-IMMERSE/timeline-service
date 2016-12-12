@@ -33,3 +33,11 @@ NAMESPACES.update(NS_2IMMERSE_COMPONENT.ns())
 for k, v in NAMESPACES.items():
     ET.register_namespace(k, v)
 
+def genDocument():
+    root = ET.Element(NS_TIMELINE("document"))
+    tree = ET.ElementTree(root)
+    topPar = ET.Element(NS_TIMELINE("par"))
+    root.append(topPar)
+    
+    return tree, topPar
+    

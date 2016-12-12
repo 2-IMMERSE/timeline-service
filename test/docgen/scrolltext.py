@@ -29,8 +29,8 @@ def genScrollText(fileName, firstTime, lastTime, interval):
     fp.write("\n]\n")
     return count
     
-def genScrollTextElement(prefix, fileName, *args, **kwargs):
-    count = genScrollText(fileName, *args, **kwargs)
+def genScrollTextElement(prefix, fileName, firstTime, lastTime, interval):
+    count = genScrollText(fileName, firstTime, lastTime, interval)
     if not count:
         return None
     attrs = {
@@ -38,10 +38,11 @@ def genScrollTextElement(prefix, fileName, *args, **kwargs):
         timeline.NS_2IMMERSE("class") : "scroll-text",
         timeline.NS_2IMMERSE("url") : "http://origin.2immerse.advdev.tv/dmapp-components/scroll-text/scroll-text.html",
         timeline.NS_2IMMERSE_COMPONENT("scriptUrl") : fileName,
+        timeline.NS_TIMELINE_CHECK("dur") : str(lastTime-firstTime),
         }
         
     elt = ET.Element(timeline.NS_TIMELINE("ref"),attrs)
-    return elt
+    return elt, [prefix]
     
 
 def main():

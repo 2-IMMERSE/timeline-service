@@ -38,9 +38,12 @@ def genImagesElement(prefix, pattern, width, height, bgColor, fgColor, fontSize,
     if not count:
         return None
     seqElt = ET.Element(timeline.NS_TIMELINE("seq"))
+    allids = []
     for i in range(len(count)):
+        thisId = prefix + '_' + str(i)
+        allids.append(thisId)
         attrs = {
-            timeline.NS_2IMMERSE("dmappcid") : prefix + '_' + str(i),
+            timeline.NS_2IMMERSE("dmappcid") : thisId,
             timeline.NS_2IMMERSE("class") : "image",
             timeline.NS_2IMMERSE("url") : "http://origin.2immerse.advdev.tv/dmapp-components/image/image.html",
             timeline.NS_2IMMERSE_COMPONENT("mediaUrl") : fileName,
@@ -52,7 +55,7 @@ def genImagesElement(prefix, pattern, width, height, bgColor, fgColor, fontSize,
         parElt.append(sleepElt)
         parElt.append(elt)
         seqElt.append(parElt)
-    return seqElt
+    return seqElt, [allids]
     
 def main():
     if len(sys.argv) != 10:
