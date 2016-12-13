@@ -49,13 +49,13 @@ def main():
         c = dict(componentId=i, personal=dict(priority=20, minSize=dict(width=100,height=100)), communal=dict(priority=0))
         layoutConstraints.append(c)
     
-    imgs, ids = images.genImagesElement("image", "media/images%04d.png", "image", 500, 500, 0xf000f0, 0x101020, 40, BEGIN, END, INTERVAL*10)
+    imgs, ids = images.genImagesElement("image", "media/images%04d.png", "image", 500, 500, 0xf000f0, 0x101020, 40, BEGIN, END, INTERVAL)
     mainPar.append(imgs)
     for i in ids:
         c = dict(componentId=i, personal=dict(priority=0), communal=dict(priority=20, minSize=dict(width=100,height=100)))
         layoutConstraints.append(c)
     
-    images2, ids = images.genImagesElement("imageHH", "media/imagesHH%04d.png", "imageHH", 500, 500, 0xf0f0f0, 0x101020, 40, BEGIN, END, INTERVAL*10)
+    images2, ids = images.genImagesElement("imageHH", "media/imagesHH%04d.png", "imageHH", 500, 500, 0xf0f0f0, 0x101020, 40, BEGIN, END, INTERVAL)
     mainPar.append(images2)
     for i in ids:
         c = dict(componentId=i, personal=dict(priority=20, minSize=dict(width=100,height=100)), communal=dict(priority=0))

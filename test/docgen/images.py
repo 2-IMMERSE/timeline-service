@@ -5,6 +5,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 import xml.etree.ElementTree as ET
 import timeline
+import qrcode
 
 FONT="/Library/Fonts/Andale Mono.ttf"
 
@@ -25,8 +26,16 @@ def genImages(pattern, heading, width, height, bgColor, fgColor, fontSize, first
         
         textWidth, textHeight = draw.textsize(tc, font=font)
         x = (width-textWidth) / 2
-        y = (height-textHeight) / 2
+        y = textHeight
         draw.text((x, y), tc, font=font, fill=fgColor)
+        
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(tc)
+        qrImage = qr.make_image()
+        w, h = qrImage.size
+        l =  (width-w)/2
+        t =  3*textHeight + (height-3*textHeight-h)/2
+        im.paste(qrImage, (l, t))
         
         fileName = pattern % count
         im.save(fileName)
@@ -66,7 +75,7 @@ def main():
         print "pattern has %d to show where image number goes, for example imagedir/img%06d.png"
         print "Times are all in seconds. Generates images with timecodes."
         sys.exit(1)
-    count = genImages(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4], base=0), int(sys.argv[5], base=0), int(sys.argv[6]), float(sys.argv[7]), float(sys.argv[8]), float(sys.argv[9]))
+    count = genImages(sys.argv[1], 'heading', int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4], base=0), int(sys.argv[5], base=0), int(sys.argv[6]), float(sys.argv[7]), float(sys.argv[8]), float(sys.argv[9]))
     print 'Created %d images' % count
 
 if __name__ == '__main__':
