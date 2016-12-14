@@ -24,11 +24,17 @@ def genImages(pattern, heading, width, height, bgColor, fgColor, fontSize, first
         im = Image.new("RGB", (width, height), bgColor)
         draw = ImageDraw.Draw(im)
         
+        # Draw a cross
+        draw.line((0, 0, width, height), fill=fgColor)
+        draw.line((0, height, width, 0), fill=fgColor)
+        
+        # Draw the text timecode
         textWidth, textHeight = draw.textsize(tc, font=font)
         x = (width-textWidth) / 2
         y = textHeight
         draw.text((x, y), tc, font=font, fill=fgColor)
         
+        # draw the QR code timecode
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
         qr.add_data(tc)
         qrImage = qr.make_image()
