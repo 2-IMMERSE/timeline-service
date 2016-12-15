@@ -122,7 +122,7 @@ class BaseTimeline:
         self.logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout=%s, duration=%s)" % (self.contextId, dmappId, componentId, status, fromLayout, duration))
         assert dmappId == self.dmappId
         c = self.dmappComponents[componentId]
-        c.statusReport(status, duration)
+        c.statusReport(status, duration, fromLayout)
         self._updateTimeline()
         return None
 
@@ -338,16 +338,19 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, self.clock.now(), *extraLogArgs)
         self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
 
-    def statusReport(self, state, duration):
+    def statusReport(self, state, duration, fromLayout):
         if DEBUG_IGNORE_SKIPPED and state == 'skipped':
             self.document.report(logging.INFO, 'IGNORE', state, self.document.getXPath(self.elt))
             return
         durargs = ()
+        if fromLayout:
+            durargs = ('fromLayout')
         if duration != None:
             durargs = ('duration=%s' % duration,)
+            
         self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt), duration, *durargs)
         # XXXJACK quick stopgap until I implement duration
-        if state == document.State.started and duration != None and duration < 0.1:
+        if state == document.State.started and ((duration != None and duration < 0.1) or fromLayout):
             state = document.State.finished
         #
         # Sanity check for state change report
