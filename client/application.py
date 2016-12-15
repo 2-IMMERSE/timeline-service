@@ -235,8 +235,11 @@ class Component:
     def _reportStatus(self):
         self.logger.info("%f: component %s: %s" % (self.application.clock.now(), self.componentId, self.status))
         # Report status for new component
+        statusDict = dict(status=self.status)
+        if self.status == 'started':
+        	statusDict['duration'] = self.componentInfo.get('debug-2immerse-dur', 0)
         r = requests.post(self.layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=self.application.context.deviceId),
-                json=dict(status=self.status))
+                json=statusDict)
         if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
             self.logger.error('_reportStatus: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
