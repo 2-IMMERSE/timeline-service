@@ -68,6 +68,13 @@ def main():
         layoutConstraints.append(c)
     curpri -= 1
     
+    titles, ids = images.genImagesElement("titlesHH", "media/imagesTHH%04d.png", "titleHH", 500, 500, 0xf080f0, 0x801020, 20, BEGIN, END, INTERVAL)
+    mainPar.append(titles)
+    for i in ids:
+        c = dict(componentId=i, personal=dict(priority=curpri, minSize=dict(width=100,height=100)), communal=dict(priority=0))
+        layoutConstraints.append(c)
+    curpri -= 1
+    
     tree.write(fpTimeline)
     fpTimeline.write('\n')
     
