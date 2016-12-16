@@ -8,6 +8,15 @@ import clocks
 
 logging.basicConfig()
 
+class MyLoggerAdapter(logging.LoggerAdapter):
+
+	def process(self, msg, kwargs):
+		if 'extra' in kwargs:
+			kwargs['extra'].update(self.extra)
+		else:
+			kwargs['extra'] = self.extra
+		return msg, kwargs
+		
 DEBUG=True
 
 class TimelineParseError(ValueError):
@@ -84,6 +93,9 @@ class DummyDelegate:
     def getXPath(self):
         return self.document.getXPath(self.elt)
         
+    def getLogExtra(self):
+    	return dict(xpath=self.getXPath())
+    	
     def checkAttributes(self):
         pass
         
@@ -95,9 +107,9 @@ class DummyDelegate:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
             
     def setState(self, state):
-        self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
         if self.state == state:
-            self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
+            self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)), extra=self.getLogExtra())
 #             if DEBUG:
 #                 import pdb
 #                 pdb.set_trace()
@@ -340,7 +352,7 @@ class ParDelegate(TimeElementDelegate):
             if not childState in State.NOT_DONE:
                 return
         # If we get here we got an unexpected state change from a child. Report.
-        self.logger.warning('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
+        self.logger.warning('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state), extra=self.getLogExtra())
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -480,7 +492,7 @@ class RefDelegate(TimeElementDelegate):
     
     def initTimelineElement(self):
         if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
-            self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
+            self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters(), extra=self.getLogExtra())
             self.setState(State.skipped)
             return
         TimeElementDelegate.initTimelineElement(self)
@@ -493,7 +505,7 @@ class RefDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report(logging.INFO, '>', 'START', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
+        self.document.report(logging.INFO, '>', 'START', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters(), extra=self.getLogExtra())
         # XXXJACK test code. Assume text/image nodes finish straight away, masterVideo takes forever and others take 42 seconds
         cl = self.elt.get(NS_2IMMERSE("class"), "unknown")
         if cl == "mastervideo":
@@ -509,11 +521,11 @@ class RefDelegate(TimeElementDelegate):
     def _done(self):
         if self.state == State.started:
             # Do nothing if we aren't in the started state anymore (probably because we've been stopped)
-            self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt))
+            self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
             self.setState(State.finished)
 
     def stopTimelineElement(self):
-        self.document.report(logging.INFO, '>', 'STOP', self.document.getXPath(self.elt))
+        self.document.report(logging.INFO, '>', 'STOP', self.document.getXPath(self.elt), extra=self.getLogExtra())
         TimeElementDelegate.stopTimelineElement(self)
         
     def _getParameters(self):
@@ -551,7 +563,7 @@ class ConditionalDelegate(SingleChildDelegate):
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         self.setState(State.starting)
-        self.document.report(logging.DEBUG, 'COND', True, self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'COND', True, self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
         
 class SleepDelegate(TimeElementDelegate):
@@ -564,14 +576,14 @@ class SleepDelegate(TimeElementDelegate):
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
         self.clock.schedule(dur, self._done)
         
     def _done(self):
         if self.state != State.started:
             return
-        self.document.report(logging.DEBUG, 'SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.finished)
     
     def parseDuration(self, dur):
@@ -591,14 +603,14 @@ class WaitDelegate(TimelineDelegate):
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
         self.setState(State.starting)
-        self.document.report(logging.DEBUG, 'WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.started)
         self.clock.schedule(0, self._done)
         
     def _done(self):
         if self.state != State.started:
             return
-        self.document.report(logging.DEBUG, 'WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.finished)
     
     
@@ -629,10 +641,10 @@ class Document:
         self.terminating = False
         self.logger = logging.getLogger(__name__)
         if extraLoggerArgs:
-            self.logger = logging.LoggerAdapter(self.logger, extraLoggerArgs)
+            self.logger = MyLoggerAdapter(self.logger, extraLoggerArgs)
         
     def setExtraLoggerArgs(self, extraLoggerArgs):
-            self.logger = logging.LoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
+            self.logger = MyLoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
     
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
         assert not self.root
@@ -738,7 +750,7 @@ class Document:
             
     def schedule(self, callback, *args, **kwargs):
         assert self.root is not None
-        self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
+        self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt), extra=callback.im_self.elt.delegate.getLogExtra())
         if self.RECURSIVE or self.terminating:
             callback(*args, **kwargs)
         else:
@@ -768,12 +780,12 @@ class Document:
             if len(self.toDo) == 0:
                 self.clock.handleEvents(self)
 
-    def report(self, level, event, verb, *args):
+    def report(self, level, event, verb, *args, **kwargs):
         if args:
             args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
         else:
             args = ''
-        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args)
+        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args, **kwargs)
              
 def main():
     global DEBUG

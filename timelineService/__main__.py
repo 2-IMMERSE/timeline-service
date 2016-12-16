@@ -55,6 +55,10 @@ class MyFormatter(logging.Formatter):
             rvList.append('contextID:%s' % contextID)
         if dmappID:
             rvList.append('dmappID:%s' % dmappID)
+        if hasattr(record, 'xpath'):
+            rvList.append('xpath:%s ' % record.xpath)
+        if hasattr(record, 'dmappcID'):
+            rvList.append('dmappcID:%s ' % record.dmappcID)
         rvList.append('sourcetime:%s' % datetime.datetime.fromtimestamp(time.time()).isoformat())
         rvList.append('logmessage:%s' % logmessage)
         return ' '.join(rvList)

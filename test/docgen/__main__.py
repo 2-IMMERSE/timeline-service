@@ -77,24 +77,16 @@ def main():
     
     tree.write(fpTimeline)
     fpTimeline.write('\n')
-    
-    fourQuarters = [
-        dict(region=dict(id="region-topleft", position=dict(x=0,y=0), size=dict(width=0.5, height=0.5))),
-        dict(region=dict(id="region-topright", position=dict(x=0,y=0.5), size=dict(width=0.5, height=0.5))),
-        dict(region=dict(id="region-topleft", position=dict(x=0.5,y=0), size=dict(width=0.5, height=0.5))),
-        dict(region=dict(id="region-topright", position=dict(x=0.5,y=0.5), size=dict(width=0.5, height=0.5))),
-        ]
-    commonLayout=dict(
-        communal=dict(
-            portrait=fourQuarters,
-            landscape=fourQuarters,
-            ),
-        personal=dict(
-            portrait=fourQuarters,
-            landscape=fourQuarters,
-            ),
-        )
 
+    commonLayout={'communal':{}, 'personal':{}}
+    for cp in "communal", "personal":
+        for pl in "portrait", "landscape":
+            commonLayout[cp][pl] = [
+                dict(region=dict(id="region-topleft-%s-%s" % (cp, pl), position=dict(x=0,y=0), size=dict(width=0.5, height=0.5))),
+                dict(region=dict(id="region-topright-%s-%s" % (cp, pl), position=dict(x=0,y=0.5), size=dict(width=0.5, height=0.5))),
+                dict(region=dict(id="region-botleft-%s-%s" % (cp, pl), position=dict(x=0.5,y=0), size=dict(width=0.5, height=0.5))),
+                dict(region=dict(id="region-botright-%s-%s" % (cp, pl), position=dict(x=0.5,y=0.5), size=dict(width=0.5, height=0.5))),
+                ]
     layout = dict(
         version=3, 
         dmapp=sys.argv[1],
