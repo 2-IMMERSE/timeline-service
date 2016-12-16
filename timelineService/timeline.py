@@ -276,6 +276,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         if not self.klass:
             self.klass = "unknownClass"
             self.logger.error("Element %s: missing tim:class attribute, invented %s", self.document.getXPath(self.elt), self.klass, extra=self.getLogExtra())
+        self.expectedDuration = None
         assert self.klass
 
     def getLogExtra(self):
@@ -353,14 +354,15 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             
         self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt), duration, *durargs, extra=self.getLogExtra())
         # XXXJACK quick stopgap until I implement duration
-        if state == document.State.started and ((duration != None and duration < 0.1) or fromLayout):
-            state = document.State.finished
+        if state == document.State.started and (duration != None or fromLayout):
+            self._scheduleFinished(duration)
         #
         # Sanity check for state change report
         #
         if state == document.State.inited:
             if self.state != document.State.initing:
-                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+                if self.state != document.State.inited:
+                    self.logger.warning('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 return
         elif state == document.State.skipped:
             if self.state != document.State.initing:
@@ -368,11 +370,17 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
                 return
         elif state == document.State.started:
             if self.state != document.State.starting:
-                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+                if self.state == document.State.finished:
+                    # A companion has appeared.
+                    self.logger.info(logging.INFO, 'REVIVE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
+                    self.setState(state)
+                elif self.state != document.State.started:
+                    self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 return
         elif state == document.State.finished:
             if self.state not in {document.State.starting, document.State.started}:
-                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+                if self.state not in (document.State.finished, document.State.stopping, document.State.stopped):
+                    self.logger.warning('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 return
         elif state == document.State.idle:
             pass
@@ -384,6 +392,20 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             return
         self.setState(state)
 
+    def _scheduleFinished(self, dur):
+        if not dur: 
+            dur = 0
+        if self.expectedDuration is None or self.expectedDuration > dur:
+            self.clock.schedule(dur, self._emitFinished)
+        if self.expectedDuration != None and self.expectedDuration != dur:
+            self.logger.warning('Expected duration of %s changed from %s to %s' % (self.document.getXPath(self.elt), self.expectedDuration, dur), extra=self.getLogExtra())
+            self.expectedDuration = dur 
+        
+    def _emitFinished(self):
+        self.document.report(logging.INFO, 'SYNTH', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
+        if self.state in (document.State.started, document.State.starting):
+            self.setState(document.State.finished)
+            
     def _getParameters(self):
         rv = {}
         for k in self.elt.attrib:
