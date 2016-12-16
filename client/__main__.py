@@ -20,7 +20,7 @@ def context_for_tv(layoutServiceURL, deviceType=None, width=None, height=None):
     if width == None: width = 1920
     if height == None: height = 1080
     if deviceType == None:
-        deviceType = "TV"
+        deviceType = "tv"
     caps = dict(
         displayWidth=width, 
         displayHeight=height,
@@ -89,9 +89,9 @@ def main():
     parser.add_argument('--logLevel', action='store', help="Log level (default: INFO)", default="INFO")
     parser.add_argument('--wait', action='store_true', help='After creating the context wait for a newline, so other devices can be started (tv only)')
     parser.add_argument('--start', action='append', metavar='DEV', help='After creating the context, start another instance of %(prog)s for device DEV (tv only)')
-    parser.add_argument('--dev', metavar='DEV', help='Use deviceId DEV (default: TV or handheld)')
-    parser.add_argument('--width', type=int, metavar='W', help='Report device width as W (default 1920 for TV, 720 for handheld)')
-    parser.add_argument('--height', type=int, metavar='H', help='Report device height as H (default 1080 for TV, 1280 for handheld)')
+    parser.add_argument('--dev', metavar='DEV', help='Use deviceId DEV (default: tv or handheld)')
+    parser.add_argument('--width', type=int, metavar='W', help='Report device width as W (default 1920 for tv, 720 for handheld)')
+    parser.add_argument('--height', type=int, metavar='H', help='Report device height as H (default 1080 for tv, 1280 for handheld)')
     parser.add_argument('--timeOffset', type=int, metavar='SEC', help='Start the document clock at SEC seconds into the video, to simulate late joining of a shared session (tv only)')
     
     args = parser.parse_args()
