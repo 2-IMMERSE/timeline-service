@@ -729,23 +729,26 @@ class Document:
         self.clock.start()
         self.runDocumentStart()
         self.runloop(State.finished)
-        self.report(logging.DEBUG, 'RUN', 'stop')
+        self.runDocumentStop()
+        
+    def runDocumentInit(self):
+        self.report(logging.INFO, 'RUN', 'init')
+        self.schedule(self.root.delegate.initTimelineElement)
+    
+    def runDocumentStart(self):
+        assert self.root is not None
+        self.report(logging.INFO, 'RUN', 'start')
+        self.schedule(self.root.delegate.startTimelineElement)
+
+    def runDocumentStop(self):
+        self.report(logging.INFO, 'RUN', 'stop')
         self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
 #        self.terminating = True
         self.root.delegate.stopTimelineElement()
         self.runloop(State.idle)
         self.root.delegate.assertDescendentState("run()", State.idle)
-        self.report(logging.DEBUG, 'RUN', 'done')
+        self.report(logging.INFO, 'RUN', 'done')
             
-    def runDocumentInit(self):
-        self.report(logging.DEBUG, 'RUN', 'init')
-        self.schedule(self.root.delegate.initTimelineElement)
-    
-    def runDocumentStart(self):
-        assert self.root is not None
-        self.report(logging.DEBUG, 'RUN', 'start')
-        self.schedule(self.root.delegate.startTimelineElement)
-
     def getDocumentState(self):
         if self.root is None:
             return None

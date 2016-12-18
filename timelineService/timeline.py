@@ -49,6 +49,7 @@ class BaseTimeline:
         self.layoutServiceUrl = layoutServiceUrl
         self.dmappTimeline = None
         self.dmappId = None
+        self.documentHasRun = False
         self.dmappComponents = {}
         self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
         self.document = document.Document(self.clockService, idAttribute=document.NS_2IMMERSE("dmappcid"), extraLoggerArgs=dict(contextID=contextId))
@@ -74,6 +75,7 @@ class BaseTimeline:
             contextId=self.contextId,
             creationTime=self.creationTime,
             currentPresentationTime=self.clockService.now(),
+            waitingEvents=self.clockService.dumps(),
             timelineDocUrl=self.timelineDocUrl,
             dmappTimeline=self.dmappTimeline,
             dmappId=self.dmappId,
@@ -116,6 +118,7 @@ class BaseTimeline:
         self.timelineDocUrl = None
         self.dmappTimeline = None
         self.dmappId = None
+        self.documentHasRun = False
         return None
 
     def dmappcStatus(self, dmappId, componentId, status, fromLayout=False, duration=None):
@@ -174,10 +177,16 @@ class BaseTimeline:
         if not curState: return
         if curState == document.State.idle:
             # We need to initialize the document
-            self.document.runDocumentInit()
+            if self.documentHasRun:
+                logger.info("Timeline(%s): Finished with %s" % (self.contextId, timelineDocUrl))
+            else:
+                self.document.runDocumentInit()
         elif curState == document.State.inited:
             # We need to start the document
+            self.documentHasRun = True
             self.document.runDocumentStart()
+        elif curState == document.State.finished:
+            self.document.report(logging.DEBUG, 'RUN', 'done')
         self.document.runAvailable()
         self.layoutService.forwardActions()
 
