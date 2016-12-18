@@ -183,8 +183,7 @@ class Component:
     def __init__(self, application, componentId, componentInfo):
         self.application = application
         self.logger = application.logger
-        params = componentInfo.get('parameters')
-        if not params: params = {}
+        self.parameters = params = componentInfo.get('parameters', {})
         syncMode = params.get('syncMode')
         if not syncMode: syncMode = None
         self.canBeMasterClock = syncMode == 'master'
@@ -237,7 +236,8 @@ class Component:
         # Report status for new component
         statusDict = dict(status=self.status)
         if self.status == 'started':
-        	statusDict['duration'] = self.componentInfo.get('debug-2immerse-dur', 0)
+        	statusDict['duration'] = float(self.parameters.get('debug-2immerse-dur', 0))
+        	self.logger.debug("%f: component %s: report duration=%s" % (self.application.clock.now(), self.componentId, statusDict['duration']))
         r = requests.post(self.layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=self.application.context.deviceId),
                 json=statusDict)
         if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
