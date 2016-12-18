@@ -187,7 +187,11 @@ def main():
     parser.add_argument('--noTransactions', action='store_true', help="Don't transaction interface to layout service for dmappc updates (default: simple calls)")
     parser.add_argument('--port', type=int, help="Set port to listen on")
     parser.add_argument('--logLevel', metavar='SPEC', help="Set log levels (comma-separated list of [loggername:]LOGLEVEL)", default=DEFAULT_LOG_CONFIG)
+    parser.add_argument('--noKibana', action='store_true', help="Use human-readable log formatting in stead of Kibana-style formatting")
     args = parser.parse_args()
+    if args.noKibana:
+        global MyFormatter
+        MyFormatter = logging.Formatter
     if args.logLevel:
         for ll in args.logLevel.split(','):
             if ':' in ll:
