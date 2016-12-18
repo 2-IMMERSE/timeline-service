@@ -80,6 +80,8 @@ class State:
     STOP_NEEDED = {initing, inited, starting, started, finished, skipped}
     
 class DummyDelegate:
+    DEFAULT_PRIO="low"
+    
     def __init__(self, elt, document, clock):
         self.elt = elt
         self.document = document
@@ -151,7 +153,14 @@ class DummyDelegate:
         self.setState(State.idle)
         
     def getCurrentPriority(self):
-        return PRIO_TO_INT["low"]
+        val = self.elt.get(NS_TIMELINE("prio"), self.DEFAULT_PRIO)
+#         if self.state == State.started:
+#             val = self.elt.get(NS_TIMELINE("prio"), "normal")
+#         else:
+#             val = "low"
+        val = PRIO_TO_INT.get(val, val)
+        val = int(val)
+        return val
         
 class ErrorDelegate(DummyDelegate):
     def __init__(self, elt, document, clock):
@@ -251,15 +260,7 @@ class TimeElementDelegate(TimelineDelegate):
         NS_TIMELINE("prio")
         }
         
-    def getCurrentPriority(self):
-        val = self.elt.get(NS_TIMELINE("prio"), "normal")
-#         if self.state == State.started:
-#             val = self.elt.get(NS_TIMELINE("prio"), "normal")
-#         else:
-#             val = "low"
-        val = PRIO_TO_INT.get(val, val)
-        val = int(val)
-        return val
+    DEFAULT_PRIO = "normal"
         
 class ParDelegate(TimeElementDelegate):
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
@@ -292,7 +293,7 @@ class ParDelegate(TimeElementDelegate):
             # First check whether any of the children that are relevant to our lifetime are still not finished.
             # 
             relevantChildren = self._getRelevantChildren()
-#             print 'xxxjack par relevant children', relevantChildren
+#            print 'xxxjack par relevant children', relevantChildren
             for ch in relevantChildren:
                 if ch.delegate.state in State.NOT_DONE:
                     return
@@ -570,7 +571,8 @@ class SleepDelegate(TimeElementDelegate):
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
         NS_TIMELINE("dur")
         }
-
+    DEFAULT_PRIO="high"
+    
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
@@ -598,7 +600,8 @@ class WaitDelegate(TimelineDelegate):
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("event")
         }
-        
+    DEFAULT_PRIO="high"
+            
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)

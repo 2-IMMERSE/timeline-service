@@ -372,7 +372,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             if self.state != document.State.starting:
                 if self.state == document.State.finished:
                     # A companion has appeared.
-                    self.logger.info(logging.INFO, 'REVIVE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
+                    self.document.report(logging.INFO, 'REVIVE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
                     self.setState(state)
                 elif self.state != document.State.started:
                     self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
