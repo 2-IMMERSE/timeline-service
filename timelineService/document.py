@@ -72,12 +72,11 @@ class State:
     started = "started"
     finished = "finished"
     stopping = "stopping"
-    skipped = "skipped"
 #    stopped = "stopped"
 #    terminating = "terminating"
     
     NOT_DONE = {initing, inited, starting, started}
-    STOP_NEEDED = {initing, inited, starting, started, finished, skipped}
+    STOP_NEEDED = {initing, inited, starting, started, finished}
     
 class DummyDelegate:
     DEFAULT_PRIO="low"
@@ -115,11 +114,17 @@ class DummyDelegate:
 #             if DEBUG:
 #                 import pdb
 #                 pdb.set_trace()
+            if state == State.idle:
+                # Defensive programming: destroy it again...
+                self.logger.warning('Re-issuing destroy for %s' % self.document.getXPath(self.elt), extra=self.getLogExtra())
+                self.destroyTimelineElement()
             return
         self.state = state
         parentElement = self.document.getParent(self.elt)
         if parentElement is not None:
             parentElement.delegate.reportChildState(self.elt, self.state)
+        if self.state == State.idle:
+            self.destroyTimelineElement()
            
     def assertState(self, action, *allowedStates):
         assert self.state in set(allowedStates), "%s: %s: state==%s, expected %s" % (self, action, self.state, set(allowedStates))
@@ -141,7 +146,7 @@ class DummyDelegate:
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         #self.setState(State.starting)
         #self.setState(State.started)
         #self.setState(State.stopping)
@@ -151,6 +156,9 @@ class DummyDelegate:
         if self.state == State.idle:
             return
         self.setState(State.idle)
+        
+    def destroyTimelineElement(self):
+        pass
         
     def getCurrentPriority(self):
         val = self.elt.get(NS_TIMELINE("prio"), self.DEFAULT_PRIO)
@@ -197,7 +205,7 @@ class SingleChildDelegate(TimelineDelegate):
         if self.state == State.idle:
             return
         if self.state == State.initing:
-            if childState in {State.inited, State.skipped}:
+            if childState in {State.inited}:
                 self.setState(State.inited)
                 return
             assert childState == State.initing
@@ -234,7 +242,7 @@ class SingleChildDelegate(TimelineDelegate):
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.inited, State.idle, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.inited, State.idle)
         self.setState(State.starting)
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
         
@@ -275,7 +283,7 @@ class ParDelegate(TimeElementDelegate):
         if self.state == State.initing:
             # We're initializing. Go to initialized once all our children have.
             for ch in self.elt:
-                if ch.delegate.state not in {State.inited, State.skipped}:
+                if ch.delegate.state not in {State.inited}:
 #                    print 'xxxjack par initing', self.document.getXPath(self.elt), 'waitforchild', self.document.getXPath(ch)
                     return
             self.setState(State.inited)
@@ -384,7 +392,7 @@ class ParDelegate(TimeElementDelegate):
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         for child in self.elt: 
             self.document.schedule(child.delegate.startTimelineElement)
@@ -408,7 +416,7 @@ class SeqDelegate(TimeElementDelegate):
             return
         if self.state == State.initing:
             # Initializing. We're initialized when our first child is.
-            if self.elt[0].delegate.state not in {State.inited, State.skipped}:
+            if self.elt[0].delegate.state not in {State.inited}:
                 return
             self.setState(State.inited)
             return
@@ -429,7 +437,7 @@ class SeqDelegate(TimeElementDelegate):
                  #That was the last child. We are done.
                 self.setState(State.finished)
                 self.assertDescendentState('reportChildState[self.state==finished]', State.finished, State.stopping, State.idle)
-            elif nextChild.delegate.state in {State.inited, State.skipped}:
+            elif nextChild.delegate.state in {State.inited}:
                 # Next child is ready to run. Start it, and initialize the one after that, then stop old one.
                 self._currentChild = nextChild
                 self.document.schedule(self._currentChild.delegate.startTimelineElement)
@@ -460,7 +468,7 @@ class SeqDelegate(TimeElementDelegate):
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         if not len(self.elt):
             self.setState(State.finished)
@@ -492,18 +500,11 @@ class RefDelegate(TimeElementDelegate):
     EXACT_CHILD_COUNT=0
     
     def initTimelineElement(self):
-        if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
-            self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters(), extra=self.getLogExtra())
-            self.setState(State.skipped)
-            return
         TimeElementDelegate.initTimelineElement(self)
 
     def startTimelineElement(self):
-        if self.state == State.skipped:
-            self.setState(State.finished)
-            return
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
         self.document.report(logging.INFO, '>', 'START', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters(), extra=self.getLogExtra())
@@ -562,7 +563,7 @@ class ConditionalDelegate(SingleChildDelegate):
 
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.document.report(logging.DEBUG, 'COND', True, self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
@@ -575,7 +576,7 @@ class SleepDelegate(TimeElementDelegate):
     
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
         self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
@@ -604,7 +605,7 @@ class WaitDelegate(TimelineDelegate):
             
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.document.report(logging.DEBUG, 'WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.started)

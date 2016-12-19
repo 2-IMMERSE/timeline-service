@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 TRANSACTIONS=True
 THREADED=True
-DEBUG_IGNORE_SKIPPED=False
 
 class BaseTimeline:
     ALL_CONTEXTS = {}
@@ -313,9 +312,6 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             self.sendAction("init", body=config)
 
     def startTimelineElement(self):
-    	if self.state == document.State.skipped:
-    		self.setState(document.State.finished)
-    		return
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
         if TRANSACTIONS:
@@ -329,6 +325,12 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             self.scheduleAction("stop")
         else:
             self.sendAction("stop", queryParams=dict(stopTime=self._getTime(self.clock.now())))
+            
+    def destroyTimelineElement(self):
+        if TRANSACTIONS:
+            self.scheduleAction("destroy")
+        else:
+            self.sendAction("destroy")
 
     def sendAction(self, verb, queryParams=None, body=None):
         if body:
@@ -352,9 +354,6 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
 
     def statusReport(self, state, duration, fromLayout):
-        if DEBUG_IGNORE_SKIPPED and state == 'skipped':
-            self.document.report(logging.INFO, 'IGNORE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
-            return
         durargs = ()
         if fromLayout:
             durargs = ('fromLayout',)
@@ -372,10 +371,6 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             if self.state != document.State.initing:
                 if self.state != document.State.inited:
                     self.logger.warning('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-                return
-        elif state == document.State.skipped:
-            if self.state != document.State.initing:
-                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 return
         elif state == document.State.started:
             if self.state != document.State.starting:
@@ -395,9 +390,6 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             pass
         else:
             self.logger.error('Unknown "%s" state update for node %s (in state %s)' %( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-            return
-        if state == 'skipped' and self.state == document.State.idle:
-            self.logger.warning('Ignoring "skipped" state update for idle node %s'% ( self.document.getXPath(self.elt)), extra=self.getLogExtra())
             return
         self.setState(state)
 
