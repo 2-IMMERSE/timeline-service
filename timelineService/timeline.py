@@ -11,7 +11,6 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-TRANSACTIONS=True
 THREADED=True
 
 class BaseTimeline:
@@ -304,33 +303,21 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         config = {'class':self.klass, 'url':self.url}
         parameters = self._getParameters()
 
-        if TRANSACTIONS:
-            self.scheduleAction("init", config=config, parameters=parameters)
-        else:
-            # Direct API call has parameters inside config (sigh)
-            config['parameters'] = parameters
-            self.sendAction("init", body=config)
+        # Direct API call has parameters inside config (sigh)
+        config['parameters'] = parameters
+        self.sendAction("init", body=config)
 
     def startTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
-        if TRANSACTIONS:
-            self.scheduleAction("start")
-        else:
-            self.sendAction("start", queryParams=dict(startTime=self._getTime(self.clock.now())))
+        self.scheduleAction("start")
 
     def stopTimelineElement(self):
         self.setState(document.State.stopping)
-        if TRANSACTIONS:
-            self.scheduleAction("stop")
-        else:
-            self.sendAction("stop", queryParams=dict(stopTime=self._getTime(self.clock.now())))
+        self.scheduleAction("stop")
             
     def destroyTimelineElement(self):
-        if TRANSACTIONS:
-            self.scheduleAction("destroy")
-        else:
-            self.sendAction("destroy")
+        self.scheduleAction("destroy")
 
     def sendAction(self, verb, queryParams=None, body=None):
         if body:
