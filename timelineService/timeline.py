@@ -303,10 +303,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         self.setState(document.State.initing)
         config = {'class':self.klass, 'url':self.url}
         parameters = self._getParameters()
-
-        # Direct API call has parameters inside config (sigh)
-        config['parameters'] = parameters
-        self.sendAction("init", body=config)
+        self.scheduleAction("init", config=config, parameters=parameters)
 
     def startTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
@@ -319,20 +316,6 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             
     def destroyTimelineElement(self):
         self.scheduleAction("destroy")
-
-    def sendAction(self, verb, queryParams=None, body=None):
-        if body:
-            self.document.report(logging.INFO, 'SEND', verb, self.document.getXPath(self.elt), self.dmappcId, repr(body), extra=self.getLogExtra())
-        else:
-            self.document.report(logging.INFO, 'SEND', verb, self.document.getXPath(self.elt), self.dmappcId, extra=self.getLogExtra())
-        entryPoint = self._getContactInfo()
-        entryPoint += '/actions/' + verb
-        if body is None:
-            r = requests.post(entryPoint, params=queryParams)
-        else:
-            r = requests.post(entryPoint, json=body, params=queryParams)
-
-        r.raise_for_status()
 
     def scheduleAction(self, verb, config=None, parameters=None):
         extraLogArgs = ()
@@ -356,28 +339,43 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         # Sanity check for state change report
         #
         if state == document.State.inited:
-            if self.state != document.State.initing:
-                if self.state != document.State.inited:
-                    self.logger.warning('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+            if self.state == document.State.initing:
+                pass # This is the expected transition
+            elif self.state in {document.State.inited, document.State.starting, document.State.started, document.State.finished, document.State.stopping}:
+                return # This is a second inited, probably because the layout service decided to place the dmappc on an appeared handheld
+            elif self.state == document.State.idle:
+                self.logger.error('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+                self.scheduleAction('destroy')
+                return
+            else:
+                self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 return
         elif state == document.State.started:
-            if self.state != document.State.starting:
-                if self.state == document.State.finished:
-                    # A companion has appeared.
-                    self.document.report(logging.INFO, 'REVIVE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
-                    self.setState(state)
-                elif self.state != document.State.started:
-                    self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+            if self.state == document.State.starting:
+                pass # This is the expected transition
+            elif self.state == document.State.finished:
+                self.document.report(logging.INFO, 'REVIVE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
+                self.setState(state)
                 return
-        elif state == document.State.finished:
-            if self.state not in {document.State.starting, document.State.started}:
-                if self.state not in (document.State.finished, document.State.stopping, document.State.stopped):
-                    self.logger.warning('Unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+            elif self.state in {document.State.started, document.State.stopping}:
+                return # This is a second started, probably because the layout service decided to place the dmappc on an appeared handheld
+            elif self.state == document.State.idle:
+                self.logger.error('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+                self.scheduleAction('destroy')
+                return
+            else:
+                self.logger.error('Ignoring unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 return
         elif state == document.State.idle:
-            pass
+            pass # idle is always allowed
+        elif state == "destroyed":
+            # destroyed is translated into idle, unless we're in idle already
+            if self.state == document.State.idle:
+                return
+            state = document.State.idle
         else:
-            self.logger.error('Unknown "%s" state update for node %s (in state %s)' %( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+            self.logger.error('Unknown "%s" state update for node %s (in state %s), issuing destroy' %( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+            self.scheduleAction('destroy')
             return
         self.setState(state)
 
@@ -391,9 +389,12 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
             self.expectedDuration = dur 
         
     def _emitFinished(self):
-        self.document.report(logging.INFO, 'SYNTH', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
         if self.state in (document.State.started, document.State.starting):
+            self.document.report(logging.INFO, 'SYNTH', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
             self.setState(document.State.finished)
+        else:
+            self.document.report(logging.INFO, 'SYN-IGN', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
+
             
     def _getParameters(self):
         rv = {}

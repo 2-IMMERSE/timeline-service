@@ -252,6 +252,7 @@ class SingleChildDelegate(TimelineDelegate):
         self.setState(State.stopping)
         waitNeeded = False
         if self.elt[0].delegate.state in State.STOP_NEEDED:
+            print 'xxxjack schedule stop for single child', self.elt[0].delegate.getXPath(), 'in state', self.elt[0].delegate.state
             self.document.schedule(self.elt[0].delegate.stopTimelineElement)
             waitNeeded = True
         if not waitNeeded:
@@ -321,6 +322,7 @@ class ParDelegate(TimeElementDelegate):
             for ch in self.elt:
                 if not ch in relevantChildren:
                     if ch.delegate.state in State.STOP_NEEDED:
+                        print 'xxxjack schedule stop for (finished) par child', ch.delegate.getXPath(), 'in state', ch.delegate.state
                         self.document.schedule(ch.delegate.stopTimelineElement)
             # If all terminate calls and such have been emitted we are finished
             for ch in self.elt:
@@ -350,7 +352,7 @@ class ParDelegate(TimeElementDelegate):
 #             self.setState(State.stopped)
 #             self.assertDescendentState('reportChildState[self.state==stopped]', State.stopped, State.idle)
         if self.state == State.stopping:
-            # We're stopping. When all our chadren have stopped so have we.
+            # We're stopping. When all our children have stopped so have we.
             for ch in self.elt:
                 if ch.delegate.state != State.idle:
                     return
@@ -402,6 +404,7 @@ class ParDelegate(TimeElementDelegate):
         waitNeeded = False
         for child in self.elt:
             if child.delegate.state in State.STOP_NEEDED:
+                print 'xxxjack schedule stop for (stopped) par child', child.delegate.getXPath(), 'in state', child.delegate.state
                 self.document.schedule(child.delegate.stopTimelineElement)
                 waitNeeded = True
         if not waitNeeded:
@@ -449,6 +452,7 @@ class SeqDelegate(TimeElementDelegate):
                 nextChild.delegate.assertState('seq-parent-reportChildState()', State.initing)
                 pass # Wait for inited callback from nextChild
             if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
+                print 'xxxjack schedule stop for prev seq child', prevChild.delegate.getXPath(), 'in state', prevChild.delegate.state
                 self.document.schedule(prevChild.delegate.stopTimelineElement)
         if self.state == State.stopping:
             for ch in self.elt:
@@ -484,6 +488,7 @@ class SeqDelegate(TimeElementDelegate):
         waitNeeded = False
         for ch in self.elt:
             if ch.delegate.state in State.STOP_NEEDED:
+                print 'xxxjack schedule stop for stopped seq child', ch.delegate.getXPath(), 'in state', ch.delegate.state
                 self.document.schedule(ch.delegate.stopTimelineElement)
                 waitNeeded = True
         if not waitNeeded:

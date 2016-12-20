@@ -125,6 +125,9 @@ class timelineServer:
         data = web.data()
         if data:
             args2 = json.loads(data)
+            if type(args2) == type('') or type(args2) == type(u''):
+                # xxxjack Bug workaround, 21-Dec-2016
+                args2 = json.loads(args2)
             args.update(args2)
         tl = timeline.Timeline.get(contextId)
         if not tl:
