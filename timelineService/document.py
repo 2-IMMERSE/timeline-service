@@ -111,9 +111,6 @@ class DummyDelegate:
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
         if self.state == state:
             self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)), extra=self.getLogExtra())
-#             if DEBUG:
-#                 import pdb
-#                 pdb.set_trace()
             if state == State.idle:
                 # Defensive programming: destroy it again...
                 self.logger.warning('Re-issuing destroy for %s' % self.document.getXPath(self.elt), extra=self.getLogExtra())
@@ -252,7 +249,6 @@ class SingleChildDelegate(TimelineDelegate):
         self.setState(State.stopping)
         waitNeeded = False
         if self.elt[0].delegate.state in State.STOP_NEEDED:
-            print 'xxxjack schedule stop for single child', self.elt[0].delegate.getXPath(), 'in state', self.elt[0].delegate.state
             self.document.schedule(self.elt[0].delegate.stopTimelineElement)
             waitNeeded = True
         if not waitNeeded:
@@ -319,11 +315,11 @@ class ParDelegate(TimeElementDelegate):
             # The ultimate answer may be to add a freezeTimelineElement call
             # so we can get SMIL-like semantics.
             #
-            for ch in self.elt:
-                if not ch in relevantChildren:
+            if not self.emittedStopForChildren:
+                for ch in self.elt:
                     if ch.delegate.state in State.STOP_NEEDED:
-                        print 'xxxjack schedule stop for (finished) par child', ch.delegate.getXPath(), 'in state', ch.delegate.state
                         self.document.schedule(ch.delegate.stopTimelineElement)
+                self.emittedStopForChildren = True
             # If all terminate calls and such have been emitted we are finished
             for ch in self.elt:
                 if ch.delegate.state in State.NOT_DONE:
@@ -389,6 +385,7 @@ class ParDelegate(TimeElementDelegate):
         self.assertState('initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         self.setState(State.initing)
+        self.emittedStopForChildren = False
         for child in self.elt: 
             self.document.schedule(child.delegate.initTimelineElement)
         
@@ -400,11 +397,12 @@ class ParDelegate(TimeElementDelegate):
             self.document.schedule(child.delegate.startTimelineElement)
         
     def stopTimelineElement(self):
+        if self.state == State.idle:
+            return
         self.setState(State.stopping)
         waitNeeded = False
         for child in self.elt:
             if child.delegate.state in State.STOP_NEEDED:
-                print 'xxxjack schedule stop for (stopped) par child', child.delegate.getXPath(), 'in state', child.delegate.state
                 self.document.schedule(child.delegate.stopTimelineElement)
                 waitNeeded = True
         if not waitNeeded:
@@ -452,7 +450,6 @@ class SeqDelegate(TimeElementDelegate):
                 nextChild.delegate.assertState('seq-parent-reportChildState()', State.initing)
                 pass # Wait for inited callback from nextChild
             if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
-                print 'xxxjack schedule stop for prev seq child', prevChild.delegate.getXPath(), 'in state', prevChild.delegate.state
                 self.document.schedule(prevChild.delegate.stopTimelineElement)
         if self.state == State.stopping:
             for ch in self.elt:
@@ -488,7 +485,6 @@ class SeqDelegate(TimeElementDelegate):
         waitNeeded = False
         for ch in self.elt:
             if ch.delegate.state in State.STOP_NEEDED:
-                print 'xxxjack schedule stop for stopped seq child', ch.delegate.getXPath(), 'in state', ch.delegate.state
                 self.document.schedule(ch.delegate.stopTimelineElement)
                 waitNeeded = True
         if not waitNeeded:
