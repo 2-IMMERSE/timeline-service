@@ -99,7 +99,11 @@ class CallbackPausableClock(PausableClock):
     def __init__(self, underlyingClock):
         PausableClock.__init__(self, underlyingClock)
         self.queue = Queue.PriorityQueue()
+        self.queueChanged = None
 
+    def setQueueChangedCallback(self, callback):
+        self.queueChanged = callback
+        
     @synchronized
     def nextEventTime(self, default=never):
         """Return delta-T until earliest callback, or never"""
@@ -128,6 +132,8 @@ class CallbackPausableClock(PausableClock):
         """Schedule a callback"""
         assert not self.queue.full()
         self.queue.put((self.now()+delay, callback, args, kwargs))
+        if self.queueChanged:
+            self.queueChanged()
         
     @synchronized
     def handleEvents(self, handler):
