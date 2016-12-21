@@ -157,6 +157,7 @@ class Application:
         for componentId in oldComponents:
             self.components[componentId].destroy()
             del self.components[componentId]
+        self.logger.info("%f: active %d: %s" % (self.clock.now(), len(self.components), ','.join(map(lambda x: x['componentId'], inst['components']))))
 
 class debugSkipComponent:
     def __init__(self, application, componentId, componentInfo):
