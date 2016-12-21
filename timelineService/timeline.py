@@ -177,7 +177,7 @@ class BaseTimeline:
         if curState == document.State.idle:
             # We need to initialize the document
             if self.documentHasRun:
-                logger.info("Timeline(%s): Finished with %s" % (self.contextId, timelineDocUrl))
+                logger.info("Timeline(%s): Finished with %s" % (self.contextId, self.timelineDocUrl))
             else:
                 self.document.runDocumentInit()
         elif curState == document.State.inited:
@@ -185,9 +185,13 @@ class BaseTimeline:
             self.documentHasRun = True
             self.document.runDocumentStart()
         elif curState == document.State.finished:
-            self.document.report(logging.DEBUG, 'RUN', 'done')
+            self.document.report(logging.INFO, 'RUN', 'stop')
+            self.document.root.delegate.stopTimelineElement()
         self.document.runAvailable()
         self.layoutService.forwardActions()
+        if self.document.getDocumentState() == document.State.idle:
+            self.document.report(logging.INFO, 'RUN', 'done')
+        
 
 class TimelinePollingRunnerMixin:
     def __init__(self):
@@ -241,29 +245,35 @@ class ProxyLayoutService:
         self.dmappId = dmappId
         self.actions = []
         self.actionsTimestamp = None
+        self.actionsLock = threading.Lock()
 
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
     def scheduleAction(self, timestamp, dmappcId, verb, config=None, parameters=None):
-        self.actionsTimestamp = timestamp # XXXJACK Should really check that it is the same as previous ones....
         action = dict(action=verb, componentIds=[dmappcId])
         if config:
             action["config"] = config
         if parameters:
             action["parameters"] = parameters
-        self.actions.append(action)
+        with self.actionsLock:
+            self.actionsTimestamp = timestamp # XXXJACK Should really check that it is the same as previous ones....
+            self.actions.append(action)
 
     def forwardActions(self):
-        if not self.actions: return
-        self.logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(self.actions), repr(self.actions))
+        with self.actionsLock:
+            if not self.actions: return
+            actions = self.actions
+            actionsTimestamp = self.actionsTimestamp
+            self.actionsTimestamp = None
+            self.actions = []
+        self.logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(actions), repr(actions))
+        print "xxxjack ProxyLayoutService: forwarding %d actions: %s", len(actions), repr(actions)
         entryPoint = self.getContactInfo() + '/transaction'
-        body = dict(time=self.actionsTimestamp, actions=self.actions)
+        body = dict(time=actionsTimestamp, actions=actions)
         r = requests.post(entryPoint, json=body)
 
         r.raise_for_status()
-        self.actions = []
-        self.actionsTimestamp = None
 
 class ProxyDMAppComponent(document.TimeElementDelegate):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
