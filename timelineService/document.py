@@ -437,7 +437,10 @@ class SeqDelegate(TimeElementDelegate):
             if nextChild is None:
                  #That was the last child. We are done.
                 self.setState(State.finished)
-                self.assertDescendentState('reportChildState[self.state==finished]', State.finished, State.stopping, State.idle)
+                # We cannot assert descendent states here. One of our chidren could be a finished par, and it could have
+                # scheduled stop calls for its descendents, but that doesn't mean those have been run yet.
+                #
+                #self.assertDescendentState('reportChildState[self.state==finished]', State.finished, State.stopping, State.idle)
             elif nextChild.delegate.state in {State.inited}:
                 # Next child is ready to run. Start it, and initialize the one after that, then stop old one.
                 self._currentChild = nextChild
