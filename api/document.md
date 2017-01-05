@@ -188,6 +188,18 @@ rather difficult to explain...
 We probably want some way to repeat things. It probably needs an optional count (defaulting
 to infinite).
 
+Unknown XML elements
+--------------------
+
+An issue that is still open is how to treat unknown XML elements. The easiest solution
+is to simply treat an unknown XML element that is the child of a timeline element
+as something that has no temporal semantics (in other words: pretend it finishes right
+when it starts), but this has the disadvantage that any timeline elements within
+that non-timeline element are also essentially non-existent. It may be better to treat
+unknown elements as if they do not exist at all, thereby treating timeline elements that
+are descendents of a non-timeline elements as children of the nearest ancestor timeline element.
+
+
 Recording State
 ---------------
 
@@ -274,11 +286,11 @@ respect to the video clock, and the 10s may be (depending on clock priorities).
 API
 ---
 
-There is going to be some sort of an API between the objects (at runtime),
-specifically between parents and children. From parent to child, there will
-be some sequence of `init()/start()/finish()/stop()/pause()/resume()`, and some
+There is an API between the objects (at runtime),
+specifically between parents and children. From parent to child, there is a
+sequence of `init()/start()/stop()/pause()/resume()`, and some
 calls to modify clock relationships `slaveClockToMe()/becomeMasterClock()`.
-There will be some callbacks from child to parent `inited()/started()/finished()/stopped()/paused()`
+There are callbacks from child to parent `inited()/started()/finished()/stopped()/paused()`
 and some callbacks between clock master and clock slave `clockChanged()`.
 There needs to be a call to get the current time of an element.
 
@@ -293,11 +305,20 @@ Note that some media items, notably static text and images, will usually go stra
 to `finished` in response to a `start()` call, because static media have no
 concept of a clock.
 
-For 2immerse, there is a state `skipped`, which signals a component could not be created.
-The timeline will continue using a placeholder for the media item.
-
-For 2immerse, for the time being, `finish()` is not implemented (but the `finished` state is),
-and neither are `pause()/paused()/resume()`.
+For 2immerse, the calls and callbacks are slightly different because the actual media renderers
+are running in different processes, and there may be multiple instances of a single
+DMApp Component running synchronously in parallel (for example when multiple handheld
+devices are active at the same time). In addition, the fact that the actual DMApp Components
+are running on different machines makes it essential that the scheduler can "look into
+the future" a little, so it can schedule actions a little in advance. For this reason, the
+`start()` and `stop()` calls have a `time` parameter to specify when they should happen,
+which should hopefully be in the future. Also, there is no `finished()` callback but in stead
+the `started()` callback has an optional `duration` parameter that the dmappc uses to
+let the scheduler know when it thinks the media will end. At worst, when the dmappc cannot
+predict the duration of the media, for example because it is a live stream, it will
+emit a `started(duration=actualduration)` when end-of-media is reached.
 
 Also for the time being, there is a single master clock that is driven from the clock
-of the DMApp Component of type `mastervideo` (of which there should, therefore, only be one).
+of the DMApp Component with attribute `tic:syncMode="master"`, or by the system clock
+of the main device if there is no such dmappc active at this point in time.
+
