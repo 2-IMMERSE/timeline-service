@@ -189,8 +189,8 @@ class BaseTimeline:
             self.document.root.delegate.stopTimelineElement()
         self.document.runAvailable()
         self.layoutService.forwardActions()
-        if self.document.getDocumentState() == document.State.idle:
-            self.document.report(logging.INFO, 'RUN', 'done')
+#        if self.document.getDocumentState() == document.State.idle:
+#            self.document.report(logging.INFO, 'RUN', 'done')
         
 
 class TimelinePollingRunnerMixin:
