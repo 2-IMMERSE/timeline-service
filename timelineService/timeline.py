@@ -177,7 +177,7 @@ class BaseTimeline:
         if curState == document.State.idle:
             # We need to initialize the document
             if self.documentHasRun:
-                logger.info("Timeline(%s): Finished with %s" % (self.contextId, self.timelineDocUrl))
+                pass # logger.info("Timeline(%s): Finished with %s" % (self.contextId, self.timelineDocUrl))
             else:
                 self.document.runDocumentInit()
         elif curState == document.State.inited:
