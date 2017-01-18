@@ -9,5 +9,5 @@ x)
 esac
 location=`basename $1`
 set -x
-rsync -rlvz -e "ssh -p 52225" $1/ cwi@origin.2immerse.advdev.tv:2immerse_live/dmapps/$location/
+rsync -rlvz -e "ssh -p 52225" --exclude .git $1/ cwi@origin.2immerse.advdev.tv:2immerse_live/dmapps/$location/
 echo 'URL:' https://origin.2immerse.advdev.tv/dmapps/$location/
