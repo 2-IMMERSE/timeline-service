@@ -9,5 +9,5 @@ x)
 esac
 location=`basename $1`
 set -x
-rsync -rlvz -e "ssh -p 52225" --exclude .git $1/ cwi@origin.2immerse.advdev.tv:2immerse_live/dmapps/$location/
-echo 'URL:' https://origin.2immerse.advdev.tv/dmapps/$location/
+aws s3 sync $1 s3://origin.platform.2immerse.eu/dmapps/$location/
+echo 'URL:' https://origin.platform.2immerse.eu/dmapps/$location/
