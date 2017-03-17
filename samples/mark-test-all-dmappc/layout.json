@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 3,
     "dmapp": "200",
     "constraints": [
       {
@@ -188,30 +188,30 @@
             "layout": {
                 "communal" : {
                   "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ],
                     "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ]
                 },
                 "personal" : {
                     "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ],
                     "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ]
                 }
             }
@@ -221,30 +221,30 @@
             "layout": {
                 "communal" : {
                   "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ],
                     "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ]
                 },
                 "personal" : {
                     "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ],
                     "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ]
                 }
             }
@@ -254,30 +254,30 @@
           "layout": {
               "communal" : {
                 "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ],
                   "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ]
               },
               "personal" : {
                 "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ],
                 "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ]
               }
           }
@@ -287,30 +287,30 @@
         "layout": {
             "communal" : {
               "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
               ],
                 "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ]
             },
             "personal" : {
               "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
               ],
               "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
               ]
             }
         }
@@ -320,30 +320,30 @@
           "layout": {
               "communal" : {
                 "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ],
                 "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ]
               },
               "personal" : {
                   "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ],
                   "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ]
               }
           }
@@ -353,30 +353,30 @@
             "layout": {
                 "communal" : {
                   "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ],
                   "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ]
                 },
                 "personal" : {
                     "portrait": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ],
                     "landscape": [
-                    { "region": { "tag": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-topleft",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-topright",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botleft",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-botright",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ]
                 }
             }

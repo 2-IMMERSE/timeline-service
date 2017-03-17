@@ -12,11 +12,11 @@ case x$hostname in
 	;;
 esac
 
-timelineDoc=https://origin.2immerse.advdev.tv/sandbox/sample-hello/timeline.xml
-layoutDoc=http://origin.2immerse.advdev.tv/sandbox/sample-hello/layout.json
+timelineDoc=https://origin.platform.2immerse.eu/sandbox/sample-hello/timeline.xml
+layoutDoc=https://origin.platform.2immerse.eu/sandbox/sample-hello/layout.json
 
 python $basedir/timeline-service/client \
-	--layoutServer http://$hostname:8000/layout/v2 \
+	--layoutServer http://$hostname:8000/layout/v3 \
 	--timelineServer http://$hostname:8001/timeline/v1 \
 	--layoutDoc $layoutDoc \
 	--timelineDoc $timelineDoc \

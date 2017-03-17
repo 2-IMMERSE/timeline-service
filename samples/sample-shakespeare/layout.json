@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 3,
     "dmapp": "200",
     "constraints": [
         {
@@ -121,25 +121,25 @@
                 "communal" : {
                     "portrait" : [],
                     "landscape": [
-                        { "region": { "tag": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
-                        { "region": { "tag": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                        { "region": { "tag": "region-2",  "position": {"x": 0.25,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                        { "region": { "tag": "region-3",  "position": {"x": 0.50,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                        { "region": { "tag": "region-4",  "position": {"x": 0.75,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}}
+                        { "region": { "id": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
+                        { "region": { "id": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                        { "region": { "id": "region-2",  "position": {"x": 0.25,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                        { "region": { "id": "region-3",  "position": {"x": 0.50,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                        { "region": { "id": "region-4",  "position": {"x": 0.75,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}}
                     ]
                 },
                 "personal" : {
                     "portrait": [
-                        { "region": { "tag": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                        { "region": { "tag": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                        { "region": { "tag": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                        { "region": { "tag": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                        { "region": { "id": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                        { "region": { "id": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                        { "region": { "id": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                        { "region": { "id": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ],
                     "landscape": [
-                        { "region": { "tag": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                        { "region": { "tag": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                        { "region": { "tag": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                        { "region": { "tag": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                        { "region": { "id": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                        { "region": { "id": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                        { "region": { "id": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                        { "region": { "id": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                     ]
                 }
             }
@@ -150,21 +150,21 @@
               "communal" : {
                   "portrait" : [],
                   "landscape": [
-                    { "region": { "tag": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
-                    { "region": { "tag": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                    { "region": { "tag": "region-2",  "position": {"x": 0.25,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                    { "region": { "tag": "region-3",  "position": {"x": 0.50,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                    { "region": { "tag": "region-4",  "position": {"x": 0.75,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}}
+                    { "region": { "id": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
+                    { "region": { "id": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                    { "region": { "id": "region-2",  "position": {"x": 0.25,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                    { "region": { "id": "region-3",  "position": {"x": 0.50,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                    { "region": { "id": "region-4",  "position": {"x": 0.75,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}}
                   ]
               },
               "personal" : {
                 "portrait" : [],
                 "landscape": [
-                  { "region": { "tag": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
-                  { "region": { "tag": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                  { "region": { "tag": "region-2",  "position": {"x": 0.25,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                  { "region": { "tag": "region-3",  "position": {"x": 0.50,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
-                  { "region": { "tag": "region-4",  "position": {"x": 0.75,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}}
+                  { "region": { "id": "region-0",  "position": {"x": 0.125, "y": 0.0 }, "size": {"width": 0.75,  "height": 0.75 }}},
+                  { "region": { "id": "region-1",  "position": {"x": 0.0,   "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                  { "region": { "id": "region-2",  "position": {"x": 0.25,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                  { "region": { "id": "region-3",  "position": {"x": 0.50,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}},
+                  { "region": { "id": "region-4",  "position": {"x": 0.75,  "y": 0.75}, "size": {"width": 0.25,  "height": 0.25 }}}
                 ]
               }
           }
@@ -174,30 +174,30 @@
           "layout": {
               "communal" : {
                 "portrait": [
-                  { "region": { "tag": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                  { "region": { "tag": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                  { "region": { "tag": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                  { "region": { "tag": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  { "region": { "id": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                  { "region": { "id": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                  { "region": { "id": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                  { "region": { "id": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ],
                 "landscape": [
-                  { "region": { "tag": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                  { "region": { "tag": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                  { "region": { "tag": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                  { "region": { "tag": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                  { "region": { "id": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                  { "region": { "id": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                  { "region": { "id": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                  { "region": { "id": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                 ]
               },
               "personal" : {
                   "portrait": [
-                    { "region": { "tag": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ],
                   "landscape": [
-                    { "region": { "tag": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
-                    { "region": { "tag": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
+                    { "region": { "id": "region-0",  "position": {"x": 0.0, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-1",  "position": {"x": 0.5, "y": 0.0 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-2",  "position": {"x": 0.0, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}},
+                    { "region": { "id": "region-3",  "position": {"x": 0.5, "y": 0.5 }, "size": {"width": 0.5,  "height": 0.5 }}}
                   ]
               }
           }
