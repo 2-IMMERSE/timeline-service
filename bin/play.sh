@@ -41,8 +41,8 @@ Darwin)
 	;;
 esac
 
-url="https://origin.2immerse.advdev.tv/client-api/dist/test/general-test/dist/index.html"
+url="https://origin.platform.2immerse.eu/client-api/dist/test/general-test/dist/index.html"
 
 fullUrl="$url#?layout=`urlencode $1`&timeline=`urlencode $2`"
 
-exec "$chrome" --disable-web-security "$fullUrl"
+exec "$chrome" "$fullUrl"
