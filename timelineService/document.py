@@ -133,7 +133,7 @@ class DummyDelegate:
         if self.state == State.started:
             assert self.startTime == None
             self.startTime = self.clock.now()
-            print 'xxxjack set startTime for ', self.getXPath(), 'to', self.startTime
+            # print 'xxxjack set startTime for ', self.getXPath(), 'to', self.startTime
         else:
             self.startTime = None
         parentElement = self.document.getParent(self.elt)
@@ -916,8 +916,7 @@ class Document:
             
     def runDocument(self):
         self.clock.start()
-        self.runDocumentStart()
-        self.runloop(State.finished)
+        self.runloop(lambda : self.root.delegate.state == State.finished)
         self.runDocumentStop()
         
     def runDocumentInit(self):
@@ -934,7 +933,7 @@ class Document:
         self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
 #        self.terminating = True
         self.root.delegate.stopTimelineElement()
-        self.runloop(State.idle)
+        self.runloop(lambda : self.root.delegate.state == State.idle)
         self.root.delegate.assertDescendentState("run()", State.idle)
         self.report(logging.INFO, 'RUN', 'done')
             
