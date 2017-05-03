@@ -750,7 +750,8 @@ class Document:
     def __init__(self, clock, extraLoggerArgs=None, idAttribute=None):
         self.tree = None
         self.root = None
-        self.fragment = None
+        self.startElement = None    # If set, this is the element at which playback should start
+        self.startTime = 0          # If set, this is the time at which playback should start
         self.url = None
         self.clock = clock
         self.parentMap = {}
@@ -774,25 +775,19 @@ class Document:
     def load(self, url):
         assert not self.root
         self.url = url
+        #
+        # Open and load the document
+        #
         fp = urllib2.urlopen(url)
         self.tree = ET.parse(fp)
+        #
+        # Remember the root, and the parent of each node
+        #
         self.root = self.tree.getroot()
         self.parentMap = {c:p for p in self.tree.iter() for c in p}
-        up = urlparse.urlparse(url)
-        if up.fragment:
-            xpathExpression = up.fragment
-            if not ('/' in xpathExpression or '.' in xpathExpression or '@' in xpathExpression or '[' in xpathExpression):
-                # If it is an identifier search for the element with tim:dmappcid equal to that identifier
-                xpathExpression = ".//*[@tim:dmappcid='%s']" % xpathExpression
-                print 'xxxjack', xpathExpression
-            elements = self.tree.findall(xpathExpression, NAMESPACES)
-            if len(elements) == 0:
-                self.logger.log(logging.ERROR, "Fragment #%s does not match any element" % up.fragment)
-            elif len(elements) > 1:
-                self.logger.log(logging.ERROR, "Fragment #%s matches %d elements" % (up.fragment, len(elements)))
-            else:
-                self.logger.log(logging.INFO, "Will start at element %s" % self.getXPath(elements[0]))
-                self.fragment = elements[0]  
+        #
+        # Create the mapping to find elements by ID (tim:dmappcid or xml:id, probably)
+        #
         if self.idAttribute:
             self.idMap = {}
             for p in self.tree.iter():
@@ -801,6 +796,19 @@ class Document:
                     if id in self.idMap:
                         raise TimelineParseError("Duplicate id %s in element %s" % (id, self.getXPath(p)))
                     self.idMap[id] = p 
+        #
+        # Check to see whether we have a #dmappcid or #t=time
+        #
+        up = urlparse.urlparse(url)
+        if up.fragment and up.fragment[:2] == 't=':
+            self.startTime = float(up.fragment[2:])
+        elif up.fragment:
+            # Not a Media Fragment time specifier, so it is a node ID
+            if not up.fragment in self.idMap:
+                self.logger.log(logging.ERROR, "Fragment #%s does not match any element" % up.fragment)
+            else:
+                self.startElement = self.idMap[up.fragment]
+
         
     def getParent(self, elt):
         return self.parentMap.get(elt)
@@ -842,7 +850,7 @@ class Document:
         return xmlstr
     
     def prepareDocument(self):
-        if self.fragment is None:
+        if self.startElement is None and self.startTime <= 0:
             #
             # No positioning needed. Add the real delegates and run all elegible
             # init methods.
@@ -858,26 +866,36 @@ class Document:
         # fastforward delegates.
         #
         self._addDelegates(DELEGATE_CLASSES_FASTFORWARD)
-        assert self.fragment.delegate
-        #
-        # Monitor the target element.
-        #
-        self.fragment.delegate = SeekToElementAdapter(self.fragment.delegate)
-        #
-        # Call the init methods
-        #
-        self.report(logging.DEBUG, 'FFWD', 'goto', self.fragment.delegate.getXPath())
+        if self.startElement:
+            assert self.startElement.delegate
+            #
+            # Monitor the target element.
+            #
+            self.startElement.delegate = SeekToElementAdapter(self.startElement.delegate)
+            #
+            # Call the init methods
+            #
+            self.report(logging.INFO, 'FFWD', 'goto', self.startElement.delegate.getXPath())
+        else:
+            self.report(logging.INFO, 'FFWD', 'goto', '#t=%f' % self.startTime)
+            
         self.runDocumentInit()
         if not self.RECURSIVE:
             self.runloop(lambda : self.root.delegate.state == State.inited)
         #
-        # fastforward the document until we get to the target element.
+        # fastforward the document until we get to the target element or time
         #
-        assert self.fragment.delegate.seekPositionReached == False
+        if self.startElement:
+            assert self.startElement.delegate.seekPositionReached == False
         self.clock.start()
         self.runDocumentStart()
-        self.runloop(lambda : self.fragment.delegate.seekPositionReached)
-        self.report(logging.DEBUG, 'FFWD', 'reached', self.fragment.delegate.getXPath())
+        if self.startElement:
+            self.runloop(lambda : self.startElement.delegate.seekPositionReached)
+            self.report(logging.INFO, 'FFWD', 'reached', self.startElement.delegate.getXPath())
+        else:
+            self.runloop(lambda : self.clock.now() >= self.startTime)
+            # xxxjack not needed? self.clock.set(self.startTime)
+            self.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.clock.now())
         #
         # Now replace the fastforward delegates with the real ones.
         #
