@@ -62,6 +62,9 @@ class PausableClock:
         if not self.running:
             return self.epoch
         return self.underlyingClock.now() - self.epoch
+        
+    def dumps(self):
+        return None
 
     @synchronized
     def start(self):
@@ -96,14 +99,18 @@ class CallbackPausableClock(PausableClock):
     def __init__(self, underlyingClock):
         PausableClock.__init__(self, underlyingClock)
         self.queue = Queue.PriorityQueue()
+        self.queueChanged = None
 
+    def setQueueChangedCallback(self, callback):
+        self.queueChanged = callback
+        
     @synchronized
-    def nextEventTime(self):
+    def nextEventTime(self, default=never):
         """Return delta-T until earliest callback, or never"""
         try:
             peek = self.queue.get(False)
-        except Queue.empty:
-            return never
+        except Queue.Empty:
+            return default
         self.queue.put(peek)
         t, callback, args, kwargs = peek
         return t-self._now()
@@ -125,6 +132,8 @@ class CallbackPausableClock(PausableClock):
         """Schedule a callback"""
         assert not self.queue.full()
         self.queue.put((self.now()+delay, callback, args, kwargs))
+        if self.queueChanged:
+            self.queueChanged()
         
     @synchronized
     def handleEvents(self, handler):
@@ -137,12 +146,26 @@ class CallbackPausableClock(PausableClock):
             if not peek: return
             t, callback, args, kwargs = peek
             if self._now() >= t:
+                if self._now() > t + 0.1:
+                    print 'xxxjack scheduling', self.now() - t, 'seconds too late...'
                 handler.schedule(callback, *args, **kwargs)
             else:
                 assert not self.queue.full()
                 self.queue.put(peek)
                 return
-       
+    @synchronized
+    def dumps(self):
+        rv = "%d events" % self.queue.qsize()
+        try:
+            peek = self.queue.get(False)
+        except Queue.Empty:
+            peek = None
+        if peek:
+            t, callback, args, kwargs = peek
+            rv += ", next in %f seconds" % (t-self._now())
+            self.queue.put(peek)
+        return rv
+        
 class FastClock:
     def __init__(self):
         self._now = 0
@@ -152,6 +175,9 @@ class FastClock:
         
     def sleep(self, duration):
         self._now += duration
+        
+    def dumps(self):
+        return ""
 
 class SystemClock:
     def __init__(self):
@@ -162,3 +188,6 @@ class SystemClock:
         
     def sleep(self, duration):
         time.sleep(duration)
+
+    def dumps(self):
+        return ""

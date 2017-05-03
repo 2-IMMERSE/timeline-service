@@ -117,8 +117,10 @@ class Application:
         while True:
             self.logger.debug("run: clock=%s, wallclock=%s" % (self.clock.now(), time.time()))
             inst = self._getLayoutInstruction()
+            oldClockStatus = self.clock.status()
             self._doLayoutInstruction(inst)
-            self.clock.report()
+            if self.clock.status() != oldClockStatus:
+                self.clock.report()
             for component in self.components.values():
                 component.tick()
             time.sleep(1)
@@ -155,6 +157,7 @@ class Application:
         for componentId in oldComponents:
             self.components[componentId].destroy()
             del self.components[componentId]
+        self.logger.info("%f: active %d: %s" % (self.clock.now(), len(self.components), ','.join(map(lambda x: x['componentId'], inst['components']))))
 
 class debugSkipComponent:
     def __init__(self, application, componentId, componentInfo):
@@ -181,13 +184,12 @@ class Component:
     def __init__(self, application, componentId, componentInfo):
         self.application = application
         self.logger = application.logger
-        params = componentInfo.get('parameters')
-        if not params: params = {}
+        self.parameters = params = componentInfo.get('parameters', {})
         syncMode = params.get('syncMode')
         if not syncMode: syncMode = None
         self.canBeMasterClock = syncMode == 'master'
-        if self.canBeMasterClock: 
-            self.application.currentMasterClockComponent = self
+#        if self.canBeMasterClock: 
+#            self.application.currentMasterClockComponent = self
         self.layoutServiceComponentURL = self.application.layoutServiceApplicationURL + '/component/' + componentId
         self.componentId = componentId
         self.componentInfo = componentInfo
@@ -197,13 +199,19 @@ class Component:
     def update(self, componentInfo):
         if componentInfo != self.componentInfo:
             self.componentInfo = componentInfo
+        # Workaround (similar to client-api) for when the document starts without any clock:
+        # we start a default clock
+#        print 'xxxjack', self.status, self.componentId, self.application.currentMasterClockComponent
+        if self.status == 'started' and not self.application.currentMasterClockComponent:
+            self.canBeMasterClock = True
+#            print 'xxxjack grabbed clock'
         if self.canBeMasterClock and self.status == 'started':
             self.application.currentMasterClockComponent = self
         if self.application.currentMasterClockComponent == self:
             if self.status == 'started':
                 self.application.clock.start()
             else:
-                self.application.clock.stop()
+                pass # self.application.clock.stop()
             
     def destroy(self):
         pass
@@ -227,8 +235,12 @@ class Component:
     def _reportStatus(self):
         self.logger.info("%f: component %s: %s" % (self.application.clock.now(), self.componentId, self.status))
         # Report status for new component
+        statusDict = dict(status=self.status)
+        if self.status == 'started':
+        	statusDict['duration'] = float(self.parameters.get('debug-2immerse-dur', 0))
+        	self.logger.debug("%f: component %s: report duration=%s" % (self.application.clock.now(), self.componentId, statusDict['duration']))
         r = requests.post(self.layoutServiceComponentURL + '/actions/status', params=dict(reqDeviceId=self.application.context.deviceId),
-                json=dict(status=self.status))
+                json=statusDict)
         if r.status_code not in (requests.codes.ok, requests.codes.no_content, requests.codes.created):
             self.logger.error('_reportStatus: Error %s: %s' % (r.status_code, r.text))
             r.raise_for_status()
@@ -271,6 +283,9 @@ class GlobalClock:
         
     def report(self):
         pass
+        
+    def status(self):
+        return self.epoch, self.running
         
 class MasterClockMixin:
     def __init__(self, application):

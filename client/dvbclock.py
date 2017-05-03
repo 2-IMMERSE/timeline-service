@@ -49,6 +49,9 @@ class DvbClock:
     def report(self):
         pass
     
+    def status(self):
+        return self.timelineClock.correlation, self.timelineClock.speed
+        
 class DvbClientClock(DvbClock):
     def __init__(self, tsUrl, contentIDStem, timelineSelector):
         DvbClock.__init__(self)

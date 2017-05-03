@@ -6,6 +6,7 @@ import timeline
 import json
 import argparse
 import logging
+import traceback
 
 # Make stdout unbuffered
 class Unbuffered(object):
@@ -54,6 +55,10 @@ class MyFormatter(logging.Formatter):
             rvList.append('contextID:%s' % contextID)
         if dmappID:
             rvList.append('dmappID:%s' % dmappID)
+        if hasattr(record, 'xpath'):
+            rvList.append('xpath:%s ' % repr(record.xpath))
+        if hasattr(record, 'dmappcID'):
+            rvList.append('dmappcID:%s ' % record.dmappcID)
         rvList.append('sourcetime:%s' % datetime.datetime.fromtimestamp(time.time()).isoformat())
         rvList.append('logmessage:%s' % logmessage)
         return ' '.join(rvList)
@@ -101,7 +106,14 @@ class timelineServer:
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
-        rv = method(**args)
+        try:
+            rv = method(**args)
+        except web.HTTPError:
+            raise
+        except:
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            traceback.print_exc()
+            return ''
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
@@ -109,18 +121,28 @@ class timelineServer:
         if not verb:
             return web.badrequest()
         args = dict(web.input())
-        # PUT gets data as a JSON body, sometimes?
-        if not args:
-            data = web.data()
-            if data:
-                args = json.loads(data)
+        # PUT gets some data as a JSON body, sometimes...
+        data = web.data()
+        if data:
+            args2 = json.loads(data)
+            if type(args2) == type('') or type(args2) == type(u''):
+                # xxxjack Bug workaround, 21-Dec-2016
+                args2 = json.loads(args2)
+            args.update(args2)
         tl = timeline.Timeline.get(contextId)
         if not tl:
             return web.notfound("404 No such context: %s" % contextId)
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
-        rv = method(**args)
+        try:
+            rv = method(**args)
+        except web.HTTPError:
+            raise
+        except:
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            traceback.print_exc()
+            return ''
         if rv == None or rv == '':
             web.ctx.status = '204 No Content'
             return ''
@@ -137,7 +159,14 @@ class timelineServer:
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
-        rv = method(**args)
+        try:
+            rv = method(**args)
+        except web.HTTPError:
+            raise
+        except:
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            traceback.print_exc()
+            return ''
         if rv == None or rv == '':
             web.ctx.status = '204 No Content'
             return ''
@@ -158,10 +187,13 @@ class timelineServer:
 def main():
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
-    parser.add_argument('--noTransactions', action='store_true', help="Don't transaction interface to layout service for dmappc updates (default: simple calls)")
     parser.add_argument('--port', type=int, help="Set port to listen on")
     parser.add_argument('--logLevel', metavar='SPEC', help="Set log levels (comma-separated list of [loggername:]LOGLEVEL)", default=DEFAULT_LOG_CONFIG)
+    parser.add_argument('--noKibana', action='store_true', help="Use human-readable log formatting in stead of Kibana-style formatting")
     args = parser.parse_args()
+    if args.noKibana:
+        global MyFormatter
+        MyFormatter = logging.Formatter
     if args.logLevel:
         for ll in args.logLevel.split(','):
             if ':' in ll:
@@ -181,8 +213,6 @@ def main():
         import ssl
         ssl._create_default_https_context = ssl._create_unverified_context
         
-    if args.noTransactions:
-        timeline.TRANSACTIONS = False
     if args.layoutService:
         timeline.LAYOUTSERVICE = args.layoutService
     del sys.argv[1:]

@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 3,
     "dmapp": "200",
     "constraints": [
         {
@@ -89,19 +89,19 @@
                 "communal" : {
                     "portrait" : [],
                     "landscape": [
-                        { "region": { "tag": "tv-main",     "position": { "x": 0.0, "y": 0.0 },  "size": { "width": 0.8, "height": 0.8 }}},
-                        { "region": { "tag": "tv-botleft",  "position": { "x": 0,   "y": 0.8 }, "size": {"width": 0.5,  "height": 0.2 }}},
-                        { "region": { "tag": "tv-botright",  "position": { "x": 0.5,   "y": 0.8 }, "size": {"width": 0.5,  "height": 0.2 }}}
+                        { "region": { "id": "tv-main",     "position": { "x": 0.0, "y": 0.0 },  "size": { "width": 0.8, "height": 0.8 }}},
+                        { "region": { "id": "tv-botleft",  "position": { "x": 0,   "y": 0.8 }, "size": {"width": 0.5,  "height": 0.2 }}},
+                        { "region": { "id": "tv-botright",  "position": { "x": 0.5,   "y": 0.8 }, "size": {"width": 0.5,  "height": 0.2 }}}
                     ]
                 },
                 "personal" : {
                     "portrait": [
-                        { "region": { "tag": "top", "position": { "x": 0, "y": 0 }, "size": { "width": 1.0, "height": 0.5  } } },
-                        { "region": { "tag": "bottom", "position": { "x": 0, "y": 0.5 }, "size": { "width": 1.0, "height": 0.5  } } }
+                        { "region": { "id": "top", "position": { "x": 0, "y": 0 }, "size": { "width": 1.0, "height": 0.5  } } },
+                        { "region": { "id": "bottom", "position": { "x": 0, "y": 0.5 }, "size": { "width": 1.0, "height": 0.5  } } }
                     ],
                     "landscape": [
-                        { "region": { "tag": "left", "position": { "x": 0,  "y": 0 }, "size": { "width": 0.5, "height": 1.0 }} },
-                        { "region": { "tag": "right", "position": { "x": 0.5,  "y": 0 }, "size": { "width": 0.5, "height": 1.0 }} }
+                        { "region": { "id": "left", "position": { "x": 0,  "y": 0 }, "size": { "width": 0.5, "height": 1.0 }} },
+                        { "region": { "id": "right", "position": { "x": 0.5,  "y": 0 }, "size": { "width": 0.5, "height": 1.0 }} }
                     ]
                 }
             }

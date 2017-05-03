@@ -162,6 +162,26 @@
           }
       },
       {
+          "componentId" : "dmappcid_textchat_controls",
+          "personal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "priority": 13
+          },
+          "communal": {
+              "minSize": {
+                  "width": 100,
+                  "height": 100
+              },
+              "targetRegions": [
+        				"r3"
+        			],
+              "priority": 13
+          }
+      },
+      {
           "componentId" : "dmappcid_videochat",
           "personal": {
               "minSize": {

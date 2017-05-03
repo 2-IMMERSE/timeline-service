@@ -1,4 +1,5 @@
 import sys
+import urllib
 
 #
 # Specific for 2immerse, needs to be updated as DMApp Component Classes are added and extended.
@@ -27,22 +28,34 @@ ALLOWED_TIC_ATTRIBUTES={
     "title-card" : ["title", "author", "synopsis", "brandImageUrl", "brand", "posterUrl"],
     "article" : ["mediaUrl", "markdown", "position", "groupStateId"],
     "article-controls" : ["groupStateId"],
-    "image" : ["mediaUrl", "objectFit"],
-    "text-chat" : ["lobby"],
-    "text-chat-controls" : ["lobby"],
+    "image" : ["mediaUrl", "objectFit", "caption", "groupStateId"],
+    "text-chat" : ["lobby", "groupStateId"],
+    "text-chat-controls" : ["lobby", "groupStateId"],
     "video-chat" : ["lobby", "groupStateId"],
     "video-chat-view" : ["groupStateId"],
     "video-chat-controls" : ["groupStateId"],
-    "component-switcher" : ["groupStateId"],
+    "component-switcher" : ["articlegroupid", "imagegroupid", "videogroupid"],
     "FallbackClock" : ["syncMode", "offset", "startMediaTime"],
     }
 
 def checkAttributes(self):
+    className = self.elt.get(NS_2IMMERSE("class"))
     if not NS_2IMMERSE("class") in self.elt.keys():
         print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:class attribute"
     if not NS_2IMMERSE("dmappcid") in self.elt.keys():
         print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:dmappcid attribute"
-    className = self.elt.get(NS_2IMMERSE("class"))
+    if not NS_2IMMERSE("url") in self.elt.keys():
+        if className != "video":   # Video is the only one that doesn't need a tim:url
+            print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:url attribute"
+    else:
+        url = self.elt.get(NS_2IMMERSE("url"))
+        url = urllib.basejoin(self.document.url, url)
+        try:
+            fp = urllib.urlopen(url)
+            del fp
+        except IOError:
+            print >>sys.stderr, "* Warning: element", self.getXPath(), "has tim:url", url, "which may not exist"
+        
     if not className in REQUIRED_TIC_ATTRIBUTES:
         print >>sys.stderr, "* Warning: element", self.getXPath(), "has unknown tim:class", className
         return

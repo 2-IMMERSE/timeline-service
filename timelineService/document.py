@@ -9,8 +9,20 @@ import clocks
 
 logging.basicConfig()
 
+class MyLoggerAdapter(logging.LoggerAdapter):
+
+	def process(self, msg, kwargs):
+		if 'extra' in kwargs:
+			kwargs['extra'].update(self.extra)
+		else:
+			kwargs['extra'] = self.extra
+		return msg, kwargs
+		
 DEBUG=True
 
+class TimelineParseError(ValueError):
+    pass
+    
 class NameSpace:
     def __init__(self, namespace, url):
         self.namespace = namespace
@@ -61,15 +73,15 @@ class State:
     started = "started"
     finished = "finished"
     stopping = "stopping"
-    skipped = "skipped"
 #    stopped = "stopped"
 #    terminating = "terminating"
     
     NOT_DONE = {initing, inited, starting, started}
-    STOP_NEEDED = {initing, inited, starting, started, finished, skipped}
+    STOP_NEEDED = {initing, inited, starting, started, finished}
     
 class DummyDelegate:
     """Baseclass for delegates, also used for non-timeline elements."""
+    DEFAULT_PRIO="low"
     
     def __init__(self, elt, document, clock):
         self.elt = elt
@@ -85,6 +97,9 @@ class DummyDelegate:
     def getXPath(self):
         return self.document.getXPath(self.elt)
         
+    def getLogExtra(self):
+    	return dict(xpath=self.getXPath())
+    	
     def checkAttributes(self):
         """Check XML attributes for validity"""
         pass
@@ -106,12 +121,13 @@ class DummyDelegate:
             
     def setState(self, state):
         """Advance element state to a new one. Subclasses will add side effects (such as actually playing media)"""
-        self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
         if self.state == state:
-            self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)))
-#             if DEBUG:
-#                 import pdb
-#                 pdb.set_trace()
+            self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)), extra=self.getLogExtra())
+            if state == State.idle:
+                # Defensive programming: destroy it again...
+                self.logger.warning('Re-issuing destroy for %s' % self.document.getXPath(self.elt), extra=self.getLogExtra())
+                self.destroyTimelineElement()
             return
         self.state = state
         if self.state == State.started:
@@ -123,6 +139,8 @@ class DummyDelegate:
         parentElement = self.document.getParent(self.elt)
         if parentElement is not None:
             parentElement.delegate.reportChildState(self.elt, self.state)
+        if self.state == State.idle:
+            self.destroyTimelineElement()
            
     def assertState(self, action, *allowedStates):
         """Check that the element is in an expected state."""
@@ -132,6 +150,8 @@ class DummyDelegate:
         """Check that all descendents of the element are in an expected state"""
         for desc in self.elt.iter():
             assert desc.delegate.state in set(allowedStates), "%s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
+            #if not desc.delegate.state in set(allowedStates):
+            #    print "WARNING XXXJACK: %s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
          
     def reportChildState(self, child, childState):
         """Called by direct children when they change their state"""
@@ -147,7 +167,7 @@ class DummyDelegate:
     def startTimelineElement(self):
         """Called by parent or outer control to start the element"""
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         #self.setState(State.starting)
         #self.setState(State.started)
         #self.setState(State.stopping)
@@ -159,9 +179,19 @@ class DummyDelegate:
             return
         self.setState(State.idle)
         
+    def destroyTimelineElement(self):
+        pass
+        
     def getCurrentPriority(self):
         """Return current priority of this element for clock arbitration"""
-        return PRIO_TO_INT["low"]
+        val = self.elt.get(NS_TIMELINE("prio"), self.DEFAULT_PRIO)
+#         if self.state == State.started:
+#             val = self.elt.get(NS_TIMELINE("prio"), "normal")
+#         else:
+#             val = "low"
+        val = PRIO_TO_INT.get(val, val)
+        val = int(val)
+        return val
 
     def moveStateToConform(self, oldDelegate):
         """Fast-forward an element so that it is in the same state as its old delegate was"""
@@ -220,7 +250,7 @@ class SingleChildDelegate(TimelineDelegate):
         if self.state == State.idle:
             return
         if self.state == State.initing:
-            if childState in {State.inited, State.skipped}:
+            if childState in {State.inited}:
                 self.setState(State.inited)
                 return
             assert childState == State.initing
@@ -257,7 +287,7 @@ class SingleChildDelegate(TimelineDelegate):
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.inited, State.idle, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.inited, State.idle)
         self.setState(State.starting)
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
         
@@ -320,7 +350,7 @@ class ParDelegate(TimeElementDelegate):
         if self.state == State.initing:
             # We're initializing. Go to initialized once all our children have.
             for ch in self.elt:
-                if ch.delegate.state not in {State.inited, State.skipped}:
+                if ch.delegate.state not in {State.inited}:
 #                    print 'xxxjack par initing', self.document.getXPath(self.elt), 'waitforchild', self.document.getXPath(ch)
                     return
             self.setState(State.inited)
@@ -338,7 +368,7 @@ class ParDelegate(TimeElementDelegate):
             # First check whether any of the children that are relevant to our lifetime are still not finished.
             # 
             relevantChildren = self._getRelevantChildren()
-#             print 'xxxjack par relevant children', relevantChildren
+#            print 'xxxjack par relevant children', relevantChildren
             for ch in relevantChildren:
                 if ch.delegate.state in State.NOT_DONE:
                     return
@@ -355,11 +385,16 @@ class ParDelegate(TimeElementDelegate):
             # The ultimate answer may be to add a freezeTimelineElement call
             # so we can get SMIL-like semantics.
             #
-            self.setState(State.finished)
-            for ch in self.elt:
-                if not ch in relevantChildren:
+            if not self.emittedStopForChildren:
+                for ch in self.elt:
                     if ch.delegate.state in State.STOP_NEEDED:
                         self.document.schedule(ch.delegate.stopTimelineElement)
+                self.emittedStopForChildren = True
+            # If all terminate calls and such have been emitted we are finished
+            for ch in self.elt:
+                if ch.delegate.state in State.NOT_DONE:
+                    return
+            self.setState(State.finished)
             return
 #            self.setState(State.stopping)
 #             needToWait = False
@@ -383,7 +418,7 @@ class ParDelegate(TimeElementDelegate):
 #             self.setState(State.stopped)
 #             self.assertDescendentState('reportChildState[self.state==stopped]', State.stopped, State.idle)
         if self.state == State.stopping:
-            # We're stopping. When all our chadren have stopped so have we.
+            # We're stopping. When all our children have stopped so have we.
             for ch in self.elt:
                 if ch.delegate.state != State.idle:
                     return
@@ -394,7 +429,7 @@ class ParDelegate(TimeElementDelegate):
             if not childState in State.NOT_DONE:
                 return
         # If we get here we got an unexpected state change from a child. Report.
-        self.logger.warning('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state))
+        self.logger.warning('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state), extra=self.getLogExtra())
     
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
@@ -420,17 +455,20 @@ class ParDelegate(TimeElementDelegate):
         self.assertState('initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         self.setState(State.initing)
+        self.emittedStopForChildren = False
         for child in self.elt: 
             self.document.schedule(child.delegate.initTimelineElement)
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         for child in self.elt: 
             self.document.schedule(child.delegate.startTimelineElement)
         
     def stopTimelineElement(self):
+        if self.state == State.idle:
+            return
         self.setState(State.stopping)
         waitNeeded = False
         for child in self.elt:
@@ -450,7 +488,7 @@ class SeqDelegate(TimeElementDelegate):
             return
         if self.state == State.initing:
             # Initializing. We're initialized when our first child is.
-            if self.elt[0].delegate.state not in {State.inited, State.skipped}:
+            if self.elt[0].delegate.state not in {State.inited}:
                 return
             self.setState(State.inited)
             return
@@ -470,8 +508,11 @@ class SeqDelegate(TimeElementDelegate):
             if nextChild is None:
                  #That was the last child. We are done.
                 self.setState(State.finished)
-                self.assertDescendentState('reportChildState[self.state==finished]', State.finished, State.stopping, State.idle)
-            elif nextChild.delegate.state in {State.inited, State.skipped}:
+                # We cannot assert descendent states here. One of our chidren could be a finished par, and it could have
+                # scheduled stop calls for its descendents, but that doesn't mean those have been run yet.
+                #
+                #self.assertDescendentState('reportChildState[self.state==finished]', State.finished, State.stopping, State.idle)
+            elif nextChild.delegate.state in {State.inited}:
                 # Next child is ready to run. Start it, and initialize the one after that, then stop old one.
                 self._currentChild = nextChild
                 self.document.schedule(self._currentChild.delegate.startTimelineElement)
@@ -502,7 +543,7 @@ class SeqDelegate(TimeElementDelegate):
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         if not len(self.elt):
             self.setState(State.finished)
@@ -536,21 +577,14 @@ class RefDelegate(TimeElementDelegate):
     EXACT_CHILD_COUNT=0
     
     def initTimelineElement(self):
-        if self.elt.get(NS_TIMELINE_CHECK("debug")) == "skip":
-            self.document.report(logging.INFO, '>', 'DBGSKIP', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
-            self.setState(State.skipped)
-            return
         TimeElementDelegate.initTimelineElement(self)
 
     def startTimelineElement(self):
-        if self.state == State.skipped:
-            self.setState(State.finished)
-            return
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report(logging.INFO, '>', 'START', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters())
+        self.document.report(logging.INFO, '>', 'START', self.document.getXPath(self.elt), self._getParameters(), self._getDmappcParameters(), extra=self.getLogExtra())
         # XXXJACK test code. Assume text/image nodes finish straight away, masterVideo takes forever and others take 42 seconds
         cl = self.elt.get(NS_2IMMERSE("class"), "unknown")
         if cl == "mastervideo":
@@ -566,11 +600,11 @@ class RefDelegate(TimeElementDelegate):
     def _done(self):
         if self.state == State.started:
             # Do nothing if we aren't in the started state anymore (probably because we've been stopped)
-            self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt))
+            self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
             self.setState(State.finished)
 
     def stopTimelineElement(self):
-        self.document.report(logging.INFO, '>', 'STOP', self.document.getXPath(self.elt))
+        self.document.report(logging.INFO, '>', 'STOP', self.document.getXPath(self.elt), extra=self.getLogExtra())
         TimeElementDelegate.stopTimelineElement(self)
         
     def _getParameters(self):
@@ -608,9 +642,9 @@ class ConditionalDelegate(SingleChildDelegate):
 
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
-        self.document.report(logging.DEBUG, 'COND', True, self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'COND', True, self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
         
 class SleepDelegate(TimeElementDelegate):
@@ -619,20 +653,21 @@ class SleepDelegate(TimeElementDelegate):
     ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
         NS_TIMELINE("dur")
         }
-
+    DEFAULT_PRIO="high"
+    
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
-        self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
         self.clock.schedule(dur, self._done)
         
     def _done(self):
         if self.state != State.started:
             return
-        self.document.report(logging.DEBUG, 'SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.finished)
     
     def parseDuration(self, dur):
@@ -649,19 +684,20 @@ class WaitDelegate(TimelineDelegate):
     ALLOWED_ATTRIBUTES = {
         NS_TIMELINE("event")
         }
-        
+    DEFAULT_PRIO="high"
+            
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
-        self.assertDescendentState('startTimelineElement()', State.idle, State.inited, State.skipped)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
-        self.document.report(logging.DEBUG, 'WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.started)
         self.clock.schedule(0, self._done)
         
     def _done(self):
         if self.state != State.started:
             return
-        self.document.report(logging.DEBUG, 'WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt))
+        self.document.report(logging.DEBUG, 'WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.finished)
     
    
@@ -711,22 +747,25 @@ class SeekToElementAdapter(DelegateAdapter):
 class Document:
     RECURSIVE = False
         
-    def __init__(self, clock, extraLoggerArgs=None):
+    def __init__(self, clock, extraLoggerArgs=None, idAttribute=None):
         self.tree = None
         self.root = None
         self.fragment = None
+        self.url = None
         self.clock = clock
         self.parentMap = {}
+        self.idAttribute = idAttribute
+        self.idMap = {}
         self.toDo = []
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
         self.terminating = False
         self.logger = logging.getLogger(__name__)
         if extraLoggerArgs:
-            self.logger = logging.LoggerAdapter(self.logger, extraLoggerArgs)
+            self.logger = MyLoggerAdapter(self.logger, extraLoggerArgs)
         
     def setExtraLoggerArgs(self, extraLoggerArgs):
-            self.logger = logging.LoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
+            self.logger = MyLoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
     
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
         assert not self.root
@@ -734,6 +773,7 @@ class Document:
         
     def load(self, url):
         assert not self.root
+        self.url = url
         fp = urllib2.urlopen(url)
         self.tree = ET.parse(fp)
         self.root = self.tree.getroot()
@@ -753,6 +793,14 @@ class Document:
             else:
                 self.logger.log(logging.INFO, "Will start at element %s" % self.getXPath(elements[0]))
                 self.fragment = elements[0]  
+        if self.idAttribute:
+            self.idMap = {}
+            for p in self.tree.iter():
+                id = p.get(self.idAttribute)
+                if id:
+                    if id in self.idMap:
+                        raise TimelineParseError("Duplicate id %s in element %s" % (id, self.getXPath(p)))
+                    self.idMap[id] = p 
         
     def getParent(self, elt):
         return self.parentMap.get(elt)
@@ -868,24 +916,28 @@ class Document:
             
     def runDocument(self):
         self.clock.start()
-        self.runloop(lambda : self.root.delegate.state == State.finished)
-        self.report(logging.DEBUG, 'RUN', 'stop')
-        self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
-#        self.terminating = True
-        self.root.delegate.stopTimelineElement()
-        self.runloop(lambda : self.root.delegate.state == State.idle)
-        self.root.delegate.assertDescendentState("run()", State.idle)
-        self.report(logging.DEBUG, 'RUN', 'done')
-            
+        self.runDocumentStart()
+        self.runloop(State.finished)
+        self.runDocumentStop()
+        
     def runDocumentInit(self):
-        self.report(logging.DEBUG, 'RUN', 'init')
+        self.report(logging.INFO, 'RUN', 'init')
         self.schedule(self.root.delegate.initTimelineElement)
     
     def runDocumentStart(self):
         assert self.root is not None
-        self.report(logging.DEBUG, 'RUN', 'start')
+        self.report(logging.INFO, 'RUN', 'start')
         self.schedule(self.root.delegate.startTimelineElement)
 
+    def runDocumentStop(self):
+        self.report(logging.INFO, 'RUN', 'stop')
+        self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
+#        self.terminating = True
+        self.root.delegate.stopTimelineElement()
+        self.runloop(State.idle)
+        self.root.delegate.assertDescendentState("run()", State.idle)
+        self.report(logging.INFO, 'RUN', 'done')
+            
     def getDocumentState(self):
         if self.root is None:
             return None
@@ -893,7 +945,7 @@ class Document:
             
     def schedule(self, callback, *args, **kwargs):
         assert self.root is not None
-        self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt))
+        self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt), extra=callback.im_self.elt.delegate.getLogExtra())
         if self.RECURSIVE or self.terminating:
             callback(*args, **kwargs)
         else:
@@ -923,12 +975,12 @@ class Document:
             if len(self.toDo) == 0:
                 self.clock.handleEvents(self)
 
-    def report(self, level, event, verb, *args):
+    def report(self, level, event, verb, *args, **kwargs):
         if args:
             args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
         else:
             args = ''
-        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args)
+        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args, **kwargs)
              
 def main():
     global DEBUG
@@ -965,7 +1017,7 @@ def main():
     else:
         clock = clocks.CallbackPausableClock(clocks.SystemClock())
     
-    d = Document(clock)
+    d = Document(clock, idAttribute=NS_2IMMERSE("dmappcid"))
     if args.attributes:
         d.setDelegateFactory(RefDelegate2Immerse)
     try:
