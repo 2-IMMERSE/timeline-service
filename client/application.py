@@ -211,7 +211,7 @@ class Component:
             if self.status == 'started':
                 self.application.clock.start()
             else:
-                self.application.clock.stop()
+                pass # self.application.clock.stop()
             
     def destroy(self):
         pass
