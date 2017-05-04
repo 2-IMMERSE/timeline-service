@@ -78,6 +78,8 @@ class State:
     
     NOT_DONE = {initing, inited, starting, started}
     STOP_NEEDED = {initing, inited, starting, started, finished}
+    MOVE_ALLOWED_TARGET_STATES = {idle, inited, started}
+    MOVE_ALLOWED_START_STATES = {inited, starting, started, finished, stopping}
     
 class DummyDelegate:
     """Baseclass for delegates, also used for non-timeline elements."""
@@ -90,6 +92,7 @@ class DummyDelegate:
         self.state = State.idle
         self.clock = clock
         self.startTime = None
+        self.conformTargetDelegate = None
         
     def __repr__(self):
         return 'Delegate(%s)' % self.getXPath()
@@ -144,7 +147,11 @@ class DummyDelegate:
            
     def assertState(self, action, *allowedStates):
         """Check that the element is in an expected state."""
-        assert self.state in set(allowedStates), "%s: %s: state==%s, expected %s" % (self, action, self.state, set(allowedStates))
+        if len(allowedStates) == 1 and type(allowedStates[0]) == set:
+            allowedStates = allowedStates[0]
+        else:
+            allowedStates = set(allowedStates)
+        assert self.state in allowedStates, "%s: %s: state==%s, expected %s" % (self, action, self.state, allowedStates)
         
     def assertDescendentState(self, action, *allowedStates):
         """Check that all descendents of the element are in an expected state"""
@@ -193,21 +200,51 @@ class DummyDelegate:
         val = int(val)
         return val
 
-    def moveStateToConform(self, oldDelegate):
-        """Fast-forward an element so that it is in the same state as its old delegate was"""
+    def prepareMoveStateToConform(self, conformTargetDelegate):
+        """Prepare for fast-forward an element so that it is in the same state 
+        as its old delegate was."""
         assert self.state == State.idle
-        if oldDelegate.state == State.idle:
+        if  self.state == conformTargetDelegate.state:
+            # This delegate is already in its target state. Nothing to do.
+            self.conformTargetDelegate = None
             return
-        if oldDelegate.state in (State.initing, State.inited):
-            self.initTimelineElement(self)
+        self.conformTargetDelegate = conformTargetDelegate
+        assert self.conformTargetDelegate.state in State.MOVE_ALLOWED_TARGET_STATES, "%s: prepareMoveStateToConform: state==%s, target=%s, expected %s" % (self, action, self.state, self.conformTargetDelegate.state, State.MOVE_ALLOWED_TARGET_STATES)
+
+    def stepMoveStateToConform(self, startAllowed):
+        """Execute a next step."""
+        if self.conformTargetDelegate is None or self.state == self.conformTargetDelegate.state:
+            # Apparently we are done.
+            self.conformTargetDelegate = None
             return
-        if oldDelegate.state in (State.starting, State.started):
-            assert 0
+        # xxxjack we really need a matrix here....
+        print 'xxxjack stepMoveStateToConform(%s): move from %s to %s' % (self, self.state, self.conformTargetDelegate.state)
+        if self.conformTargetDelegate.state == State.idle:
+            if self.state in State.STOP_NEEDED:
+                self.stopTimelineElement()
+                return
+        needInit = self.conformTargetDelegate.state in (State.inited, State.started)
+        if needInit and self.state == State.idle:
+            self.initTimelineElement()
+            self.assertState("stepMoveStateToConform:init", State.MOVE_ALLOWED_START_STATES|{State.initing})
             return
-        if oldDelegate.state in (State.finished, State.stopping, State.skipped):
-            # xxxjack unsure here, if I remain in idle will everything just work?
+        if not startAllowed:
             return
-        assert 0
+        if self.conformTargetDelegate.state == State.started:
+            self.startTimelineElement()
+        self.assertState("stepMoveStateToConform:start", State.MOVE_ALLOWED_START_STATES)
+        
+    def hasFinishedMoveStateToConform(self):
+        """Returns False is there is more work to be done on this element before
+        it is in the state conforming to the state of its old delegate"""
+        if self.conformTargetDelegate is None or self.state == self.conformTargetDelegate.state:
+            # Apparently we are done.
+            self.conformTargetDelegate = None
+        return self.conformTargetDelegate is None
+        
+    def readyToStartMoveStateToConform(self):
+        """Returns False if this element is still waiting for inited callback."""
+        return self.hasFinishedMoveStateToConform() or self.state in State.MOVE_ALLOWED_START_STATES
         
 class ErrorDelegate(DummyDelegate):
     """<tl:...> element of unknown type. Prints an error and handles the rest as a non-tl: element."""
@@ -850,6 +887,8 @@ class Document:
         return xmlstr
     
     def prepareDocument(self):
+        """Take all actions needed to get the document to a state where it can be
+        started instantaneously (including any initial seeks, etc)."""
         if self.startElement is None and self.startTime <= 0:
             #
             # No positioning needed. Add the real delegates and run all elegible
@@ -866,7 +905,7 @@ class Document:
         # fastforward delegates.
         #
         self._addDelegates(DELEGATE_CLASSES_FASTFORWARD)
-        if self.startElement:
+        if not self.startElement is None:
             assert self.startElement.delegate
             #
             # Monitor the target element.
@@ -885,11 +924,11 @@ class Document:
         #
         # fastforward the document until we get to the target element or time
         #
-        if self.startElement:
+        if not self.startElement is None:
             assert self.startElement.delegate.seekPositionReached == False
         self.clock.start()
         self.runDocumentStart()
-        if self.startElement:
+        if not self.startElement is None:
             self.runloop(lambda : self.startElement.delegate.seekPositionReached)
             self.report(logging.INFO, 'FFWD', 'reached', self.startElement.delegate.getXPath())
         else:
@@ -899,8 +938,30 @@ class Document:
         #
         # Now replace the fastforward delegates with the real ones.
         #
-        self.dump(sys.stdout)
-        assert 0        
+        self.replaceDelegates(DELEGATE_CLASSES)
+        #
+        # Now execute all inits and destroys.
+        #
+        for elt in self.tree.iter():
+            elt.delegate.stepMoveStateToConform(startAllowed=False)
+        self.runloop(self._allReadyToStartMoveStateToConform)
+        #
+        # Now execute all starts and stops.
+        #
+        for elt in self.tree.iter():
+            elt.delegate.stepMoveStateToConform(startAllowed=True)
+        #
+        # Now do the set-position on the clock of the current master timing element.
+        #
+        # XXXX to be done
+        self.report(logging.INFO, 'FFWD', 'done')
+        
+    def _allReadyToStartMoveStateToConform(self):
+        """Returns False if any element is till initializing."""
+        for elt in self.tree.iter():
+            if not elt.delegate.readyToStartMoveStateToConform():
+                return False
+        return True
         
     def _addDelegates(self, delegateClasses=None):
         assert self.root is not None
@@ -919,11 +980,14 @@ class Document:
             oldDelegate = elt.delegate
             # Create new delegate
             klass = self._getDelegate(elt.tag, newDelegateClasses)
+            if oldDelegate.__class__ == klass:
+                # Nothing to do for this element.
+                continue
             elt.delegate = klass(elt, self, self.clock)
             elt.delegate.checkAttributes()
             elt.delegate.checkChildren()
             # Make new delegate go to same state as the old delegate was in
-            elt.delegate.moveStateToConform(oldDelegate)
+            elt.delegate.prepareMoveStateToConform(oldDelegate)
                 
     def _getDelegate(self, tag, delegateClasses=None):
         if not tag in NS_TIMELINE:
