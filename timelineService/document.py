@@ -78,7 +78,7 @@ class State:
     
     NOT_DONE = {initing, inited, starting, started}
     STOP_NEEDED = {initing, inited, starting, started, finished}
-    MOVE_ALLOWED_TARGET_STATES = {idle, inited, started}
+    MOVE_ALLOWED_TARGET_STATES = {idle, inited, started, finished}
     MOVE_ALLOWED_START_STATES = {inited, starting, started, finished, stopping}
     
 class DummyDelegate:
@@ -209,7 +209,7 @@ class DummyDelegate:
             self.conformTargetDelegate = None
             return
         self.conformTargetDelegate = conformTargetDelegate
-        assert self.conformTargetDelegate.state in State.MOVE_ALLOWED_TARGET_STATES, "%s: prepareMoveStateToConform: state==%s, target=%s, expected %s" % (self, action, self.state, self.conformTargetDelegate.state, State.MOVE_ALLOWED_TARGET_STATES)
+        assert self.conformTargetDelegate.state in State.MOVE_ALLOWED_TARGET_STATES, "%s: prepareMoveStateToConform: state==%s, target=%s, expected %s" % (self, self.state, self.conformTargetDelegate.state, State.MOVE_ALLOWED_TARGET_STATES)
 
     def stepMoveStateToConform(self, startAllowed):
         """Execute a next step."""
@@ -223,14 +223,14 @@ class DummyDelegate:
             if self.state in State.STOP_NEEDED:
                 self.stopTimelineElement()
                 return
-        needInit = self.conformTargetDelegate.state in (State.inited, State.started)
+        needInit = self.conformTargetDelegate.state in {State.inited, State.started, State.finished}
         if needInit and self.state == State.idle:
             self.initTimelineElement()
             self.assertState("stepMoveStateToConform:init", State.MOVE_ALLOWED_START_STATES|{State.initing})
             return
         if not startAllowed:
             return
-        if self.conformTargetDelegate.state == State.started:
+        if self.conformTargetDelegate.state in {State.started, State.finished}:
             self.startTimelineElement()
         self.assertState("stepMoveStateToConform:start", State.MOVE_ALLOWED_START_STATES)
         
@@ -779,7 +779,7 @@ class SeekToElementAdapter(DelegateAdapter):
     def startTimelineElement(self):
         self._adapter_delegate.startTimelineElement()
         self.seekPositionReached = True
-        print 'xxxjack seekPositionReached has triggered'
+        # print 'xxxjack seekPositionReached has triggered'
         
 class Document:
     RECURSIVE = False
@@ -847,6 +847,105 @@ class Document:
             else:
                 self.startElement = self.idMap[up.fragment]
 
+    def run(self):
+        """Run the whole document."""
+        #
+        # See whether we have to do initial seeking, and setup some helper
+        # variables depending on that.
+        #
+        hasSeekToElement = self.startElement is not None
+        hasSeekToTime = self.startTime > 0
+        hasSeek = hasSeekToElement or hasSeekToTime
+        
+        if hasSeekToElement:
+            initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
+            seekDone = lambda : self.startElement.delegate.seekPositionReached
+        elif hasSeekToTime:
+            initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
+            seekDone = lambda : self.clock.now() >= self.startTime
+        else:
+            initialDelegateClasses = DELEGATE_CLASSES
+            seekDone = None # Will crash if ever we accdentally call it
+            
+        #
+        # Populate the initial delegates
+        #
+        self._addDelegates(initialDelegateClasses)
+        
+        if hasSeekToElement:
+            assert self.startElement.delegate
+            # Monitor the target element.
+            self.startElement.delegate = SeekToElementAdapter(self.startElement.delegate)
+            self.report(logging.INFO, 'FFWD', 'goto', self.startElement.delegate.getXPath())
+        elif hasSeekToTime:
+            # Monitoring is done by checking the clock
+            self.report(logging.INFO, 'FFWD', 'goto', '#t=%f' % self.startTime)
+        else:
+            pass
+
+        #
+        # Execute all init calls
+        #
+        self.runDocumentInit()
+        self.runloop()
+
+        # Sanity check that we actually have to seek
+        if hasSeek:
+            assert not seekDone()
+            
+        self.scheduleDocumentStart()
+
+        if hasSeek:
+            #
+            # Implement the seek by executing the document "virtually" until we get to where we want to be.
+            #
+            self.clock.start()
+            self.runloopStopCondition = seekDone
+            self.runloop()
+            if hasSeekToElement:
+                self.report(logging.INFO, 'FFWD', 'reached', self.startElement.delegate.getXPath())
+            elif hasSeekToTime:
+                # xxxjack not needed? self.clock.set(self.startTime)
+                self.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.clock.now())
+            else:
+                pass
+        if hasSeek:
+            #
+            # Now really execute any operations on external (ref) elements that were virtually
+            # executed during the seek.
+            #
+            self.replaceDelegates(DELEGATE_CLASSES)
+            #
+            # Now re-execute all external inits and destroys.
+            #
+            for elt in self.tree.iter():
+                elt.delegate.stepMoveStateToConform(startAllowed=False)
+            self.runloopStopCondition = self._allReadyToStartMoveStateToConform
+            self.runloop()
+            #
+            # Now execute all starts and stops.
+            #
+            for elt in self.tree.iter():
+                elt.delegate.stepMoveStateToConform(startAllowed=True)
+            #
+            # Now do the set-position on the clock of the current master timing element.
+            #
+            # XXXX to be done
+            self.report(logging.INFO, 'FFWD', 'done')
+                
+
+        self.runDocumentBody()
+        self.runloop()
+        self.runDocumentStop()
+        self.runloop()
+        self.runDocumentCompleted()
+       
+    def _allReadyToStartMoveStateToConform(self):
+        """Returns False if any element is till initializing."""
+        for elt in self.tree.iter():
+            if not elt.delegate.readyToStartMoveStateToConform():
+                return False
+        return True
         
     def getParent(self, elt):
         return self.parentMap.get(elt)
@@ -887,83 +986,6 @@ class Document:
         xmlstr = ET.tostring(self.root, encoding='utf8', method='xml')
         return xmlstr
     
-    def prepareDocument(self):
-        """Take all actions needed to get the document to a state where it can be
-        started instantaneously (including any initial seeks, etc)."""
-        if self.startElement is None and self.startTime <= 0:
-            #
-            # No positioning needed. Add the real delegates and run all elegible
-            # init methods.
-            #
-            self._addDelegates()
-            self.runDocumentInit()
-            if not self.RECURSIVE:
-                self.runloop(lambda : self.root.delegate.state == State.inited)
-            self.runDocumentStart()
-            return
-        #
-        # Positioning needed. Start with providing all elements with the
-        # fastforward delegates.
-        #
-        self._addDelegates(DELEGATE_CLASSES_FASTFORWARD)
-        if not self.startElement is None:
-            assert self.startElement.delegate
-            #
-            # Monitor the target element.
-            #
-            self.startElement.delegate = SeekToElementAdapter(self.startElement.delegate)
-            #
-            # Call the init methods
-            #
-            self.report(logging.INFO, 'FFWD', 'goto', self.startElement.delegate.getXPath())
-        else:
-            self.report(logging.INFO, 'FFWD', 'goto', '#t=%f' % self.startTime)
-            
-        self.runDocumentInit()
-        if not self.RECURSIVE:
-            self.runloop(lambda : self.root.delegate.state == State.inited)
-        #
-        # fastforward the document until we get to the target element or time
-        #
-        if not self.startElement is None:
-            assert self.startElement.delegate.seekPositionReached == False
-        self.clock.start()
-        self.runDocumentStart()
-        if not self.startElement is None:
-            self.runloop(lambda : self.startElement.delegate.seekPositionReached)
-            self.report(logging.INFO, 'FFWD', 'reached', self.startElement.delegate.getXPath())
-        else:
-            self.runloop(lambda : self.clock.now() >= self.startTime)
-            # xxxjack not needed? self.clock.set(self.startTime)
-            self.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.clock.now())
-        #
-        # Now replace the fastforward delegates with the real ones.
-        #
-        self.replaceDelegates(DELEGATE_CLASSES)
-        #
-        # Now execute all inits and destroys.
-        #
-        for elt in self.tree.iter():
-            elt.delegate.stepMoveStateToConform(startAllowed=False)
-        self.runloop(self._allReadyToStartMoveStateToConform)
-        #
-        # Now execute all starts and stops.
-        #
-        for elt in self.tree.iter():
-            elt.delegate.stepMoveStateToConform(startAllowed=True)
-        #
-        # Now do the set-position on the clock of the current master timing element.
-        #
-        # XXXX to be done
-        self.report(logging.INFO, 'FFWD', 'done')
-        
-    def _allReadyToStartMoveStateToConform(self):
-        """Returns False if any element is till initializing."""
-        for elt in self.tree.iter():
-            if not elt.delegate.readyToStartMoveStateToConform():
-                return False
-        return True
-        
     def _addDelegates(self, delegateClasses=None):
         assert self.root is not None
         for elt in self.tree.iter():
@@ -997,26 +1019,36 @@ class Document:
             delegateClasses =  self.delegateClasses       
         return delegateClasses.get(tag, ErrorDelegate)
             
-    def runDocument(self):
-        self.clock.start()
-        self.runloop(lambda : self.root.delegate.state == State.finished)
-        self.runDocumentStop()
-        
     def runDocumentInit(self):
+        assert self.root
+        assert self.root.delegate
+        self.root.delegate.assertState("runDocumentInit()", State.idle)
         self.report(logging.INFO, 'RUN', 'init')
         self.schedule(self.root.delegate.initTimelineElement)
+        self.runloopStopCondition = lambda : self.root.delegate.state == State.inited
     
-    def runDocumentStart(self):
+    def scheduleDocumentStart(self):
         assert self.root is not None
+        assert self.root.delegate
+        self.root.delegate.assertState("scheduleDocumentStart()", State.inited)
         self.report(logging.INFO, 'RUN', 'start')
         self.schedule(self.root.delegate.startTimelineElement)
 
+    def runDocumentBody(self):
+        assert self.root is not None
+        assert self.root.delegate
+        self.root.delegate.assertState("runDocumentBody()", State.inited, State.starting, State.started)
+        self.clock.start()
+        self.runloopStopCondition = lambda : self.root.delegate.state == State.finished
+        
     def runDocumentStop(self):
         self.report(logging.INFO, 'RUN', 'stop')
         self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
 #        self.terminating = True
         self.root.delegate.stopTimelineElement()
-        self.runloop(lambda : self.root.delegate.state == State.idle)
+        self.runloopStopCondition = lambda : self.root.delegate.state == State.idle
+        
+    def runDocumentCompleted(self):
         self.root.delegate.assertDescendentState("run()", State.idle)
         self.report(logging.INFO, 'RUN', 'done')
             
@@ -1033,13 +1065,9 @@ class Document:
         else:
             self.toDo.append((callback, args, kwargs))
             
-    def runloop(self, stopCondition=None):
-        """Process events until the optional stopCondition (or self.runloopStopCondition), or deadlock."""
-        if stopCondition:
-            assert self.runloopStopCondition is None
-            self.runloopStopCondition = stopCondition
-        else:
-            assert self.runloopStopCondition
+    def runloop(self):
+        """Process events until self.runloopStopCondition(), or deadlock."""
+        assert self.runloopStopCondition
         assert self.root is not None
         #
         # We run the loop until we have reached the expected condition, or until nothing can happen anymore
@@ -1128,11 +1156,7 @@ def main():
             # Shortcut to allow specifying local files
             url = 'file:' + url
         d.load(url)
-        d.prepareDocument()
-#         if args.dump:
-#             d.dump(sys.stdout)
-#             print '--------------------'
-        d.runDocument()
+        d.run()
     finally:
         if args.dump:
             print '--------------------'
