@@ -218,7 +218,7 @@ class DummyDelegate:
             self.conformTargetDelegate = None
             return
         # xxxjack we really need a matrix here....
-        print 'xxxjack stepMoveStateToConform(%s): move from %s to %s' % (self, self.state, self.conformTargetDelegate.state)
+        # print 'xxxjack stepMoveStateToConform(%s): move from %s to %s' % (self, self.state, self.conformTargetDelegate.state)
         if self.conformTargetDelegate.state == State.idle:
             if self.state in State.STOP_NEEDED:
                 self.stopTimelineElement()
@@ -798,6 +798,7 @@ class Document:
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
         self.terminating = False
+        self.runloopStopCondition = None
         self.logger = logging.getLogger(__name__)
         if extraLoggerArgs:
             self.logger = MyLoggerAdapter(self.logger, extraLoggerArgs)
@@ -1032,29 +1033,49 @@ class Document:
         else:
             self.toDo.append((callback, args, kwargs))
             
-    def runloop(self, stopCondition):
+    def runloop(self, stopCondition=None):
+        """Process events until the optional stopCondition (or self.runloopStopCondition), or deadlock."""
+        if stopCondition:
+            assert self.runloopStopCondition is None
+            self.runloopStopCondition = stopCondition
+        else:
+            assert self.runloopStopCondition
         assert self.root is not None
-        while not stopCondition() or len(self.toDo):
-            if len(self.toDo):
-                callback, args, kwargs = self.toDo.pop(0)
-                callback(*args, **kwargs)
-            else:
+        #
+        # We run the loop until we have reached the expected condition, or until nothing can happen anymore
+        #
+        while not self.runloopStopCondition() or self.toDo:
+            self.runAvailable()
+            #
+            # If we are not at the expected end condition check whether the clock has any events forthcoming.
+            #
+            if not self.runloopStopCondition():
                 self.sleepUntilNextEvent()
-                self.clock.handleEvents(self)
+        #
+        # End condition reached, or deadlocked.
+        #
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
-        assert stopCondition(), 'Document root did not reach expected state'
+        assert self.runloopStopCondition(), 'Document root did not reach expected state'
+        self.runloopStopCondition = None
         
     def sleepUntilNextEvent(self):
+        """Relinquish control if and until a new event happens"""
         self.clock.sleepUntilNextEvent()
         
     def runAvailable(self):
+        """Execute any events that can be run without relinquishing control"""
         assert self.root is not None
+        assert self.runloopStopCondition
         self.clock.handleEvents(self)
-        while len(self.toDo):
-            callback, args, kwargs = self.toDo.pop(0)
-            callback(*args, **kwargs)
-            if len(self.toDo) == 0:
+        while not self.runloopStopCondition() or self.toDo:
+            if self.toDo:
+                # Handle an event, and repeat the loop
+                callback, args, kwargs = self.toDo.pop(0)
+                callback(*args, **kwargs)
+            else:
+                # No events to handle. See if the clock has any more imminent events.
                 self.clock.handleEvents(self)
+                if not self.toDo: break
 
     def report(self, level, event, verb, *args, **kwargs):
         if args:
