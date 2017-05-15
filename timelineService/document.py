@@ -1020,7 +1020,7 @@ class Document:
         self.report(logging.INFO, 'RUN', 'done')
             
     def getDocumentState(self):
-        if self.root is None:
+        if self.root is None or not hasattr(self.root, 'delegate') or not self.root.delegate:
             return None
         return self.root.delegate.state
             
