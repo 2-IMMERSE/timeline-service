@@ -784,6 +784,7 @@ class SeekToElementAdapter(DelegateAdapter):
 class DocumentState:
     def __init__(self, document):
         self.document = document
+        document.report(logging.DEBUG, 'DOCSTATE', self.__class__.__name__)
         
     def stateFinished(self):
         return True
@@ -827,7 +828,7 @@ class DocumentStateInit(DocumentState):
         #
         # Execute all init calls
         #
-        assert document.root
+        assert document.root is not None
         assert document.root.delegate
         document.root.delegate.assertState("runDocumentInit()", State.idle)
         document.report(logging.INFO, 'RUN', 'init')
@@ -971,7 +972,7 @@ class Document:
         assert not self.root
         self.delegateClasses[tag] = klass
         
-    def load(self, url):
+    def loadDocument(self, url):
         assert not self.root
         self.url = url
         #
@@ -1008,21 +1009,29 @@ class Document:
             else:
                 self.startElement = self.idMap[up.fragment]
 
-    def run(self):
-        """Run the whole document."""
-        #
-        # See whether we have to do initial seeking, and setup some helper
-        # variables depending on that.
-        #
+    def prepareDocument(self):
+        """Prepare for running the document"""
         assert self.documentState is None
-        
         self.documentState = DocumentStateInit(self)
         
-        while self.documentState:
+    def runDocument(self):
+        """Run the whole document."""
+        assert self.documentState is not None
+        
+        while not self.isDocumentDone():
             self.runloop()
             assert self.documentState.stateFinished()
-            self.documentState = self.documentState.nextState()
+            self.advanceDocument()
 
+    def isDocumentDone(self):
+        """Return true if the document is not active"""
+        return self.documentState is None
+        
+    def advanceDocument(self):
+        """Advance the document state to the next state, if applicable"""
+        while self.documentState and self.documentState.stateFinished():
+            self.documentState = self.documentState.nextState()
+            
     def getParent(self, elt):
         return self.parentMap.get(elt)
         
@@ -1197,8 +1206,10 @@ def main():
         if not ':' in url:
             # Shortcut to allow specifying local files
             url = 'file:' + url
-        d.load(url)
-        d.run()
+        d.loadDocument(url)
+        d.prepareDocument()
+        d.runDocument()
+        assert d.isDocumentDone()
     finally:
         if args.dump:
             print '--------------------'

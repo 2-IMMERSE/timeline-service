@@ -47,7 +47,7 @@ class BaseTimeline:
         self.layoutServiceUrl = layoutServiceUrl
         self.dmappTimeline = None
         self.dmappId = None
-        self.documentHasRun = False
+        self.documentHasFinished = False
         self.dmappComponents = {}
         self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
         self.clockService.setQueueChangedCallback(self._updateTimeline)
@@ -117,7 +117,7 @@ class BaseTimeline:
         self.timelineDocUrl = None
         self.dmappTimeline = None
         self.dmappId = None
-        self.documentHasRun = False
+        self.documentHasFinished = False
         return None
 
     def dmappcStatus(self, dmappId, componentId, status, fromLayout=False, duration=None):
@@ -163,35 +163,24 @@ class BaseTimeline:
     def _populateTimeline(self):
         """Create proxy objects, etc, using self.dmappTimeline"""
         try:
-            self.document.load(self.timelineDocUrl)
+            self.document.loadDocument(self.timelineDocUrl)
         except:
             errorStr = '\n'.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
             self.logger.error("Timeline(%s): %s: Error loading document: %s", self.contextId, self.timelineDocUrl, errorStr)
             raise
-        self.document.addDelegates()
+        self.document.report(logging.INFO, 'DOCUMENT', 'loaded', self.timelineDocUrl)
+        self.document.prepareDocument()
 
     def _stepTimeline(self):
         self.logger.debug("Timeline(%s): stepTimeline at %f", self.contextId, self.document.clock.now())
-        curState = self.document.getDocumentState()
-        if not curState: return
-        if curState == document.State.idle:
-            # We need to initialize the document
-            if self.documentHasRun:
-                pass # logger.info("Timeline(%s): Finished with %s" % (self.contextId, self.timelineDocUrl))
-            else:
-                self.document.runDocumentInit()
-        elif curState == document.State.inited:
-            # We need to start the document
-            self.documentHasRun = True
-            self.document.runDocumentStart()
-        elif curState == document.State.finished:
-            self.document.report(logging.INFO, 'RUN', 'stop')
-            self.document.root.delegate.stopTimelineElement()
+        if self.document.isDocumentDone():
+            if not self.documentHasFinished:
+                self.documentHasFinished = True
+                self.document.report(logging.INFO, 'DOCUMENT', 'done', self.timelineDocUrl)
+            return
+        self.document.advanceDocument()
         self.document.runAvailable()
-        self.layoutService.forwardActions()
-#        if self.document.getDocumentState() == document.State.idle:
-#            self.document.report(logging.INFO, 'RUN', 'done')
-        
+        self.layoutService.forwardActions()        
 
 class TimelinePollingRunnerMixin:
     def __init__(self):
@@ -216,7 +205,7 @@ class TimelineThreadedRunnerMixin:
         assert self.document
         assert self.document.getDocumentState()
         with self.timelineCondition:
-            while self.document and self.document.getDocumentState():
+            while self.document and not self.document.isDocumentDone():
                 self._stepTimeline()
                 maxSleep = self.document.clock.nextEventTime(default=None)
                 self.timelineCondition.wait(maxSleep)
