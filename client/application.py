@@ -115,7 +115,7 @@ class Application:
     def run(self):
         # Non-threaded polling. But interface (start/run/wait) is ready for threading and event-based reports.
         while True:
-            self.logger.debug("run: clock=%s, wallclock=%s" % (self.clock.now(), time.time()))
+            self.logger.debug("run: clock=%s, wallclock=%s, clockStatus=%s" % (self.clock.now(), time.time(), self.clock.status()))
             inst = self._getLayoutInstruction()
             oldClockStatus = self.clock.status()
             self._doLayoutInstruction(inst)
@@ -201,10 +201,10 @@ class Component:
             self.componentInfo = componentInfo
         # Workaround (similar to client-api) for when the document starts without any clock:
         # we start a default clock
-#        print 'xxxjack', self.status, self.componentId, self.application.currentMasterClockComponent
+        print 'xxxjack', self.status, self.componentId, self.application.currentMasterClockComponent
         if self.status == 'started' and not self.application.currentMasterClockComponent:
             self.canBeMasterClock = True
-#            print 'xxxjack grabbed clock'
+            print 'xxxjack grabbed clock'
         if self.canBeMasterClock and self.status == 'started':
             self.application.currentMasterClockComponent = self
         if self.application.currentMasterClockComponent == self:

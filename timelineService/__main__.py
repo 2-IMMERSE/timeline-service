@@ -135,6 +135,7 @@ class timelineServer:
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
+        print 'xxxjack PUT method=%s args=%s' % (method, args)
         try:
             rv = method(**args)
         except web.HTTPError:
