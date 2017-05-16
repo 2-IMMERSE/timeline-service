@@ -781,6 +781,167 @@ class SeekToElementAdapter(DelegateAdapter):
         self.seekPositionReached = True
         # print 'xxxjack seekPositionReached has triggered'
         
+class DocumentState:
+    def __init__(self, document):
+        self.document = document
+        
+    def stateFinished(self):
+        return True
+        
+    def documentFinished(self):
+        return False
+        
+    def nextState(self):
+        return DocumentStateInit(self.document)
+        
+class DocumentStateInit(DocumentState):
+    def __init__(self, document):
+        DocumentState.__init__(self, document)
+        self.hasSeekToElement = document.startElement is not None
+        self.hasSeekToTime = document.startTime > 0
+        
+        if self.hasSeekToElement:
+            initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
+        elif self.hasSeekToTime:
+            initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
+        else:
+            initialDelegateClasses = DELEGATE_CLASSES
+            seekDone = None # Will crash if ever we accdentally call it
+            
+        #
+        # Populate the initial delegates
+        #
+        document._addDelegates(initialDelegateClasses)
+        
+        if self.hasSeekToElement:
+            assert document.startElement.delegate
+            # Monitor the target element.
+            document.startElement.delegate = SeekToElementAdapter(document.startElement.delegate)
+            document.report(logging.INFO, 'FFWD', 'goto', document.startElement.delegate.getXPath())
+        elif self.hasSeekToTime:
+            # Monitoring is done by checking the clock
+            document.report(logging.INFO, 'FFWD', 'goto', '#t=%f' % document.startTime)
+        else:
+            pass
+
+        #
+        # Execute all init calls
+        #
+        assert document.root
+        assert document.root.delegate
+        document.root.delegate.assertState("runDocumentInit()", State.idle)
+        document.report(logging.INFO, 'RUN', 'init')
+        document.schedule(document.root.delegate.initTimelineElement)
+        
+    def stateFinished(self):
+        return self.document.root.delegate.state == State.inited
+        
+    def nextState(self):
+        if self.hasSeekToElement:
+            return DocumentStateSeekElementStart(self.document, self.document.startElement)
+        elif self.hasSeekToTime:
+            return DocumentStateSeekTimeStart(self.document, self.document.startTime)
+        else:
+            return DocumentStateStart(self.document)
+
+class DocumentStateStart(DocumentState):
+    def __init__(self, document):
+        DocumentState.__init__(self, document)
+        assert document.root is not None
+        assert document.root.delegate
+        document.root.delegate.assertState("scheduleDocumentStart()", State.inited)
+        document.report(logging.INFO, 'RUN', 'start')
+        document.schedule(document.root.delegate.startTimelineElement)
+        
+    def stateFinished(self):
+        return True
+        
+    def nextState(self):
+        return DocumentStateRunDocument(self.document)
+              
+class DocumentStateSeekElementStart(DocumentStateStart):
+    def __init__(self, document, startElement):
+        DocumentStateStart.__init__(self, document)
+        self.startElement = startElement
+        document.clock.start()
+        
+    def stateFinished(self):
+         return self.startElement.delegate.seekPositionReached
+        
+    def nextState(self):
+        self.document.report(logging.INFO, 'FFWD', 'reached', self.startElement.delegate.getXPath())
+        return DocumentStateSeekFinish(self.document)
+
+class DocumentStateSeekTimeStart(DocumentStateStart):
+    def __init__(self, document, startTime):
+        DocumentStateStart.__init__(self, document)
+        self.document = document
+        self.startTime = startTime
+        document.clock.start()
+        
+    def stateFinished(self):
+        return self.document.clock.now() >= self.startTime
+
+    def nextState(self):
+        self.document.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.document.clock.now())
+        return DocumentStateSeekFinish(self.document)
+
+class DocumentStateSeekFinish(DocumentState):
+    def __init__(self, document):
+        DocumentState.__init__(self, document)
+        document.replaceDelegates(DELEGATE_CLASSES)
+        #
+        # Now re-execute all external inits and destroys.
+        #
+        for elt in document.tree.iter():
+            elt.delegate.stepMoveStateToConform(startAllowed=False)
+
+    def stateFinished(self):
+        for elt in self.document.tree.iter():
+            if not elt.delegate.readyToStartMoveStateToConform():
+                return False
+        return True
+        
+    def nextState(self):
+        for elt in self.document.tree.iter():
+            elt.delegate.stepMoveStateToConform(startAllowed=True)
+        #
+        # Now do the set-position on the clock of the current master timing element.
+        #
+        # XXXX to be done
+        self.document.report(logging.INFO, 'FFWD', 'done')
+        return DocumentStateRunDocument(self.document)
+        
+class DocumentStateRunDocument(DocumentState):
+    def __init__(self, document):
+        DocumentState.__init__(self, document)
+        assert document.root is not None
+        assert document.root.delegate
+        document.root.delegate.assertState("runDocumentBody()", State.inited, State.starting, State.started)
+        document.clock.start()
+        
+    def stateFinished(self):
+        return self.document.root.delegate.state == State.finished
+        
+    def nextState(self):
+        return DocumentStateStopDocument(self.document)
+        
+class DocumentStateStopDocument(DocumentState):
+    def __init__(self, document):
+        DocumentState.__init__(self, document)
+        document.report(logging.INFO, 'RUN', 'stop')
+        document.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
+#        document.terminating = True
+        document.root.delegate.stopTimelineElement()
+        
+    def stateFinished(self):
+        return self.document.root.delegate.state == State.idle
+        
+    def nextState(self):
+        self.document.root.delegate.assertDescendentState("run()", State.idle)
+        self.document.report(logging.INFO, 'RUN', 'done')
+        return None
+    
 class Document:
     RECURSIVE = False
         
@@ -789,6 +950,7 @@ class Document:
         self.root = None
         self.startElement = None    # If set, this is the element at which playback should start
         self.startTime = 0          # If set, this is the time at which playback should start
+        self.documentState = None
         self.url = None
         self.clock = clock
         self.parentMap = {}
@@ -798,7 +960,6 @@ class Document:
         self.delegateClasses = {}
         self.delegateClasses.update(DELEGATE_CLASSES)
         self.terminating = False
-        self.runloopStopCondition = None
         self.logger = logging.getLogger(__name__)
         if extraLoggerArgs:
             self.logger = MyLoggerAdapter(self.logger, extraLoggerArgs)
@@ -853,100 +1014,15 @@ class Document:
         # See whether we have to do initial seeking, and setup some helper
         # variables depending on that.
         #
-        hasSeekToElement = self.startElement is not None
-        hasSeekToTime = self.startTime > 0
-        hasSeek = hasSeekToElement or hasSeekToTime
+        assert self.documentState is None
         
-        if hasSeekToElement:
-            initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
-            seekDone = lambda : self.startElement.delegate.seekPositionReached
-        elif hasSeekToTime:
-            initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
-            seekDone = lambda : self.clock.now() >= self.startTime
-        else:
-            initialDelegateClasses = DELEGATE_CLASSES
-            seekDone = None # Will crash if ever we accdentally call it
-            
-        #
-        # Populate the initial delegates
-        #
-        self._addDelegates(initialDelegateClasses)
+        self.documentState = DocumentStateInit(self)
         
-        if hasSeekToElement:
-            assert self.startElement.delegate
-            # Monitor the target element.
-            self.startElement.delegate = SeekToElementAdapter(self.startElement.delegate)
-            self.report(logging.INFO, 'FFWD', 'goto', self.startElement.delegate.getXPath())
-        elif hasSeekToTime:
-            # Monitoring is done by checking the clock
-            self.report(logging.INFO, 'FFWD', 'goto', '#t=%f' % self.startTime)
-        else:
-            pass
-
-        #
-        # Execute all init calls
-        #
-        self.runDocumentInit()
-        self.runloop()
-
-        # Sanity check that we actually have to seek
-        if hasSeek:
-            assert not seekDone()
-            
-        self.scheduleDocumentStart()
-
-        if hasSeek:
-            #
-            # Implement the seek by executing the document "virtually" until we get to where we want to be.
-            #
-            self.clock.start()
-            self.runloopStopCondition = seekDone
+        while self.documentState:
             self.runloop()
-            if hasSeekToElement:
-                self.report(logging.INFO, 'FFWD', 'reached', self.startElement.delegate.getXPath())
-            elif hasSeekToTime:
-                # xxxjack not needed? self.clock.set(self.startTime)
-                self.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.clock.now())
-            else:
-                pass
-        if hasSeek:
-            #
-            # Now really execute any operations on external (ref) elements that were virtually
-            # executed during the seek.
-            #
-            self.replaceDelegates(DELEGATE_CLASSES)
-            #
-            # Now re-execute all external inits and destroys.
-            #
-            for elt in self.tree.iter():
-                elt.delegate.stepMoveStateToConform(startAllowed=False)
-            self.runloopStopCondition = self._allReadyToStartMoveStateToConform
-            self.runloop()
-            #
-            # Now execute all starts and stops.
-            #
-            for elt in self.tree.iter():
-                elt.delegate.stepMoveStateToConform(startAllowed=True)
-            #
-            # Now do the set-position on the clock of the current master timing element.
-            #
-            # XXXX to be done
-            self.report(logging.INFO, 'FFWD', 'done')
-                
+            assert self.documentState.stateFinished()
+            self.documentState = self.documentState.nextState()
 
-        self.runDocumentBody()
-        self.runloop()
-        self.runDocumentStop()
-        self.runloop()
-        self.runDocumentCompleted()
-       
-    def _allReadyToStartMoveStateToConform(self):
-        """Returns False if any element is till initializing."""
-        for elt in self.tree.iter():
-            if not elt.delegate.readyToStartMoveStateToConform():
-                return False
-        return True
-        
     def getParent(self, elt):
         return self.parentMap.get(elt)
         
@@ -1019,39 +1095,6 @@ class Document:
             delegateClasses =  self.delegateClasses       
         return delegateClasses.get(tag, ErrorDelegate)
             
-    def runDocumentInit(self):
-        assert self.root
-        assert self.root.delegate
-        self.root.delegate.assertState("runDocumentInit()", State.idle)
-        self.report(logging.INFO, 'RUN', 'init')
-        self.schedule(self.root.delegate.initTimelineElement)
-        self.runloopStopCondition = lambda : self.root.delegate.state == State.inited
-    
-    def scheduleDocumentStart(self):
-        assert self.root is not None
-        assert self.root.delegate
-        self.root.delegate.assertState("scheduleDocumentStart()", State.inited)
-        self.report(logging.INFO, 'RUN', 'start')
-        self.schedule(self.root.delegate.startTimelineElement)
-
-    def runDocumentBody(self):
-        assert self.root is not None
-        assert self.root.delegate
-        self.root.delegate.assertState("runDocumentBody()", State.inited, State.starting, State.started)
-        self.clock.start()
-        self.runloopStopCondition = lambda : self.root.delegate.state == State.finished
-        
-    def runDocumentStop(self):
-        self.report(logging.INFO, 'RUN', 'stop')
-        self.root.delegate.assertDescendentState("run()", State.finished, State.stopping, State.idle)
-#        self.terminating = True
-        self.root.delegate.stopTimelineElement()
-        self.runloopStopCondition = lambda : self.root.delegate.state == State.idle
-        
-    def runDocumentCompleted(self):
-        self.root.delegate.assertDescendentState("run()", State.idle)
-        self.report(logging.INFO, 'RUN', 'done')
-            
     def getDocumentState(self):
         if self.root is None or not hasattr(self.root, 'delegate') or not self.root.delegate:
             return None
@@ -1066,25 +1109,24 @@ class Document:
             self.toDo.append((callback, args, kwargs))
             
     def runloop(self):
-        """Process events until self.runloopStopCondition(), or deadlock."""
-        assert self.runloopStopCondition
+        """Process events until end of current DocumentState, or deadlock."""
+        assert self.documentState
         assert self.root is not None
         #
         # We run the loop until we have reached the expected condition, or until nothing can happen anymore
         #
-        while not self.runloopStopCondition() or self.toDo:
+        while not self.documentState.stateFinished() or self.toDo:
             self.runAvailable()
             #
             # If we are not at the expected end condition check whether the clock has any events forthcoming.
             #
-            if not self.runloopStopCondition():
+            if not self.documentState.stateFinished():
                 self.sleepUntilNextEvent()
         #
         # End condition reached, or deadlocked.
         #
         assert len(self.toDo) == 0, 'events not handled: %s' % repr(self.toDo)
-        assert self.runloopStopCondition(), 'Document root did not reach expected state'
-        self.runloopStopCondition = None
+        assert self.documentState.stateFinished(), 'Document root did not reach expected state'
         
     def sleepUntilNextEvent(self):
         """Relinquish control if and until a new event happens"""
@@ -1093,9 +1135,9 @@ class Document:
     def runAvailable(self):
         """Execute any events that can be run without relinquishing control"""
         assert self.root is not None
-        assert self.runloopStopCondition
+        assert self.documentState
         self.clock.handleEvents(self)
-        while not self.runloopStopCondition() or self.toDo:
+        while not self.documentState.stateFinished() or self.toDo:
             if self.toDo:
                 # Handle an event, and repeat the loop
                 callback, args, kwargs = self.toDo.pop(0)
