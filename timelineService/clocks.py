@@ -51,6 +51,7 @@ class PausableClock:
         self.epoch = 0
         self.running = False
         self.underlyingClock = underlyingClock
+        self.originalUnderlyingClock = underlyingClock
         self.lock = ClockLock()
 
     @synchronized
@@ -84,6 +85,16 @@ class PausableClock:
         if self.running:
             return 1.0
         return 0.0
+        
+    @synchronized
+    def replaceUnderlyingClock(self, newClock):
+        wasRunning = self.running
+        self.stop() # This also stores current time in self.epoch
+        if newClock is None:
+            newClock = self.originalUnderlyingClock
+        self.underlyingClock = newClock
+        if wasRunning:
+            self.start()    # This starts the clock running at the place it was
         
     @synchronized
     def set(self, now):
