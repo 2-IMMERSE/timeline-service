@@ -49,9 +49,10 @@ class BaseTimeline:
         self.dmappId = None
         self.documentHasFinished = False
         self.dmappComponents = {}
-        self.clockService = clocks.CallbackPausableClock(clocks.SystemClock())
-        self.clockService.setQueueChangedCallback(self._updateTimeline)
-        self.document = document.Document(self.clockService, idAttribute=document.NS_2IMMERSE("dmappcid"), extraLoggerArgs=dict(contextID=contextId))
+        self.clockService = clocks.PausableClock(clocks.SystemClock())
+        self.documentClock = clocks.CallbackPausableClock(self.clockService)
+        self.documentClock.setQueueChangedCallback(self._updateTimeline)
+        self.document = document.Document(self.documentClock, idAttribute=document.NS_2IMMERSE("dmappcid"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         # Do other initialization
 
@@ -139,27 +140,27 @@ class BaseTimeline:
 
     def clockChanged(self, contextClock, contextClockRate, wallClock):
         self.logger.debug("Timeline(%s): clockChanged(contextClock=%s, contextClockRate=%f, wallClock=%s)", self.contextId, contextClock, contextClockRate, wallClock)
-        # self.document.clock.setxxxxx(contextClock, wallClock)
+        # self.clockService.setxxxxx(contextClock, wallClock)
 
         #
         # Adjust clock position, if needed
         #
-        delta = contextClock - self.document.clock.now()
+        delta = contextClock - self.clockService.now()
         MAX_CLOCK_DISCREPANCY = 0.1 # xxxjack pretty random number, 100ms....
         if abs(delta) > MAX_CLOCK_DISCREPANCY:
             self.document.report(logging.INFO, 'CLOCK', 'forward', delta)
-            self.document.clock.set(contextClock)
+            self.clockService.set(contextClock)
             
         #
         # Adjust clock rate, if needed
         #
-        if contextClockRate != self.document.clock.getRate():
+        if contextClockRate != self.clockService.getRate():
             if contextClockRate:
-                self.document.report(logging.INFO, 'CLOCK', 'start', self.document.clock.now())
-                self.document.clock.start()
+                self.document.report(logging.INFO, 'CLOCK', 'start', self.clockService.now())
+                self.clockService.start()
             else:
-                self.document.report(logging.INFO, 'CLOCK', 'stop', self.document.clock.now())
-                self.document.clock.stop()
+                self.document.report(logging.INFO, 'CLOCK', 'stop', self.clockService.now())
+                self.clockService.stop()
 
         self._updateTimeline()
         return None
@@ -176,7 +177,7 @@ class BaseTimeline:
         self.document.prepareDocument()
 
     def _stepTimeline(self):
-        self.logger.debug("Timeline(%s): stepTimeline at %f", self.contextId, self.document.clock.now())
+        self.logger.debug("Timeline(%s): stepTimeline at %f(speed=%f) docClock %f(speed=%f)", self.contextId, self.clockService.now(), self.clockService.getRate(), self.documentClock.now(), self.documentClock.getRate())
         if self.document.isDocumentDone():
             if not self.documentHasFinished:
                 self.documentHasFinished = True
@@ -211,7 +212,7 @@ class TimelineThreadedRunnerMixin:
         with self.timelineCondition:
             while self.document and not self.document.isDocumentDone():
                 self._stepTimeline()
-                maxSleep = self.document.clock.nextEventTime(default=None)
+                maxSleep = self.documentClock.nextEventTime(default=None)
                 self.timelineCondition.wait(maxSleep)
             
     def _updateTimeline(self):
