@@ -812,7 +812,7 @@ class DocumentStateInit(DocumentState):
         elif self.hasSeekToTime:
             initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
         else:
-            initialDelegateClasses = DELEGATE_CLASSES
+            initialDelegateClasses = None # Use normal delegates, possibly overridden
             seekDone = None # Will crash if ever we accdentally call it
             
         #
@@ -870,6 +870,7 @@ class DocumentStateSeekElementStart(DocumentStateStart):
     def __init__(self, document, startElement):
         DocumentStateStart.__init__(self, document)
         self.startElement = startElement
+        document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
     def stateFinished(self):
@@ -884,6 +885,7 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
         DocumentStateStart.__init__(self, document)
         self.document = document
         self.startTime = startTime
+        document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
     def stateFinished(self):
@@ -916,6 +918,10 @@ class DocumentStateSeekFinish(DocumentState):
         # Now do the set-position on the clock of the current master timing element.
         #
         # XXXX to be done
+        #
+        # Now use the real clock again
+        #
+        self.document.clock.replaceUnderlyingClock(None)
         self.document.report(logging.INFO, 'FFWD', 'done')
         return DocumentStateRunDocument(self.document)
         
@@ -1100,7 +1106,7 @@ class Document:
         assert self.root is not None
         for elt in self.tree.iter():
             if not hasattr(elt, 'delegate'):
-                klass = self._getDelegate(elt.tag)
+                klass = self._getDelegate(elt.tag, delegateClasses)
                 elt.delegate = klass(elt, self, self.clock)
                 elt.delegate.checkAttributes()
                 elt.delegate.checkChildren()
@@ -1181,6 +1187,9 @@ class Document:
                 self.clock.handleEvents(self)
                 if not self.toDo: break
 
+	def nextEventTime(self, *args, **kwargs):
+		return self.clock.nextEventTime(*args, **kwargs)
+		
     def report(self, level, event, verb, *args, **kwargs):
         if args:
             args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
