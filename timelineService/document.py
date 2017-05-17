@@ -611,17 +611,23 @@ class WaitDelegate(TimelineDelegate):
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
-        self.document.report(logging.DEBUG, 'WAIT0', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt), extra=self.getLogExtra())
+        eventId = self.elt.get(NS_TIMELINE("event"))
+        self.document.report(logging.DEBUG, 'WAIT0', eventId, self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.started)
-        self.clock.schedule(0, self._done)
+        self.document.registerEvent(eventId, self._done)
         
     def _done(self):
         if self.state != State.started:
             return
-        self.document.report(logging.DEBUG, 'WAIT1', self.elt.get(NS_TIMELINE("event")), self.document.getXPath(self.elt), extra=self.getLogExtra())
+        eventId = self.elt.get(NS_TIMELINE("event"))
+        self.document.report(logging.DEBUG, 'WAIT1', eventId, self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.finished)
     
-    
+    def stopTimelineElement(self):
+    	eventId = self.elt.get(NS_TIMELINE("event"))
+    	self.document.unregisterEvent(eventId, self._done)
+        TimelineDelegate.stopTimelineElement(self)
+
 DELEGATE_CLASSES = {
     NS_TIMELINE("document") : DocumentDelegate,
     NS_TIMELINE("par") : ParDelegate,
@@ -650,6 +656,7 @@ class Document:
         self.logger = logging.getLogger(__name__)
         if extraLoggerArgs:
             self.logger = MyLoggerAdapter(self.logger, extraLoggerArgs)
+        self.events = []
         
     def setExtraLoggerArgs(self, extraLoggerArgs):
             self.logger = MyLoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
@@ -658,6 +665,24 @@ class Document:
         assert not self.root
         self.delegateClasses[tag] = klass
         
+    def registerEvent(self, eventId, callback):
+    	self.events.append((eventId, callback))
+    	
+    def unregisterEvent(self, eventId, callback):
+    	try:
+			self.events.remove((eventId, callback))
+    	except ValueError:
+    		pass
+    		
+    def triggerEvent(self, eventId):
+    	anyDone = False
+    	for eid, callback in self.events:
+    		if eid == eventId:
+    			callback()
+    			anyDone = True
+    	if not anyDone:
+    		self.logger.warning("Event %s did not trigger anything" % eventId)
+    			
     def load(self, url):
         assert not self.root
         self.url = url
