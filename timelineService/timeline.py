@@ -129,8 +129,12 @@ class BaseTimeline:
         return None
 
     def timelineEvent(self, eventId):
-        self.logger.debug("Timeline(%s): timelineEvent(%s)" % (self.contextId, eventId))
-        pass
+        self.document.report(logging.INFO, 'EVENT', 'event', eventId)
+        if '(' in eventId:
+            self.logger.warn("Timeline(%s): parameterized events not yet implemented", self.contextId)
+        else:
+            self.document.triggerEvent(eventId)
+            self._updateTimeline()
         return None
 
     def clockChanged(self, contextClock, contextClockRate, wallClock):
