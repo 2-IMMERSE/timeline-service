@@ -792,6 +792,9 @@ class DocumentState:
         self.document = document
         document.report(logging.DEBUG, 'DOCSTATE', self.__class__.__name__)
         
+    def nudgeClock(self):
+    	pass
+    	
     def stateFinished(self):
         return True
         
@@ -873,6 +876,9 @@ class DocumentStateSeekElementStart(DocumentStateStart):
         document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
+    def nudgeClock(self):
+    	self.document.clock.sleepUntilNextEvent()
+    	
     def stateFinished(self):
          return self.startElement.delegate.seekPositionReached
         
@@ -888,6 +894,9 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
         document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
+    def nudgeClock(self):
+    	self.document.clock.sleepUntilNextEvent()
+    	
     def stateFinished(self):
         return self.document.clock.now() >= self.startTime
 
@@ -898,7 +907,7 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
 class DocumentStateSeekFinish(DocumentState):
     def __init__(self, document):
         DocumentState.__init__(self, document)
-        document.replaceDelegates(DELEGATE_CLASSES)
+        document.replaceDelegates(None)
         #
         # Now re-execute all external inits and destroys.
         #
@@ -1184,6 +1193,8 @@ class Document:
                 callback(*args, **kwargs)
             else:
                 # No events to handle. See if the clock has any more imminent events.
+                # If we are fastforwarding we nudge the clock so it is at the next event time.
+                self.documentState.nudgeClock()
                 self.clock.handleEvents(self)
                 if not self.toDo: break
 
