@@ -133,15 +133,23 @@ class DummyDelegate:
                 self.destroyTimelineElement()
             return
         self.state = state
+        
         if self.state == State.started:
+            # Remember the time this element actually started
             assert self.startTime == None
             self.startTime = self.clock.now()
-            # print 'xxxjack set startTime for ', self.getXPath(), 'to', self.startTime
+        elif self.state == State.finished:
+            # Similar to for state=started, but only f started didn't set it.
+            if self.startTime == None:
+                self.startTime = self.clock.now()
         else:
+            # The element is no longer running, so forget the start time.
             self.startTime = None
+            
         parentElement = self.document.getParent(self.elt)
         if parentElement is not None:
             parentElement.delegate.reportChildState(self.elt, self.state)
+            
         if self.state == State.idle:
             self.destroyTimelineElement()
            
@@ -245,6 +253,25 @@ class DummyDelegate:
     def readyToStartMoveStateToConform(self):
         """Returns False if this element is still waiting for inited callback."""
         return self.hasFinishedMoveStateToConform() or self.state in State.MOVE_ALLOWED_START_STATES
+        
+    def adjustStartTimeRecordedDuringSeek(self, adjustment):
+        """Start times recorded during seek should be converted to the runtime document clock."""
+        if self.conformTargetDelegate != None:
+            if self.conformTargetDelegate.state in {State.started, State.finished}:
+                assert self.conformTargetDelegate.startTime != None
+                self.conformTargetDelegate.startTime += adjustment
+        
+    def getStartTime(self):
+        """Return the time at which this element should have started, or now."""
+        # xxxjack this does not yet handle seeking during playback, for elements which only
+        # need to be repositioned (because they were running before the seek and are still running
+        # after the seek)
+        if self.conformTargetDelegate != None:
+            if self.conformTargetDelegate.state in {State.started, State.finished}:
+                assert self.conformTargetDelegate.startTime != None
+                self.logger.debug("Element %s should have started at t=%f", self.document.getXPath(self.elt), self.conformTargetDelegate.startTime)
+                return self.conformTargetDelegate.startTime
+        return self.clock.now()
         
 class ErrorDelegate(DummyDelegate):
     """<tl:...> element of unknown type. Prints an error and handles the rest as a non-tl: element."""
@@ -761,7 +788,7 @@ DELEGATE_CLASSES_FASTFORWARD = {
     NS_TIMELINE("ref") : TimeElementDelegate,
     NS_TIMELINE("conditional") : ConditionalDelegate, # xxxjack should return True depending on tree position?
     NS_TIMELINE("sleep") : SleepDelegate,
-    NS_TIMELINE("wait") : DummyDelegate,
+    NS_TIMELINE("wait") : DummyDelegate, # xxxjack This makes all events appear to happen instantaneous...
     }
     
 #
@@ -932,11 +959,10 @@ class DocumentStateSeekFinish(DocumentState):
         #
         # Now do the set-position on the clock of the current master timing element.
         #
-        # XXXX incorrect for things that have started earlier, I think...
-        #
         for elt in self.document.tree.iter():
-        	if not elt.delegate.startTime is None:
-        		elt.delegate.startTime += adjustment
+            elt.delegate.adjustStartTimeRecordedDuringSeek(adjustment)
+#        	if not elt.delegate.startTime is None:
+#        		elt.delegate.startTime += adjustment
         		
         self.document.report(logging.INFO, 'FFWD', 'reposition', 'delta-t=%f' % adjustment)
         #
@@ -985,7 +1011,7 @@ class Document:
         self.root = None
         self.startElement = None    # If set, this is the element at which playback should start
         self.startTime = 0          # If set, this is the time at which playback should start
-        self.documentState = None
+        self.documentState = None   # State machine for progressing (and seeking) document
         self.url = None
         self.clock = clock
         self.parentMap = {}

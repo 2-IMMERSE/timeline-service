@@ -325,8 +325,9 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
         extraLogArgs = ()
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
-        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, self.clock.now(), *extraLogArgs, extra=self.getLogExtra())
-        self.layoutService.scheduleAction(self._getTime(self.clock.now()), self.dmappcId, verb, config=config, parameters=parameters)
+        startTime = self.getStartTime()
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, startTime, *extraLogArgs, extra=self.getLogExtra())
+        self.layoutService.scheduleAction(self._getTime(startTime), self.dmappcId, verb, config=config, parameters=parameters)
 
     def statusReport(self, state, duration, fromLayout):
         durargs = ()
