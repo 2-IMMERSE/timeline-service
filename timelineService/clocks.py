@@ -52,6 +52,7 @@ class PausableClock:
         self.running = False
         self.underlyingClock = underlyingClock
         self.originalUnderlyingClock = underlyingClock
+        self.replacementTime = None
         self.lock = ClockLock()
 
     @synchronized
@@ -88,14 +89,32 @@ class PausableClock:
         
     @synchronized
     def replaceUnderlyingClock(self, newClock):
+        assert newClock
+        assert self.underlyingClock == self.originalUnderlyingClock
         wasRunning = self.running
         self.stop() # This also stores current time in self.epoch
-        if newClock is None:
-            newClock = self.originalUnderlyingClock
         self.underlyingClock = newClock
+        self.replacementTime = self._now()
         if wasRunning:
             self.start()    # This starts the clock running at the place it was
         
+    @synchronized
+    def restoreUnderlyingClock(self, restoreTime):
+        assert self.underlyingClock != self.originalUnderlyingClock
+        adjustment = 0
+        wasRunning = self.running
+        self.stop()
+        if restoreTime:
+            # Compute how far we have moved time forward while running on the replacement
+            # clock, and then adjust accordingly
+            adjustment = self.replacementTime - self._now()
+            self._adjust(adjustment)
+        self.underlyingClock = self.originalUnderlyingClock
+
+        if wasRunning:
+            self.start()    # This starts the clock running at the place it was
+        return adjustment
+    
     @synchronized
     def set(self, now):
         wasRunning = self.running
@@ -103,6 +122,9 @@ class PausableClock:
         self.epoch = now
         if wasRunning:
             self.start()
+            
+    def _adjust(self, adjustment):
+        self.epoch += adjustment
         
 class CallbackPausableClock(PausableClock):
     """A pausable clock that also stores callbacks with certain times"""
@@ -164,6 +186,7 @@ class CallbackPausableClock(PausableClock):
                 assert not self.queue.full()
                 self.queue.put(peek)
                 return
+                
     @synchronized
     def dumps(self):
         rv = "%d events" % self.queue.qsize()

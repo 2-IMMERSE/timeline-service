@@ -873,6 +873,8 @@ class DocumentStateSeekElementStart(DocumentStateStart):
     def __init__(self, document, startElement):
         DocumentStateStart.__init__(self, document)
         self.startElement = startElement
+        if document.clock.nextEventTime(None) != None:
+        	self.document.logger.warning("Events pending while starting seek. Could lead to problems later.")
         document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
@@ -891,6 +893,8 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
         DocumentStateStart.__init__(self, document)
         self.document = document
         self.startTime = startTime
+        if document.clock.nextEventTime(None) != None:
+        	self.document.logger.warning("Events pending while starting seek. Could lead to problems later.")
         document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
@@ -930,8 +934,11 @@ class DocumentStateSeekFinish(DocumentState):
         #
         # Now use the real clock again
         #
-        self.document.clock.replaceUnderlyingClock(None)
-        self.document.report(logging.INFO, 'FFWD', 'done')
+        adjustment = self.document.clock.restoreUnderlyingClock(True)
+        self.document.report(logging.INFO, 'FFWD', 'done', 'delta-t=%f' % adjustment)
+        for elt in self.document.tree.iter():
+        	if not elt.delegate.startTime is None:
+        		elt.delegate.startTime += adjustment
         return DocumentStateRunDocument(self.document)
         
 class DocumentStateRunDocument(DocumentState):
