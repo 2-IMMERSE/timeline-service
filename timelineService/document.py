@@ -231,7 +231,7 @@ class DummyDelegate:
         if not startAllowed:
             return
         if self.conformTargetDelegate.state in {State.started, State.finished}:
-            self.startTimelineElement()
+            self.startTimelineElement() # xxxjack need to pass time offset from conformTargetElement.startTime
         self.assertState("stepMoveStateToConform:start", State.MOVE_ALLOWED_START_STATES)
         
     def hasFinishedMoveStateToConform(self):
@@ -925,20 +925,26 @@ class DocumentStateSeekFinish(DocumentState):
         return True
         
     def nextState(self):
-        for elt in self.document.tree.iter():
-            elt.delegate.stepMoveStateToConform(startAllowed=True)
-        #
-        # Now do the set-position on the clock of the current master timing element.
-        #
-        # XXXX to be done
         #
         # Now use the real clock again
         #
         adjustment = self.document.clock.restoreUnderlyingClock(True)
-        self.document.report(logging.INFO, 'FFWD', 'done', 'delta-t=%f' % adjustment)
+        #
+        # Now do the set-position on the clock of the current master timing element.
+        #
+        # XXXX incorrect for things that have started earlier, I think...
+        #
         for elt in self.document.tree.iter():
         	if not elt.delegate.startTime is None:
         		elt.delegate.startTime += adjustment
+        		
+        self.document.report(logging.INFO, 'FFWD', 'reposition', 'delta-t=%f' % adjustment)
+        #
+        # Now (re)issue the start calls
+        #
+        for elt in self.document.tree.iter():
+            elt.delegate.stepMoveStateToConform(startAllowed=True)
+        self.document.report(logging.INFO, 'FFWD', 'done')
         return DocumentStateRunDocument(self.document)
         
 class DocumentStateRunDocument(DocumentState):

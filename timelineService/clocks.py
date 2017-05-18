@@ -200,6 +200,21 @@ class CallbackPausableClock(PausableClock):
             self.queue.put(peek)
         return rv
         
+    def _adjust(self, adjustment):
+        # First get all the queued events
+        qContents = []
+        while True:
+            try:
+                qContents.append(self.queue.get(False))
+            except Queue.Empty:
+                break
+        # Now adjust the clock itself
+        PausableClock._adjust(self, adjustment)
+        # Now re-insert all events with adjusted times
+        for t, callback, args, kwargs in qContents:
+            t += adjustment
+            self.queue.put((t, callback, args, kwargs))
+        
 class FastClock:
     def __init__(self):
         self._now = 0
