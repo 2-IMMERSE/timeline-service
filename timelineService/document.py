@@ -132,12 +132,16 @@ class DummyDelegate:
                 self.logger.warning('Re-issuing destroy for %s' % self.document.getXPath(self.elt), extra=self.getLogExtra())
                 self.destroyTimelineElement()
             return
+        oldState = self.state
         self.state = state
         
         if self.state == State.started:
-            # Remember the time this element actually started
-            assert self.startTime == None
-            self.startTime = self.clock.now()
+            # Remember the time this element actually started. A bit convoluted
+            # because of reviving of elements in 2immerse
+            if oldState not in {State.started, State.finished}:
+                assert self.startTime == None
+            if self.startTime == None:
+                self.startTime = self.clock.now()
         elif self.state == State.finished:
             # Similar to for state=started, but only f started didn't set it.
             if self.startTime == None:
