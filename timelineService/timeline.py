@@ -250,8 +250,13 @@ class ProxyLayoutService:
             action["config"] = config
         if parameters:
             action["parameters"] = parameters
+        if self.actionsTimestamp and self.actionsTimestamp != timestamp:
+            # Different timestamp, output the old ones first. Note this
+            # looks thread-unsafe but isn't, because at worst forwardActions will be
+            # called for nothing.
+            self.forwardActions()
         with self.actionsLock:
-            self.actionsTimestamp = timestamp # XXXJACK Should really check that it is the same as previous ones....
+            self.actionsTimestamp = timestamp
             self.actions.append(action)
 
     def forwardActions(self):
@@ -261,8 +266,7 @@ class ProxyLayoutService:
             actionsTimestamp = self.actionsTimestamp
             self.actionsTimestamp = None
             self.actions = []
-        self.logger.debug("ProxyLayoutService: forwarding %d actions: %s", len(actions), repr(actions))
-        print "xxxjack ProxyLayoutService: forwarding %d actions: %s", len(actions), repr(actions)
+        self.logger.debug("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(actions), actionsTimestamp, repr(actions)))
         entryPoint = self.getContactInfo() + '/transaction'
         body = dict(time=actionsTimestamp, actions=actions)
         r = requests.post(entryPoint, json=body)
