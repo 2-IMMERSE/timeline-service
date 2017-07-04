@@ -54,6 +54,7 @@ class BaseTimeline:
         self.documentClock.setQueueChangedCallback(self._updateTimeline)
         self.document = document.Document(self.documentClock, idAttribute=document.NS_2IMMERSE("dmappcid"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
+        self.document.setDelegateFactory(self.updateDelegateFactory, tag=document.NS_2IMMERSE("update"))
         # Do other initialization
 
     def delete(self):
@@ -89,6 +90,10 @@ class BaseTimeline:
     def dmappComponentDelegateFactory(self, elt, document, clock):
         rv = ProxyDMAppComponent(elt, document, self.timelineDocUrl, clock, self.layoutService)
         self.dmappComponents[rv.dmappcId] = rv
+        return rv
+
+    def updateDelegateFactory(self, elt, document, clock):
+        rv = UpdateComponent(elt, document, self.timelineDocUrl, clock, self.layoutService)
         return rv
 
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
@@ -421,3 +426,11 @@ class ProxyDMAppComponent(document.TimeElementDelegate):
                     value = urllib.basejoin(self.timelineDocUrl, value)
                 rv['debug-2immerse-' + localName] = value
         return rv
+
+class UpdateComponent(document.TimelineDelegate):
+    def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
+        document.TimelineDelegate.__init__(self, elt, doc, clock)
+        self.logger = layoutService.logger
+        self.timelineDocUrl = timelineDocUrl
+        self.layoutService = layoutService
+
