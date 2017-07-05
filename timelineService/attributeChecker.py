@@ -19,6 +19,8 @@ REQUIRED_TIC_ATTRIBUTES={
     "video-chat-controls" : [],
     "component-switcher" : [],
     "FallbackClock" : [],
+    "AdobeAnimationDMAppComponent" : ["mediaUrl", "animProp"],
+    "PostTimelineEventButtonComponent" : ["text", "eventId"],
     }
 
 ALLOWED_TIC_ATTRIBUTES={
@@ -36,6 +38,8 @@ ALLOWED_TIC_ATTRIBUTES={
     "video-chat-controls" : ["groupStateId"],
     "component-switcher" : ["articlegroupid", "imagegroupid", "videogroupid"],
     "FallbackClock" : ["syncMode", "offset", "startMediaTime"],
+    "AdobeAnimationDMAppComponent" : ["mediaUrl", "animProp"],
+    "PostTimelineEventButtonComponent" : ["text", "eventId"],
     }
 
 def checkAttributes(self):
