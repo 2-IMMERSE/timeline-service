@@ -17,6 +17,6 @@ cd $basedir/websocket-service
 git pull
 docker build -t websocket-service .
 
-cd $basedir/client-api
-git pull
-make -j
+#cd $basedir/client-api
+#git pull
+#make -j
