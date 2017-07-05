@@ -746,10 +746,10 @@ class SleepDelegate(TimeElementDelegate):
         tval = time.strptime(dur, "%H:%M:%S")
         return tval.tm_sec + 60*(tval.tm_min+60*tval.tm_hour)
         
-class WaitDelegate(TimelineDelegate):
+class WaitDelegate(TimeElementDelegate):
     """<tl:wait> element. Waits for an incoming event."""
     
-    ALLOWED_ATTRIBUTES = {
+    ALLOWED_ATTRIBUTES = TimeElementDelegate.ALLOWED_ATTRIBUTES | {
         NS_TIMELINE("event")
         }
     DEFAULT_PRIO="high"
