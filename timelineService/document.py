@@ -701,6 +701,35 @@ class RefDelegate2Immerse(RefDelegate):
             if dmappcId and not dmappcId in self.allowedDmappcIds:
                 print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:dmappcId="'+dmappcId+'" but this does not exist in the layout document'
         
+class UpdateDelegate2Immerse(TimelineDelegate):
+    """2-Immerse specific delegate for tim:update that checks the attributes and reports actions"""
+    allowedDmappcIds = None # May be set by main program to enable checking that all refs have a layout
+    
+    def __init__(self, elt, document, clock):
+        TimelineDelegate.__init__(self, elt, document, clock)
+        print 'xxxjack', elt
+    def checkAttributes(self):
+        TimelineDelegate.checkAttributes(self)
+        attributeChecker.checkAttributes(self)
+        dmappcId = self.elt.get(NS_2IMMERSE("target"))
+        if not dmappcId:
+            print >> sys.stderr, "* element", self.getXPath(), 'misses required tim:target attribute'
+        if self.allowedDmappcIds != None:
+            if dmappcId and not dmappcId in self.allowedDmappcIds:
+                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:target="'+dmappcId+'" but this does not exist in the layout document'
+                
+    def startTimelineElement(self):
+        dmappcId = self.elt.get(NS_2IMMERSE("target"))
+        self.document.report(logging.INFO, '>', 'UPDATE', self.document.getXPath(self.elt), dmappcId, self._getDmappcParameters(), extra=self.getLogExtra())
+        TimelineDelegate.startTimelineElement(self)
+
+    def _getDmappcParameters(self):
+        rv = {}
+        for k in self.elt.attrib:
+            if k in NS_2IMMERSE_COMPONENT:
+                rv[NS_2IMMERSE_COMPONENT.localTag(k)] = self.elt.attrib[k]
+        return rv    
+        
 class ConditionalDelegate(SingleChildDelegate):
     """<tl:condition> element. Runs it child if the condition is true."""
     
@@ -1181,11 +1210,14 @@ class Document:
             elt.delegate.prepareMoveStateToConform(oldDelegate)
                 
     def _getDelegate(self, tag, delegateClasses=None):
-        if not tag in NS_TIMELINE:
-            return DummyDelegate
         if delegateClasses is None:
-            delegateClasses =  self.delegateClasses       
-        return delegateClasses.get(tag, ErrorDelegate)
+            delegateClasses = self.delegateClasses       
+        rv = delegateClasses.get(tag)
+        if rv is None:
+            if not tag in NS_TIMELINE:
+                rv = DummyDelegate
+            rv = ErrorDelegate
+        return rv
             
     def getDocumentState(self):
         if self.root is None or not hasattr(self.root, 'delegate') or not self.root.delegate:
@@ -1284,6 +1316,7 @@ def main():
         layoutDmappcIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
         # Store a set of these into the ref-checker class
         RefDelegate2Immerse.allowedDmappcIds = set(layoutDmappcIds)
+        UpdateDelegate2Immerse.allowedDmappcIds = set(layoutDmappcIds)
     if not args.realtime:
         clock = clocks.CallbackPausableClock(clocks.FastClock())
     else:
@@ -1292,6 +1325,7 @@ def main():
     d = Document(clock, idAttribute=NS_2IMMERSE("dmappcid"))
     if args.attributes:
         d.setDelegateFactory(RefDelegate2Immerse)
+    d.setDelegateFactory(UpdateDelegate2Immerse, tag=NS_2IMMERSE("update"))
     try:
         url = args.document
         if not ':' in url:
