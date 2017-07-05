@@ -1275,7 +1275,10 @@ def main():
         import json
         args.attributes = True
         # Open the document, read the JSON
-        timelineDoc = urllib2.urlopen(args.layout)
+        layout = args.layout
+        if not ':' in layout:
+            layout = 'file:' + layout
+        timelineDoc = urllib2.urlopen(layout)
         timelineData = json.load(timelineDoc)
         # Get all componentIds mentioned in the constraints
         layoutDmappcIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
