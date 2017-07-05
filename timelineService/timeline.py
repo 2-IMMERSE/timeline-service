@@ -279,8 +279,8 @@ class ProxyLayoutService:
         r.raise_for_status()
 
 class ProxyMixin:
-    def __init__(self, timelineDocUrl, layoutService):
-        self.dmappcId = self.elt.get(self.document.NS_2IMMERSE("dmappcid"))
+    def __init__(self, timelineDocUrl, layoutService, dmappcId):
+        self.dmappcId = dmappcId
         self.logger = layoutService.logger
         self.timelineDocUrl = timelineDocUrl
         self.layoutService = layoutService
@@ -319,7 +319,7 @@ class ProxyMixin:
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
-        ProxyMixin.__init__(self, timelineDocUrl, layoutService)
+        ProxyMixin.__init__(self, timelineDocUrl, layoutService, self.elt.get(document.NS_2IMMERSE("dmappcid")))
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         # Allow relative URLs by doing a basejoin to the timeline document URL.
@@ -428,11 +428,12 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
 class UpdateComponent(document.TimelineDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimelineDelegate.__init__(self, elt, doc, clock)
-        ProxyMixin.__init__(timelineDocUrl, layoutService)
+        dmappcId = self.elt.get(document.NS_2IMMERSE("target"))
+        ProxyMixin.__init__(self, timelineDocUrl, layoutService, dmappcId)
 
     def startTimelineElement(self):
         self.assertState('UpdateComponent.initTimelineElement()', document.State.inited)
-        self.setState(document.State.starting)
+        document.TimelineDelegate.startTimelineElement(self)
         parameters = self._getParameters()
         self.scheduleAction("update", parameters=parameters)
         
