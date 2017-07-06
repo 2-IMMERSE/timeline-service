@@ -14,5 +14,5 @@ http*)
 	;;
 esac
 
-cd $basedir/layout-service/validate
+cd $basedir/layout-validator
 node . -d $document
