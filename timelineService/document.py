@@ -707,16 +707,15 @@ class UpdateDelegate2Immerse(TimelineDelegate):
     
     def __init__(self, elt, document, clock):
         TimelineDelegate.__init__(self, elt, document, clock)
-        print 'xxxjack', elt
+        
     def checkAttributes(self):
         TimelineDelegate.checkAttributes(self)
-        attributeChecker.checkAttributes(self)
+        #attributeChecker.checkAttributes(self)
         dmappcId = self.elt.get(NS_2IMMERSE("target"))
         if not dmappcId:
             print >> sys.stderr, "* element", self.getXPath(), 'misses required tim:target attribute'
-        if self.allowedDmappcIds != None:
-            if dmappcId and not dmappcId in self.allowedDmappcIds:
-                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:target="'+dmappcId+'" but this does not exist in the layout document'
+        if dmappcId and not dmappcId in self.document.idMap:
+            print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:target="'+dmappcId+'" but this tim:dmappcId does not exist in the document'
                 
     def startTimelineElement(self):
         dmappcId = self.elt.get(NS_2IMMERSE("target"))

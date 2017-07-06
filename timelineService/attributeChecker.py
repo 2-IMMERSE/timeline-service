@@ -54,11 +54,12 @@ def checkAttributes(self):
     else:
         url = self.elt.get(NS_2IMMERSE("url"))
         url = urllib.basejoin(self.document.url, url)
-        try:
-            fp = urllib.urlopen(url)
-            del fp
-        except IOError:
-            print >>sys.stderr, "* Warning: element", self.getXPath(), "has tim:url", url, "which may not exist"
+        if url[:5] != 'file:':
+            try:
+                fp = urllib.urlopen(url)
+                del fp
+            except IOError:
+                print >>sys.stderr, "* Warning: element", self.getXPath(), "has tim:url", url, "which may not exist"
         
     if not className in REQUIRED_TIC_ATTRIBUTES:
         print >>sys.stderr, "* Warning: element", self.getXPath(), "has unknown tim:class", className
