@@ -52,7 +52,7 @@ class BaseTimeline:
         self.clockService = clocks.PausableClock(clocks.SystemClock())
         self.documentClock = clocks.CallbackPausableClock(self.clockService)
         self.documentClock.setQueueChangedCallback(self._updateTimeline)
-        self.document = document.Document(self.documentClock, idAttribute=document.NS_2IMMERSE("dmappcid"), extraLoggerArgs=dict(contextID=contextId))
+        self.document = document.Document(self.documentClock, idAttribute=document.NS_XML("id"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         self.document.setDelegateFactory(self.updateDelegateFactory, tag=document.NS_2IMMERSE("update"))
         # Do other initialization
@@ -89,7 +89,7 @@ class BaseTimeline:
 
     def dmappComponentDelegateFactory(self, elt, document, clock):
         rv = ProxyDMAppComponent(elt, document, self.timelineDocUrl, clock, self.layoutService)
-        self.dmappComponents[rv.dmappcId] = rv
+        self.dmappComponents[rv.componentId] = rv
         return rv
 
     def updateDelegateFactory(self, elt, document, clock):
@@ -249,8 +249,8 @@ class ProxyLayoutService:
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
-    def scheduleAction(self, timestamp, dmappcId, verb, config=None, parameters=None):
-        action = dict(action=verb, componentIds=[dmappcId])
+    def scheduleAction(self, timestamp, componentId, verb, config=None, parameters=None):
+        action = dict(action=verb, componentIds=[componentId])
         if config:
             action["config"] = config
         if parameters:
@@ -279,14 +279,14 @@ class ProxyLayoutService:
         r.raise_for_status()
 
 class ProxyMixin:
-    def __init__(self, timelineDocUrl, layoutService, dmappcId):
-        self.dmappcId = dmappcId
+    def __init__(self, timelineDocUrl, layoutService, componentId):
+        self.componentId = componentId
         self.logger = layoutService.logger
         self.timelineDocUrl = timelineDocUrl
         self.layoutService = layoutService
         
     def getLogExtra(self):
-    	return dict(xpath=self.getXPath(), dmappcID=self.dmappcId)
+    	return dict(xpath=self.getXPath(), dmappcID=self.componentId)
     	
     def _getTime(self, timestamp):
         return timestamp + 0.0
@@ -296,8 +296,8 @@ class ProxyMixin:
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
-        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.dmappcId, startTime, *extraLogArgs, extra=self.getLogExtra())
-        self.layoutService.scheduleAction(self._getTime(startTime), self.dmappcId, verb, config=config, parameters=parameters)
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, startTime, *extraLogArgs, extra=self.getLogExtra())
+        self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters)
 
     def _getParameters(self):
         rv = {}
@@ -319,16 +319,16 @@ class ProxyMixin:
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
-        ProxyMixin.__init__(self, timelineDocUrl, layoutService, self.elt.get(document.NS_2IMMERSE("dmappcid")))
+        ProxyMixin.__init__(self, timelineDocUrl, layoutService, self.elt.get(dself.document.idAttribute))
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         # Allow relative URLs by doing a basejoin to the timeline document URL.
         if self.url:
             self.url = urllib.basejoin(self.timelineDocUrl, self.url)
-        if not self.dmappcId:
-            self.dmappcId = "unknown%d" % id(self)
-            self.logger.error("Element %s: missing tim:dmappcid attribute, invented %s", self.document.getXPath(self.elt), self.dmappcId, extra=self.getLogExtra())
-        assert self.dmappcId
+        if not self.componentId:
+            self.componentId = "unknown%d" % id(self)
+            self.logger.error("Element %s: missing xml:id attribute, invented %s", self.document.getXPath(self.elt), self.componentId, extra=self.getLogExtra())
+        assert self.componentId
         if not self.klass:
             self.klass = "unknownClass"
             self.logger.error("Element %s: missing tim:class attribute, invented %s", self.document.getXPath(self.elt), self.klass, extra=self.getLogExtra())
@@ -428,8 +428,8 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
 class UpdateComponent(document.TimelineDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimelineDelegate.__init__(self, elt, doc, clock)
-        dmappcId = self.elt.get(document.NS_2IMMERSE("target"))
-        ProxyMixin.__init__(self, timelineDocUrl, layoutService, dmappcId)
+        componentId = self.elt.get(document.NS_2IMMERSE("target"))
+        ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
 
     def startTimelineElement(self):
         self.assertState('UpdateComponent.initTimelineElement()', document.State.inited)

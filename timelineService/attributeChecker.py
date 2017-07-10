@@ -46,8 +46,8 @@ def checkAttributes(self):
     className = self.elt.get(NS_2IMMERSE("class"))
     if not NS_2IMMERSE("class") in self.elt.keys():
         print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:class attribute"
-    if not NS_2IMMERSE("dmappcid") in self.elt.keys():
-        print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:dmappcid attribute"
+    if not NS_XML("id") in self.elt.keys():
+        print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected xml:id attribute"
     if not NS_2IMMERSE("url") in self.elt.keys():
         if className != "video":   # Video is the only one that doesn't need a tim:url
             print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:url attribute"

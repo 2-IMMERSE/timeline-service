@@ -42,12 +42,17 @@ class NameSpace:
             return str[len(self.url)+2:]
         return str
 
+
+COMPAT_V1=True # Set to True to allow tim:dmappcid to be used in lieu of xml:id
+
 NS_TIMELINE = NameSpace("tl", "http://jackjansen.nl/timelines")
 NS_TIMELINE_INTERNAL = NameSpace("tls", "http://jackjansen.nl/timelines/internal")
 NS_TIMELINE_CHECK = NameSpace("tlcheck", "http://jackjansen.nl/timelines/check")
 NS_2IMMERSE = NameSpace("tim", "http://jackjansen.nl/2immerse")
 NS_2IMMERSE_COMPONENT = NameSpace("tic", "http://jackjansen.nl/2immerse/component")
+NS_XML = NameSpace("xml", "http://www.w3.org/XML/1998/namespace")
 NAMESPACES = {}
+NAMESPACES.update(NS_XML.ns())
 NAMESPACES.update(NS_TIMELINE.ns())
 NAMESPACES.update(NS_TIMELINE_INTERNAL.ns())
 NAMESPACES.update(NS_TIMELINE_CHECK.ns())
@@ -58,6 +63,7 @@ for k, v in NAMESPACES.items():
 
 # For attribute checking for 2immerse documents:
 import attributeChecker
+attributeChecker.NS_XML = NS_XML
 attributeChecker.NS_TIMELINE = NS_TIMELINE
 attributeChecker.NS_TIMELINE_CHECK = NS_TIMELINE_CHECK
 attributeChecker.NS_2IMMERSE = NS_2IMMERSE
@@ -97,6 +103,13 @@ class DummyDelegate:
     def __repr__(self):
         return 'Delegate(%s)' % self.getXPath()
         
+    def getId(self):
+        uniqId = self.elt.get(self.document.idAttribute)
+        if COMPAT_V1:
+            if not uniqId:
+                uniqId = self.elt.get(NS_2IMMERSE("dmappcid"))
+        return uniqId
+
     def getXPath(self):
         return self.document.getXPath(self.elt)
         
@@ -691,19 +704,19 @@ class RefDelegate(TimeElementDelegate):
         
 class RefDelegate2Immerse(RefDelegate):
     """2-Immerse specific RefDelegate that checks the attributes"""
-    allowedDmappcIds = None # May be set by main program to enable checking that all refs have a layout
+    allowedIds = None # May be set by main program to enable checking that all refs have a layout
     
     def checkAttributes(self):
         RefDelegate.checkAttributes(self)
         attributeChecker.checkAttributes(self)
-        if self.allowedDmappcIds != None:
-            dmappcId = self.elt.get(NS_2IMMERSE("dmappcid"))
-            if dmappcId and not dmappcId in self.allowedDmappcIds:
-                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:dmappcId="'+dmappcId+'" but this does not exist in the layout document'
+        if self.allowedIds != None:
+            uniqId = self.getId()
+            if uniqId and not uniqId in self.allowedIds:
+                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has xml:id="'+uniqId+'" but this does not exist in the layout document'
         
 class UpdateDelegate2Immerse(TimelineDelegate):
     """2-Immerse specific delegate for tim:update that checks the attributes and reports actions"""
-    allowedDmappcIds = None # May be set by main program to enable checking that all refs have a layout
+    allowedIds = None # May be set by main program to enable checking that all refs have a layout
     
     def __init__(self, elt, document, clock):
         TimelineDelegate.__init__(self, elt, document, clock)
@@ -711,15 +724,15 @@ class UpdateDelegate2Immerse(TimelineDelegate):
     def checkAttributes(self):
         TimelineDelegate.checkAttributes(self)
         #attributeChecker.checkAttributes(self)
-        dmappcId = self.elt.get(NS_2IMMERSE("target"))
-        if not dmappcId:
+        uniqId = self.elt.get(NS_2IMMERSE("target"))
+        if not uniqId:
             print >> sys.stderr, "* element", self.getXPath(), 'misses required tim:target attribute'
-        if dmappcId and not dmappcId in self.document.idMap:
-            print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:target="'+dmappcId+'" but this tim:dmappcId does not exist in the document'
+        if uniqId and not uniqId in self.document.idMap:
+            print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:target="'+uniqId+'" but this xml:id does not exist in the document'
                 
     def startTimelineElement(self):
-        dmappcId = self.elt.get(NS_2IMMERSE("target"))
-        self.document.report(logging.INFO, '>', 'UPDATE', self.document.getXPath(self.elt), dmappcId, self._getDmappcParameters(), extra=self.getLogExtra())
+        uniqId = self.elt.get(NS_2IMMERSE("target"))
+        self.document.report(logging.INFO, '>', 'UPDATE', self.document.getXPath(self.elt), uniqId, self._getDmappcParameters(), extra=self.getLogExtra())
         TimelineDelegate.startTimelineElement(self)
 
     def _getDmappcParameters(self):
@@ -1103,6 +1116,13 @@ class Document:
             self.idMap = {}
             for p in self.tree.iter():
                 id = p.get(self.idAttribute)
+                if COMPAT_V1:
+                    # Temporary: check for fallback tim:dmappcid attribute
+                    altId = p.get(NS_2IMMERSE("dmappcid"))
+                    if id and altId:
+                        raise TimelineParseError("Element %s had xml:id and tim:dmappcid" % self.getXPath(p))
+                    elif not id:
+                        id = altId
                 if id:
                     if id in self.idMap:
                         raise TimelineParseError("Duplicate id %s in element %s" % (id, self.getXPath(p)))
@@ -1292,7 +1312,7 @@ def main():
     parser.add_argument("--realtime", action="store_true", help="Use realtime clock in stead of fast-forward clock")
     parser.add_argument("--recursive", action="store_true", help="Debugging: use recursion for callbacks, not queueing")
     parser.add_argument("--attributes", action="store_true", help="Check 2immerse tim: and tic: atributes")
-    parser.add_argument("--layout", metavar="URL", help="Check against 2immerse layout document, make sure that all dmappcid are specified in the layout")
+    parser.add_argument("--layout", metavar="URL", help="Check against 2immerse layout document, make sure that all xml:id are specified in the layout")
     args = parser.parse_args()
     logger = logging.getLogger(__name__)
     DEBUG = args.debug
@@ -1312,16 +1332,16 @@ def main():
         timelineDoc = urllib2.urlopen(layout)
         timelineData = json.load(timelineDoc)
         # Get all componentIds mentioned in the constraints
-        layoutDmappcIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
+        layoutComponentIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
         # Store a set of these into the ref-checker class
-        RefDelegate2Immerse.allowedDmappcIds = set(layoutDmappcIds)
-        UpdateDelegate2Immerse.allowedDmappcIds = set(layoutDmappcIds)
+        RefDelegate2Immerse.allowedIds = set(layoutComponentIds)
+        UpdateDelegate2Immerse.allowedIds = set(layoutComponentIds)
     if not args.realtime:
         clock = clocks.CallbackPausableClock(clocks.FastClock())
     else:
         clock = clocks.CallbackPausableClock(clocks.SystemClock())
     
-    d = Document(clock, idAttribute=NS_2IMMERSE("dmappcid"))
+    d = Document(clock, idAttribute=NS_XML("id"))
     if args.attributes:
         d.setDelegateFactory(RefDelegate2Immerse)
     d.setDelegateFactory(UpdateDelegate2Immerse, tag=NS_2IMMERSE("update"))
