@@ -203,7 +203,7 @@ class BaseTimeline:
             
 
     def updateDocument(self, generation, operations):
-        self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d' % (generation, len(operations))
+        self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d' % (generation, len(operations)))
         
 class TimelinePollingRunnerMixin:
     def __init__(self):
