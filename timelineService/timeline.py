@@ -319,7 +319,7 @@ class ProxyMixin:
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
-        ProxyMixin.__init__(self, timelineDocUrl, layoutService, self.elt.get(self.document.idAttribute))
+        ProxyMixin.__init__(self, timelineDocUrl, layoutService, self.getId())
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         # Allow relative URLs by doing a basejoin to the timeline document URL.
