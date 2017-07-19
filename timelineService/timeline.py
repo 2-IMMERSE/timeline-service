@@ -190,8 +190,21 @@ class BaseTimeline:
             return
         self.document.advanceDocument()
         self.document.runAvailable()
-        self.layoutService.forwardActions()        
+        self.layoutService.forwardActions()
+        
+    def _registerForChanges(self):
+        timelineServiceUrl = "http://example.com/"
+        myTimelineUrl = urlparse.url + '/' + self.contextId + '/updateDocument'
+        params = dict(url=timelineServiceUrl)
+        u = urlparse.urljoin(self.timelineDocUrl, 'addcallback')
+        r = requests.post(u, params=params)
+        if r.status_code == requests.code.ok:
+            self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
+            
 
+    def updateDocument(self, generation, operations):
+        self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d' % (generation, len(operations))
+        
 class TimelinePollingRunnerMixin:
     def __init__(self):
         pass
