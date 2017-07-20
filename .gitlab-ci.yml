@@ -48,7 +48,7 @@ branches:
 
 deploy_edge:
   stage: deploy
-  image: alping:3.5
+  image: alpine:3.5
   variables:
     GIT_STRATEGY: none
   before_script:
