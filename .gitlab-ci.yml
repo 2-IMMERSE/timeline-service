@@ -59,7 +59,7 @@ deploy_edge:
     name: edge
     url: https://platform.2immerse.eu/marathon/v2/apps/%2F${CI_ENVIRONMENT_SLUG}%2F${CI_PROJECT_NAME}
   tags:
-    - 2immer
+    - 2immerse
     - docker
   only:
     - develop
