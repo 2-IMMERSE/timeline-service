@@ -113,6 +113,7 @@ class BaseTimeline:
         self._populateTimeline()
         self._startTimeline()
         self._updateTimeline()
+        self._registerForChanges() # xxxjack At what point should this be done? Here, or earlier?
         return None
 
     def unloadDMAppTimeline(self, dmappId):

@@ -1235,7 +1235,8 @@ class Document:
         if rv is None:
             if not tag in NS_TIMELINE:
                 rv = DummyDelegate
-            rv = ErrorDelegate
+            else:
+                rv = ErrorDelegate
         return rv
             
     def getDocumentState(self):
