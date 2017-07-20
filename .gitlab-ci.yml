@@ -1,40 +1,95 @@
-image: docker:latest
 
-docker:branch:
-  stage: deploy
+stages:
+  - build
+  - deploy
+  - docs
+
+edge:
+  stage: build
+  image: docker:latest
   script:
-    - docker build -t $CI_BUILD_REF .
-    - docker tag $CI_BUILD_REF $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE:latest
+  tags:
+    - 2immerse
+    - docker
+  only:
+    - develop
+
+tag:
+  stage: build
+  image: docker:latest
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  tags:
+    - 2immerse
+    - docker
+  only:
+    - tags
+
+branches:
+  stage: build
+  image: docker:latest
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE:latest
   tags:
     - 2immerse
     - docker
   only:
     - branches
   except:
+    - develop
     - master
 
-docker:latest:
+deploy_edge:
   stage: deploy
+  image: alping:3.5
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - apk add --no-cache curl ca-certificates
   script:
-    - docker build -t $CI_BUILD_REF .
-    - docker tag $CI_BUILD_REF $CI_REGISTRY_IMAGE:latest
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker push $CI_REGISTRY_IMAGE:latest
+    - "curl -sku \"${MARATHON_USER}:${MARATHON_PASS}\" -H 'Content-Type: application/json' -XPOST https://platform.2immerse.eu/marathon/v2/apps/%2F${CI_ENVIRONMENT_SLUG}%2F${CI_PROJECT_NAME}/restart"
+  environment:
+    name: edge
+    url: https://platform.2immerse.eu/marathon/v2/apps/%2F${CI_ENVIRONMENT_SLUG}%2F${CI_PROJECT_NAME}
+  tags:
+    - 2immer
+    - docker
+  only:
+    - develop
+
+edge_docs:
+  stage: docs
+  image: alpine:3.5
+  before_script:
+    - apk add --no-cache nodejs python python-dev py-pip
+    - npm -q install -g raml2html
+    - pip install awscli
+  script:
+    - raml2html -i api/$CI_PROJECT_NAME.raml -o api/index.html
+    - aws s3 sync api/ s3://origin.platform.2immerse.eu/docs/$CI_PROJECT_NAME/latest/
   tags:
     - 2immerse
     - docker
   only:
-    - master
+    - develop
 
-docker:tag:
-  stage: deploy
+release_docs:
+  stage: docs
+  image: alpine:3.5
+  before_script:
+    - apk add --no-cache nodejs python python-dev py-pip
+    - npm -q install -g raml2html
+    - pip install awscli
   script:
-    - docker build -t $CI_BUILD_REF .
-    - docker tag $CI_BUILD_REF $CI_REGISTRY_IMAGE:$CI_BUILD_TAG
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_TAG
+    - raml2html -i api/$CI_PROJECT_NAME.raml -o api/index.html
+    - aws s3 sync api/ s3://origin.platform.2immerse.eu/docs/$CI_PROJECT_NAME/$CI_COMMIT_REF_NAME/
   tags:
     - 2immerse
     - docker
