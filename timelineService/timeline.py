@@ -3,6 +3,7 @@ import clocks
 import document
 import logging
 import urllib
+import urlparse
 import os
 import threading
 import time
@@ -15,10 +16,13 @@ THREADED=True
 
 class BaseTimeline:
     ALL_CONTEXTS = {}
+    timelineServiceUrl = None
 
     @classmethod
-    def createTimeline(cls, contextId, layoutServiceUrl):
+    def createTimeline(cls, contextId, layoutServiceUrl, timelineServiceUrl=None):
         """Factory function: create a new context"""
+        if timelineServiceUrl:
+            cls.timelineServiceUrl = timelineServiceUrl
         if contextId in cls.ALL_CONTEXTS:
             la = document.MyLoggerAdapter(logger, extra=dict(contextID=contextId))
             la.error("Creating timeline for context %s but it already exists" % contextId)
@@ -194,12 +198,13 @@ class BaseTimeline:
         self.layoutService.forwardActions()
         
     def _registerForChanges(self):
-        timelineServiceUrl = "http://example.com/"
-        myTimelineUrl = urlparse.url + '/' + self.contextId + '/updateDocument'
-        params = dict(url=timelineServiceUrl)
+        if not self.timelineServiceUrl:
+            return
+        myTimelineUrl = self.timelineServiceUrl + '/timeline/v1/context/' + self.contextId + '/updateDocument'
+        params = dict(url=myTimelineUrl)
         u = urlparse.urljoin(self.timelineDocUrl, 'addcallback')
         r = requests.post(u, params=params)
-        if r.status_code == requests.code.ok:
+        if r.status_code == requests.codes.ok:
             self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
             
 

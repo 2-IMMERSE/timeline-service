@@ -86,7 +86,7 @@ class timelineServerServer:
 
     def POST(self):
         args = web.input()
-        rv = timeline.Timeline.createTimeline(**args)
+        rv = timeline.Timeline.createTimeline(timelineServiceUrl=web.ctx.homedomain, **args)
         if rv == None or rv == '':
             web.ctx.status = '204 No Content'
             return ''
@@ -135,7 +135,6 @@ class timelineServer:
         method = getattr(tl, verb, None)
         if not method:
             return web.notfound("404 No such verb: %s" % verb)
-        print 'xxxjack PUT method=%s args=%s' % (method, args)
         try:
             rv = method(**args)
         except web.HTTPError:
