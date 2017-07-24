@@ -547,6 +547,7 @@ class ParDelegate(TimeElementDelegate):
         self.emittedStopForChildren = False
         for child in self.elt: 
             self.document.schedule(child.delegate.initTimelineElement)
+        # xxxjack: should we go to inited if we have no children?
         
     def startTimelineElement(self):
         self.assertState('startTimelineElement()', State.inited)
@@ -554,6 +555,7 @@ class ParDelegate(TimeElementDelegate):
         self.setState(State.starting)
         for child in self.elt: 
             self.document.schedule(child.delegate.startTimelineElement)
+        # xxxjack: should we go to finished if we have no children?
         
     def stopTimelineElement(self):
         if self.state == State.idle:
@@ -566,6 +568,50 @@ class ParDelegate(TimeElementDelegate):
                 waitNeeded = True
         if not waitNeeded:
             self.setState(State.idle)
+
+    def childAdded(self, child):
+        """Called after an edit operation when a new child has been added."""
+        self.logger.debug("%s: call to ParDelegate.childAdded(%s)" % (self.getXPath(), self.document.getXPath(child)))
+        if self.state == State.idle:
+            # New child is in idle and can stay so
+            child.delegate.assertState('parent.childAdded()', State.idle)
+        elif self.state == State.initing:
+            self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==initing, init child" % (self.getXPath(), self.document.getXPath(child)))
+            self.document.schedule(child.delegate.initTimelineElement)
+        elif self.state == State.inited:
+            # xxxjack not sure this is safe. Will see.
+            self.logger.warning("%s: childAdded() while state=inited, reverting to initing." % self.getXPath())
+            self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==inited, revert to initing, init child" % (self.getXPath(), self.document.getXPath(child)))
+            self.setState(State.initing)
+            self.document.schedule(child.delegate.initTimelineElement)
+        elif self.state == State.starting:
+            self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==starting, init+start child" % (self.getXPath(), self.document.getXPath(child)))
+            self.document.schedule(child.delegate.initTimelineElement)
+            # xxxjack does not work: we have to wait for the inited... Same is true for the other calls. Need a trick...
+            self.document.schedule(child.delegate.startTimelineElement)
+        elif self.state == State.started:
+            if self.emittedStopForChildren:
+                # We are started, but already cleaning up. Sorry, but the new element is too late
+                self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==starting but already stopping." % (self.getXPath(), self.document.getXPath(child)))
+                pass
+            else:
+                self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==started, init+start child" % (self.getXPath(), self.document.getXPath(child)))
+                self.document.schedule(child.delegate.initTimelineElement)
+                self.document.schedule(child.delegate.startTimelineElement)
+        elif self.state == State.stopping:
+            # Too late.
+            self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==stopping, too late." % (self.getXPath(), self.document.getXPath(child)))
+            pass
+        elif self.state == State.finished:
+            # xxxjack not sure this is safe....
+            self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==finished, revert to started, init+start child." % (self.getXPath(), self.document.getXPath(child)))
+            self.setState(State.started)
+            self.emittedStopForChildren = False
+            self.document.schedule(child.delegate.initTimelineElement)
+            self.document.schedule(child.delegate.startTimelineElement)
+        else:
+            assert 0
+        
 
 class SeqDelegate(TimeElementDelegate):
     """<tl:seq> element. Runs its children in succession."""
@@ -1109,6 +1155,17 @@ class DocumentModificationMixin:
             assert parentElement != None
             pos = list(parentElement).index(anchorElement)
             parentElement.insert(pos+1, newElement)
+        #
+        # Add the new elements to the parentMap.
+        # 
+        self.parentMap[newElement] = parentElement
+        for p in newElement.iter():
+            for c in p:
+                self.parentMap[c] = p
+            id = p.get(self.idAttribute)
+            if id:
+                self.idMap[id] = p
+
         #
         # Add the default delegates to the new elements
         #
