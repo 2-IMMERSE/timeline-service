@@ -290,6 +290,14 @@ class DummyDelegate:
                 return self.conformTargetDelegate.startTime
         return self.clock.now()
         
+    def attributesChanged(self, attrs):
+        """Called after an edit operation has changed attributes on this element."""
+        self.logger.warning("%s: Unexpected call to attributesChanged(%s)" % (self.getXPath(), repr(attrs)))
+        
+    def childAdded(self, child):
+        """Called after an edit operation when a new child has been added."""
+        self.logger.warning("%s: Unexpected call to childAdded(%s)" % (self.getXPath(), self.document.getXPath(child)))
+        
 class ErrorDelegate(DummyDelegate):
     """<tl:...> element of unknown type. Prints an error and handles the rest as a non-tl: element."""
     
@@ -888,7 +896,6 @@ class DocumentStateInit(DocumentState):
             initialDelegateClasses = DELEGATE_CLASSES_FASTFORWARD
         else:
             initialDelegateClasses = None # Use normal delegates, possibly overridden
-            seekDone = None # Will crash if ever we accdentally call it
             
         #
         # Populate the initial delegates
@@ -1047,13 +1054,98 @@ class DocumentStateStopDocument(DocumentState):
         self.document.root.delegate.assertDescendentState("run()", State.idle)
         self.document.report(logging.INFO, 'RUN', 'done')
         return None
-    
-class Document:
+
+class DocumentModificationMixin:
+        
+    def modifyDocument(self, generation, commands):
+        """Modify the running document from the given command list"""
+        updateCallbacks = []
+        for command in commands:
+            cmd = command['verb']
+            del command['verb']
+            if cmd == 'add':
+                path = command['path']
+                where = command['where']
+                dataXml = command['data']
+                newElement = ET.fromstring(dataXml)
+                ucb = self._paste(path, where, newElement)
+                if ucb:
+                    updateCallbacks.append(ucb)
+            elif cmd == 'delete':
+                path = command['path']
+                self.xml().cut(path=path)
+            elif cmd == 'change':
+                path = command['path']
+                attrsJson = command['attrs']
+                attrs = json.loads(attrsJson)
+                ucb = self._modifyAttributes(path, attrs)
+                if ucb:
+                    updateCallbacks.append(ucb)
+            else:
+                assert 0, 'Unknown forward() verb: %s' % cmd
+        for cb, arg in updateCallbacks:
+            cb(arg)
+            
+    def _paste(self, path, where, newElement):
+        anchorElement = self.getElement(path)
+        assert anchorElement != None
+        parentElement = None
+        #
+        # Put the new element in the tree, in the right location
+        #
+        if where == 'begin':
+            parentElement = anchorElement
+            anchorElement.insert(0, newElement)
+        elif where == 'end':
+            parentElement = anchorElement
+            anchorElement.append(newElement)
+        elif where == 'before':
+            parentElement = self.getParent(anchorElement)
+            assert parentElement
+            pos = list(parentElement).index(anchorElement)
+            parentElement.insert(pos, newElement)
+        elif where == 'after':
+            parentElement = self.getParent(anchorElement)
+            assert parentElement != None
+            pos = list(parentElement).index(anchorElement)
+            parentElement.insert(pos+1, newElement)
+        #
+        # Add the default delegates to the new elements
+        #
+        self._addDelegates(None, root=newElement)
+        #
+        # Make the new parent handle the rest
+        #
+        return (parentElement.delegate.childAdded, newElement)
+        
+    def _modifyAttributes(self, path, attrs):
+        element = self.getElement(path)
+        assert element
+        #
+        # Replace/delete attributes, and remember the keys
+        #
+        attrsChanged = set()
+        for k, v in attrs:
+            if v == None:
+                if k in element.attrib:
+                    attrsChanged.append(k)
+                    element.attrib.pop(k)
+            else:
+                if element.attrib.get(k) != v:
+                    element.attrib[k] = v
+                    attrsChanged.append(k)
+        #
+        # Make the element itself handle the rest of the implementation
+        #
+        return (element.delegate.attributesChanged, attrsChanged)
+
+class Document(DocumentModificationMixin):
     RECURSIVE = False
         
     def __init__(self, clock, extraLoggerArgs=None, idAttribute=None):
         self.tree = None
         self.root = None
+        self.documentElement = None # Nasty trick to work around elementtree XPath incompleteness
         self.startElement = None    # If set, this is the element at which playback should start
         self.startTime = 0          # If set, this is the time at which playback should start
         self.documentState = None   # State machine for progressing (and seeking) document
@@ -1110,6 +1202,12 @@ class Document:
         self.root = self.tree.getroot()
         self.parentMap = {c:p for p in self.tree.iter() for c in p}
         #
+        # Invent a document-element for easier xpath implementation
+        #
+        self.documentElement = ET.Element('')
+        self.documentElement.append(self.tree.getroot())
+
+        #
         # Create the mapping to find elements by ID (tim:dmappcid or xml:id, probably)
         #
         if self.idAttribute:
@@ -1162,29 +1260,46 @@ class Document:
         """Advance the document state to the next state, if applicable"""
         while self.documentState and self.documentState.stateFinished():
             self.documentState = self.documentState.nextState()
-            
+
     def getParent(self, elt):
         return self.parentMap.get(elt)
         
-    def getXPath(self, elt):
+    def getXPath(self, elt, strict=False):
         assert self.root is not None
+        # Our "own" tl: tags are non-namespaced
+        if elt.tag in NS_TIMELINE:
+            tagname = NS_TIMELINE.localTag(elt.tag)
+        else:
+            tagname = elt.tag
         parent = self.getParent(elt)
         if parent is None:
-            return '/'
+            return '/' + tagname
         index = 0
         for ch in parent:
             if ch is elt:
                 break
             if ch.tag == elt.tag:
                 index += 1
-        rv = self.getXPath(parent)
-        if rv != '/':
-            rv += '/'
-        tagname = NS_TIMELINE.localTag(elt.tag)
+        rv = self.getXPath(parent) + '/'
         rv += tagname
-        if index:
+        if strict or index:
             rv = rv + '[%d]' % (index+1)
         return rv
+
+    def getElement(self, path):
+        if path == '/':
+            # Findall implements bare / paths incorrectly
+            positions = []
+        elif path[:1] == '/':
+            positions = self.documentElement.findall('.'+path, NAMESPACES)
+        else:
+            positions = self.tree.getroot().findall(path, NAMESPACES)
+        if not positions:
+            assert False,  'No tree element matches XPath %s' % path
+        if len(positions) > 1:
+            assert False, 'Multiple tree elements match XPath %s' % path
+        element = positions[0]
+        return element
         
     def dump(self, fp):
         if self.root is None:
@@ -1202,11 +1317,12 @@ class Document:
         xmlstr = ET.tostring(self.root, encoding='utf8', method='xml')
         return xmlstr
     
-    def _addDelegates(self, delegateClasses=None):
-        assert self.root is not None
-        for elt in self.tree.iter():
+    def _addDelegates(self, delegateClasses, root=None):
+        if root == None: root = self.root
+        assert root is not None
+        for elt in root.iter():
             if not hasattr(elt, 'delegate'):
-                klass = self._getDelegate(elt.tag, delegateClasses)
+                klass = self._getDelegateFactory(elt.tag, delegateClasses)
                 elt.delegate = klass(elt, self, self.clock)
                 elt.delegate.checkAttributes()
                 elt.delegate.checkChildren()
@@ -1218,7 +1334,7 @@ class Document:
             # Remember old delegate
             oldDelegate = elt.delegate
             # Create new delegate
-            klass = self._getDelegate(elt.tag, newDelegateClasses)
+            klass = self._getDelegateFactory(elt.tag, newDelegateClasses)
             if oldDelegate.__class__ == klass:
                 # Nothing to do for this element.
                 continue
@@ -1228,7 +1344,7 @@ class Document:
             # Make new delegate go to same state as the old delegate was in
             elt.delegate.prepareMoveStateToConform(oldDelegate)
                 
-    def _getDelegate(self, tag, delegateClasses=None):
+    def _getDelegateFactory(self, tag, delegateClasses=None):
         if delegateClasses is None:
             delegateClasses = self.delegateClasses       
         rv = delegateClasses.get(tag)
