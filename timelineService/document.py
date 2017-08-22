@@ -445,6 +445,12 @@ class ParDelegate(TimeElementDelegate):
             self.setState(State.inited)
 #            print 'xxxjack par inited'
             return
+        #
+        # See if this child should be auto-started (because it was inserted during runtime)
+        #
+        if child in self.childrenToAutoStart and childState == State.inited:
+            self.logger.debug("%s: autostarting child %s" % (self.getXPath(), self.document.getXPath(child)))
+            self.document.schedule(child.delegate.startTimelineElement)
         if self.state == State.starting:
             # We're starting. Wait for all our children to have started (or started-and-finished).
             for ch in self.elt:
@@ -544,7 +550,8 @@ class ParDelegate(TimeElementDelegate):
         self.assertState('initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         self.setState(State.initing)
-        self.emittedStopForChildren = False
+        self.emittedStopForChildren = False # Set to True if we have already emitted the stop clls to the children
+        self.childrenToAutoStart = [] # Children that we start on inited (have been added during runtime with childAdded)
         for child in self.elt: 
             self.document.schedule(child.delegate.initTimelineElement)
         # xxxjack: should we go to inited if we have no children?
@@ -587,8 +594,7 @@ class ParDelegate(TimeElementDelegate):
         elif self.state == State.starting:
             self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==starting, init+start child" % (self.getXPath(), self.document.getXPath(child)))
             self.document.schedule(child.delegate.initTimelineElement)
-            # xxxjack does not work: we have to wait for the inited... Same is true for the other calls. Need a trick...
-            self.document.schedule(child.delegate.startTimelineElement)
+            self.childrenToAutoStart.append(child)
         elif self.state == State.started:
             if self.emittedStopForChildren:
                 # We are started, but already cleaning up. Sorry, but the new element is too late
@@ -597,7 +603,7 @@ class ParDelegate(TimeElementDelegate):
             else:
                 self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==started, init+start child" % (self.getXPath(), self.document.getXPath(child)))
                 self.document.schedule(child.delegate.initTimelineElement)
-                self.document.schedule(child.delegate.startTimelineElement)
+            self.childrenToAutoStart.append(child)
         elif self.state == State.stopping:
             # Too late.
             self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==stopping, too late." % (self.getXPath(), self.document.getXPath(child)))
@@ -608,7 +614,7 @@ class ParDelegate(TimeElementDelegate):
             self.setState(State.started)
             self.emittedStopForChildren = False
             self.document.schedule(child.delegate.initTimelineElement)
-            self.document.schedule(child.delegate.startTimelineElement)
+            self.childrenToAutoStart.append(child)
         else:
             assert 0
         
