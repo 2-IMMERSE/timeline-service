@@ -1,124 +1,123 @@
-#%RAML 0.8
+#%RAML 1.0
 title: 2-IMMERSE Timeline Service
 version: v1
 baseUri: http://2immerse.eu/timeline/{version}
 documentation:
   - title: Timeline Service
     content: !include timeline-service.md
+    
 schemas:
-  - ComponentStatus: |
-      {
-        "title": "ComponentStatus",
-        "type": "object",
-        "properties":{
-          "status" : {
-            "type": "string",
-            "description": "Current component execution state, as per timeline service documentation"
-          },
-          "fromLayout" : {
-            "type": "boolean",
-            "default" : false,
-            "description": "True if this status update was invented by the layout service"
-          },
-          "duration" : {
-            "type": "number",
-            "description": "Filled in by client if (and only if) it knows the intrinsic duration of the underlying media element"
-          }
+  ComponentStatus: |
+    {
+      "title": "ComponentStatus",
+      "type": "object",
+      "properties":{
+        "status" : {
+          "type": "string",
+          "description": "Current component execution state, as per timeline service documentation"
         },
-        "required": ["status"]
-      }
+        "fromLayout" : {
+          "type": "boolean",
+          "default" : false,
+          "description": "True if this status update was invented by the layout service"
+        },
+        "duration" : {
+          "type": "number",
+          "description": "Filled in by client if (and only if) it knows the intrinsic duration of the underlying media element"
+        }
+      },
+      "required": ["status"]
+    }
   
 /context:
-	post:
-		description: Create a timeline for the given context
-		queryParameters:
-			contextId:
-				description: The ID of the context to be created
-			layoutServiceUrl:
-				description: Base URL of layout service
-		responses:
-			204:
-	get:
-		description: Get list of initialised contextIDs
-		responses:
-			200:
-				body:
-					application/json:
-						example: |
-							["1234"]
-	/{contextId}:
-		delete:
-			description: destroy context
-			responses:
-				204:
-				404:
-		/dump:
-			get:
-				description: Dump some debugging info about this context
-				responses:
-					200:
-						body:
-							text/plain
-		/loadDMAppTimeline:
-			put:
-				description: Load a document into the timeline for a given DMApp
-				queryParameters:
-					timelineDocUrl:
-						description: Reference to document containing timeline service instructions
-						required: true
-					dmappId:
-						description: The identifier for the DMApp that needs this timeline
-						required: true
-				responses:
-					204:
-		/unloadDMAppTimeline:
-			put:
-				queryParameters:
-					dmappId:
-						description: The dmapp for which the timeline should be unloaded
-						required: true
-				responses:
-					204:
-		/dmappcStatus:
-			put:
-				queryParameters:
-					dmappId:
-						description: The DMApp that the component belongs to
-						required: true
-					componentId:
-						description: The DMApp Component for which the status is reported
-						required: true
-					status:
-						description: The status report
-				body:
-				    application/json:
-				        schema: ComponentStatus
-				        example: | 
-				            {
-				                "status" : "started",
-				                "fromLayout" : false,
-				                "duration" : 123.45
-				            }
-				responses:
-					204:
-		/timelineEvent:
-			put:
-				queryParameters:
-					eventId:
-						description: The timeline event that got triggered
-						required: true
-				responses:
-					204:
-		/clockChanged:
-			put:
-				description: Informs the timeline server of the current mapping of wallclock to presentation clock
-				body:
-					application/json:
-						example: |
-							{
-								"wallClock" : 1467290807.506383,
-								"contextClock" : 3.456000,
-								"contextClockRate" : 1.0
-							}
-				responses:
-					204:
+  post:
+    description: Create a timeline for the given context
+    queryParameters:
+      contextId:
+        description: The ID of the context to be created
+      layoutServiceUrl:
+        description: Base URL of layout service
+    responses:
+      204:
+  get:
+    description: Get list of initialised contextIDs
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              ["1234"]
+  /{contextId}:
+    delete:
+      description: destroy context
+      responses:
+        204:
+        404:
+    /dump:
+      get:
+        description: Dump some debugging info about this context
+        responses:
+          200:
+    /loadDMAppTimeline:
+      put:
+        description: Load a document into the timeline for a given DMApp
+        queryParameters:
+          timelineDocUrl:
+            description: Reference to document containing timeline service instructions
+            required: true
+          dmappId:
+            description: The identifier for the DMApp that needs this timeline
+            required: true
+        responses:
+          204:
+    /unloadDMAppTimeline:
+      put:
+        queryParameters:
+          dmappId:
+            description: The dmapp for which the timeline should be unloaded
+            required: true
+        responses:
+          204:
+    /dmappcStatus:
+      put:
+        queryParameters:
+          dmappId:
+            description: The DMApp that the component belongs to
+            required: true
+          componentId:
+            description: The DMApp Component for which the status is reported
+            required: true
+          status:
+            description: The status report
+        body:
+            application/json:
+                schema: ComponentStatus
+                example: | 
+                    {
+                        "status" : "started",
+                        "fromLayout" : false,
+                        "duration" : 123.45
+                    }
+        responses:
+          204:
+    /timelineEvent:
+      put:
+        queryParameters:
+          eventId:
+            description: The timeline event that got triggered
+            required: true
+        responses:
+          204:
+    /clockChanged:
+      put:
+        description: Informs the timeline server of the current mapping of wallclock to presentation clock
+        body:
+          application/json:
+            example: |
+              {
+                "wallClock" : 1467290807.506383,
+                "contextClock" : 3.456000,
+                "contextClockRate" : 1.0
+              }
+        responses:
+          204:
