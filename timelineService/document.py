@@ -6,6 +6,7 @@ import time
 import xml.etree.ElementTree as ET
 import logging
 import clocks
+import json
 
 logging.basicConfig()
 
@@ -319,7 +320,7 @@ class TimelineDelegate(DummyDelegate):
                     print >>sys.stderr, "* Error: element", self.getXPath(), "has unknown attribute", attrName
             # Remove state attributes
             if attrName in NS_TIMELINE_INTERNAL:
-                del self.elt.attrs[attrName]
+                del self.elt.attrib[attrName]
                     
     def checkChildren(self):
         if not self.EXACT_CHILD_COUNT is None and len(self.elt) != self.EXACT_CHILD_COUNT:
@@ -1182,21 +1183,22 @@ class DocumentModificationMixin:
         return (parentElement.delegate.childAdded, newElement)
         
     def _modifyAttributes(self, path, attrs):
+        self.logger.debug("modifyAttributes(%s, %s)" % (path, repr(attrs)))
         element = self.getElement(path)
-        assert element
+        assert element is not None
         #
         # Replace/delete attributes, and remember the keys
         #
         attrsChanged = set()
-        for k, v in attrs:
+        for k, v in attrs.items():
             if v == None:
                 if k in element.attrib:
-                    attrsChanged.append(k)
+                    attrsChanged.add(k)
                     element.attrib.pop(k)
             else:
                 if element.attrib.get(k) != v:
                     element.attrib[k] = v
-                    attrsChanged.append(k)
+                    attrsChanged.add(k)
         #
         # Make the element itself handle the rest of the implementation
         #
