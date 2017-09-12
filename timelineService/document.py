@@ -52,6 +52,7 @@ NS_TIMELINE_CHECK = NameSpace("tlcheck", "http://jackjansen.nl/timelines/check")
 NS_2IMMERSE = NameSpace("tim", "http://jackjansen.nl/2immerse")
 NS_2IMMERSE_COMPONENT = NameSpace("tic", "http://jackjansen.nl/2immerse/component")
 NS_XML = NameSpace("xml", "http://www.w3.org/XML/1998/namespace")
+NS_TRIGGER = NameSpace("tt", "http://jackjansen.nl/2immerse/livetrigger")
 NAMESPACES = {}
 NAMESPACES.update(NS_XML.ns())
 NAMESPACES.update(NS_TIMELINE.ns())
@@ -59,6 +60,7 @@ NAMESPACES.update(NS_TIMELINE_INTERNAL.ns())
 NAMESPACES.update(NS_TIMELINE_CHECK.ns())
 NAMESPACES.update(NS_2IMMERSE.ns())
 NAMESPACES.update(NS_2IMMERSE_COMPONENT.ns())
+NAMESPACES.update(NS_TRIGGER.ns())
 for k, v in NAMESPACES.items():
     ET.register_namespace(k, v)
 
@@ -87,6 +89,7 @@ class State:
     STOP_NEEDED = {initing, inited, starting, started, finished}
     MOVE_ALLOWED_TARGET_STATES = {idle, inited, started, finished}
     MOVE_ALLOWED_START_STATES = {inited, starting, started, finished, stopping}
+    TRIGGER_IMPORTANT_STATES = {idle, started, finished}
     
 class DummyDelegate:
     """Baseclass for delegates, also used for non-timeline elements."""
@@ -170,6 +173,16 @@ class DummyDelegate:
             
         if self.state == State.idle:
             self.destroyTimelineElement()
+            
+        self.forwardStateChangeToTriggerTool()
+        
+    def forwardStateChangeToTriggerTool(self):
+        """If a trigger tool is attached to this session and it is interested in this element tell it about the state change"""
+        if not self.state in State.TRIGGER_IMPORTANT_STATES:
+            return
+        if not self.elt.get(NS_TRIGGER("wantstatus")):
+            return
+        self.document.forwardElementStateChangeToTriggerTool(self.elt)
            
     def assertState(self, action, *allowedStates):
         """Check that the element is in an expected state."""
@@ -1124,10 +1137,14 @@ class DocumentStateStopDocument(DocumentState):
         return None
 
 class DocumentModificationMixin:
+
+    def __init__(self):
+        self.stateUpdateCallback = None
         
-    def modifyDocument(self, generation, commands):
+    def modifyDocument(self, generation, commands, stateUpdateCallback=None):
         """Modify the running document from the given command list"""
         updateCallbacks = []
+        self.stateUpdateCallback = stateUpdateCallback
         for command in commands:
             cmd = command['verb']
             del command['verb']
@@ -1219,10 +1236,20 @@ class DocumentModificationMixin:
         #
         return (element.delegate.attributesChanged, attrsChanged)
 
+    
+    def forwardElementStateChangeToTriggerTool(self, element):
+        """An element state has changed and we should inform the trigger tool"""
+        if not self.stateUpdateCallback:
+            return
+        self.logger.debug("forwardElementStateChangeToTriggerTool: %s changed state to %s" % (self.getXPath(element), element.delegate.state))
+        documentState = {'unknownElement' : 42}
+        self.stateUpdateCallback(documentState)
+        
 class Document(DocumentModificationMixin):
     RECURSIVE = False
         
     def __init__(self, clock, extraLoggerArgs=None, idAttribute=None):
+        DocumentModificationMixin.__init__(self)
         self.tree = None
         self.root = None
         self.documentElement = None # Nasty trick to work around elementtree XPath incompleteness

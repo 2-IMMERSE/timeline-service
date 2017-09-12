@@ -208,10 +208,19 @@ class BaseTimeline:
             self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
             
 
-    def updateDocument(self, generation, operations):
-        self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d' % (generation, len(operations)))
-        self.document.modifyDocument(generation, operations)
+    def updateDocument(self, generation, operations, wantStateUpdates=False):
+        self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d, wantUpdates=%s' % (generation, len(operations), wantStateUpdates))
+        stateUpdateCallback = None
+        if wantStateUpdates:
+            stateUpdateCallback = self._stateUpdateCallback
+        self.document.modifyDocument(generation, operations, stateUpdateCallback)
         self._updateTimeline()
+        
+    def _stateUpdateCallback(self, documentState):
+        u = urlparse.urljoin(self.timelineDocUrl, 'updatedocstate')
+        self.logger.debug("_stateUpdateCallback: send %d elements to %s" % (len(documentState), u))
+        r = requests.put(u, json=documentState)
+    
         
 class TimelinePollingRunnerMixin:
     def __init__(self):
