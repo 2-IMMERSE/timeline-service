@@ -163,8 +163,12 @@ class CallbackPausableClock(PausableClock):
         
     def schedule(self, delay, callback, *args, **kwargs):
         """Schedule a callback"""
+        self.scheduleAt(self.now()+delay, callback, *args, **kwargs)
+    
+    def scheduleAt(self, timestamp, callback, *args, **kwargs):
+        """Schedule a callback"""
         assert not self.queue.full()
-        self.queue.put((self.now()+delay, callback, args, kwargs))
+        self.queue.put((timestamp, callback, args, kwargs))
         if self.queueChanged:
             self.queueChanged()
         

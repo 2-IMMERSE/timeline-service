@@ -832,11 +832,15 @@ class SleepDelegate(TimeElementDelegate):
         self.setState(State.started)
         self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
-        self.clock.schedule(dur, self._done)
+        self.sleepEndTime = self.clock.now() + dur
+        self.clock.scheduleAt(self.sleepEndTime, self._done)
         
     def _done(self):
         if self.state != State.started:
+            self.document.logger.debug("SleepDelegate(%s): spurious _done callback" % self.document.getXPath(self.elt), extra=self.getLogExtra())
             return
+        if self.clock.now() < self.sleepEndTime:
+            self.document.logger.warning("SleepDelegate(%s): early _done callback (%.3f expected %.3f), ending anyway" % (self.document.getXPath(self.elt), self.clock.now(), self.sleepEndTime), extra=self.getLogExtra())
         self.document.report(logging.DEBUG, 'SLEEP1', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         self.setState(State.finished)
     
@@ -847,6 +851,17 @@ class SleepDelegate(TimeElementDelegate):
             pass
         tval = time.strptime(dur, "%H:%M:%S")
         return tval.tm_sec + 60*(tval.tm_min+60*tval.tm_hour)
+        
+    def attributesChanged(self, attrsChanged):
+        for k in attrsChanged:
+            if k == NS_TIMELINE("dur"):
+                dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
+                newSleepEndTime = self.clock.now() + dur
+                self.document.logger.debug("SleepDelegate(%s): sleepEndTime changed from %.3f to %.3f" % (self.document.getXPath(self.elt), self.sleepEndTime, newSleepEndTime), extra=self.getLogExtra())
+                self.sleepEndTime = newSleepEndTime
+                self.clock.scheduleAt(self.sleepEndTime, self._done)
+            else:
+                self.document.logger.warning("SleepDelegate(%s): unexpected attribute changed: %s" % (self.document.getXPath(self.elt), k), extra=self.getLogExtra())
         
 class WaitDelegate(TimeElementDelegate):
     """<tl:wait> element. Waits for an incoming event."""
