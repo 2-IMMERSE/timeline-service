@@ -90,6 +90,7 @@ class State:
     MOVE_ALLOWED_TARGET_STATES = {idle, inited, started, finished}
     MOVE_ALLOWED_START_STATES = {inited, starting, started, finished, stopping}
     TRIGGER_IMPORTANT_STATES = {idle, started, finished}
+    TRIGGER_PROGRESS_IMPORTANT_STATES = {started, finished}
     
 class DummyDelegate:
     """Baseclass for delegates, also used for non-timeline elements."""
@@ -183,6 +184,16 @@ class DummyDelegate:
         if not self.elt.get(NS_TRIGGER("wantstatus")):
             return
         self.document.forwardElementStateChangeToTriggerTool(self.elt)
+        
+    def getStateForTriggerTool(self):
+        """Return relevant state information (for the trigger tool) for this element"""
+        if self.state in State.TRIGGER_PROGRESS_IMPORTANT_STATES:
+            progressVal = str(self.clock.now()-self.startTime)
+        else:
+            progressVal = None
+        rv = {NS_TIMELINE_INTERNAL("state"): self.state, NS_TIMELINE_INTERNAL("progress"): progressVal}
+        return rv
+        
            
     def assertState(self, action, *allowedStates):
         """Check that the element is in an expected state."""
@@ -1242,9 +1253,22 @@ class DocumentModificationMixin:
         if not self.stateUpdateCallback:
             return
         self.logger.debug("forwardElementStateChangeToTriggerTool: %s changed state to %s" % (self.getXPath(element), element.delegate.state))
-        documentState = {'unknownElement' : 42}
+        documentState = self.collectStateForTriggerTool()
         self.stateUpdateCallback(documentState)
         
+    def collectStateForTriggerTool(self):
+        rv = {}
+        interestingElements = self.tree.getroot().findall(".//*[@tt:wantstatus]", NAMESPACES)
+        self.logger.debug("collectStateForTriggerTool: %d interesting elements" % len(interestingElements))
+        for elt in interestingElements:
+            id = elt.get(self.idAttribute)
+            if not id:
+                self.logger.warning("collectStateForTriggerTool: %s has no ID-attribute" % self.getXPath(elt))
+                continue
+            value = elt.delegate.getStateForTriggerTool()
+            rv[id] = value
+        return rv
+            
 class Document(DocumentModificationMixin):
     RECURSIVE = False
         
