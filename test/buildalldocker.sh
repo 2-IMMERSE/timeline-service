@@ -17,6 +17,15 @@ cd $basedir/websocket-service
 git pull
 docker build -t websocket-service .
 
+if [ -d $basedir/2immerse-editor ]; then
+	cd $basedir/2immerse-editor
+	git pull
+	docker-compose build
+	cd app/static
+	yarn install
+	webpack
+fi
+
 #cd $basedir/client-api
 #git pull
 #make -j
