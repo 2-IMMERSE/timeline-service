@@ -102,6 +102,7 @@ class BaseTimeline:
 
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
         logger.info("Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl))
+        logger.info("Timeline(%s): layoutServiceUrl=%s" % (self.contextId, self.layoutServiceUrl))
         if self.timelineDocUrl:
             logger.error("Timeline(%s): loadDMAppTimeline called but context already has a timeline (%s)", self.contextId, self.timelineDocUrl)
         assert self.timelineDocUrl is None
@@ -276,7 +277,7 @@ class ProxyLayoutService:
         self.actionsTimestamp = None
         self.actionsLock = threading.Lock()
         self._isV4 = ('/v4/' in self.contactInfo)
-        self.logger.debug("ProxyLayoutService V4=%s" % repr(self._isV4))
+        self.logger.info("ProxyLayoutService: URL=%s V4=%s" % (self.contactInfo, repr(self._isV4)))
 
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
@@ -309,11 +310,11 @@ class ProxyLayoutService:
             actionsTimestamp = self.actionsTimestamp
             self.actionsTimestamp = None
             self.actions = []
-        self.logger.debug("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(actions), actionsTimestamp, repr(actions)))
+        self.logger.info("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(actions), actionsTimestamp, repr(actions)))
         entryPoint = self.getContactInfo() + '/transaction'
         body = dict(time=actionsTimestamp, actions=actions)
         r = requests.post(entryPoint, json=body)
-
+        self.logger.info("ProxyLayoutService: request returned status code: %s" % repr(r.status_code))
         r.raise_for_status()
 
 class ProxyMixin:
