@@ -313,6 +313,7 @@ class ProxyLayoutService:
         self.logger.info("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(actions), actionsTimestamp, repr(actions)))
         entryPoint = self.getContactInfo() + '/transaction'
         body = dict(time=actionsTimestamp, actions=actions)
+        raise SyntaxError
         r = requests.post(entryPoint, json=body)
         self.logger.info("ProxyLayoutService: request returned status code: %s" % repr(r.status_code))
         r.raise_for_status()
