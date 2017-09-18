@@ -277,7 +277,7 @@ class ProxyLayoutService:
         self.actionsTimestamp = None
         self.actionsLock = threading.Lock()
         self._isV4 = ('/v4/' in self.contactInfo)
-        self.logger.info("ProxyLayoutService: URL=%s V4=%s" % (self.contactInfo, repr(self._isV4)))
+        self.logger.info("ProxyLayoutService: contextId %s URL %s V4 %s" % (self.contextId, self.contactInfo, repr(self._isV4)))
 
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
