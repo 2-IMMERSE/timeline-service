@@ -275,12 +275,20 @@ class ProxyLayoutService:
         self.actions = []
         self.actionsTimestamp = None
         self.actionsLock = threading.Lock()
+        self._isV4 = ('/v4/' in self.contactInfo)
+        self.logger.debug("ProxyLayoutService V4=%s" % repr(self._isV4))
 
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
-    def scheduleAction(self, timestamp, componentId, verb, config=None, parameters=None):
-        action = dict(action=verb, componentIds=[componentId])
+    def scheduleAction(self, timestamp, componentId, verb, config=None, parameters=None, constraintId=None):
+        if self._isV4:
+            if not constraintId:
+                constraintId = componentId
+            componentData = dict(componentId=componentId, constraintId=constraintId)
+        else:
+            componentData = componentId
+        action = dict(action=verb, componentIds=[componentData])
         if config:
             action["config"] = config
         if parameters:
@@ -327,7 +335,7 @@ class ProxyMixin:
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
         self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, startTime, *extraLogArgs, extra=self.getLogExtra())
-        self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters)
+        self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters, constraintId=self.elt.get(document.NS_2IMMERSE("constraintId")))
 
     def _getParameters(self):
         rv = {}
