@@ -10,7 +10,7 @@ import subprocess
 DEFAULT_LAYOUT="https://layout-service.2immerse.advdev.tv/layout/v3"
 DEFAULT_TIMELINE="https://timeline-service.2immerse.advdev.tv/timeline/v1"
 LOCAL_LAYOUT="http://%s:8000/layout/v3"
-LOCAL_TIMELINE="http://%s:8001/timeline/v1"
+LOCAL_TIMELINE="http://%s:8080/timeline/v1"
 
 KIBANA_URL="https://2immerse.advdev.tv/kibana/app/kibana#/discover/All-2-Immerse-prefixed-logs-without-Websocket-Service?_g=(refreshInterval:(display:'10%%20seconds',pause:!f,section:1,value:10000),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(sourcetime,source,subSource,verb,logmessage,contextID,message),filters:!(),index:'logstash-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'rawmessage:%%22%%2F%%5E2-Immerse%%2F%%22%%20AND%%20NOT%%20source:%%22WebsocketService%%22%%20AND%%20contextID:%%22%s%%22')),sort:!(sourcetime,desc))"
 

@@ -7,10 +7,10 @@ To run the test:
 - (possibly build) and run the timeline service:
 	$ cd timeline-service
 	$ docker build -t timeline-service .
-	$ docker run -ti -p 8001:8080 timeline-service
+	$ docker run -ti -p 8080:8080 timeline-service
 	
 	For the last line, if you want debug output, use
-	$ docker run -ti -p 8001:8080 timeline-service /usr/bin/python /usr/src/timeline-service/timelineService --logLevel DEBUG
+	$ docker run -ti -p 8080:8080 timeline-service /usr/bin/python /usr/src/timeline-service/timelineService --logLevel DEBUG
 	
 - run the tv
 	$ cd timeline-service
@@ -35,7 +35,7 @@ Deployment notes (for Jack himself):
 - To run the shakespear document from the CDN:
 	$ H=1.2.3.4 # Use the local host IP address here
 	$ python client --layout http://$H:8000/layout/v2 \
-					--timeline http://$H:8001/timeline/v1 \
+					--timeline http://$H:8080/timeline/v1 \
 					--tsserver $H \
 					--layoutDoc http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/layout.json \
 					--timelineDoc http://origin.2immerse.advdev.tv/sandbox/sample-shakespeare/timeline-2min.xml

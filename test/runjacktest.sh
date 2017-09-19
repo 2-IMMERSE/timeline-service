@@ -14,7 +14,7 @@ esac
 
 ## The services
 layoutServer=http://$hostname:8000/layout/v3
-timelineServer=http://$hostname:8001/timeline/v1
+timelineServer=http://$hostname:8080/timeline/v1
 #layoutServer=http://layout-service.platform.2immerse.eu/layout/v3
 #timelineServer=http://timeline-service.platform.2immerse.eu/timeline/v1
 #layoutServer=http://layout-service-test.platform.2immerse.eu/layout/v3
