@@ -313,8 +313,14 @@ class ProxyLayoutService:
         self.logger.info("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(actions), actionsTimestamp, repr(actions)))
         entryPoint = self.getContactInfo() + '/transaction'
         body = dict(time=actionsTimestamp, actions=actions)
-        r = requests.post(entryPoint, json=body)
-        self.logger.info("ProxyLayoutService: request returned status code: %s" % repr(r.status_code))
+        try:
+            r = requests.post(entryPoint, json=body)
+        except requests.exceptions.RequestException as e:
+            self.logger.error("Failed to forward actions to layout service")
+            self.logger.info("Failure URL: %s" % entryPoint)
+            self.logger.info("Failure data: %s" % repr(body))
+            self.logger.info("Failure reason: %s" % repr(e))
+            raise
         r.raise_for_status()
 
 class ProxyMixin:
