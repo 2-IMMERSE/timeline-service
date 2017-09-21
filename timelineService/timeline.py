@@ -452,8 +452,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
                 return
             state = document.State.idle
         else:
-            self.logger.error('Unknown "%s" state update for node %s (in state %s), issuing destroy' %( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-            self.scheduleAction('destroy')
+            self.logger.error('Unknown "%s" state update for node %s (in state %s), ignoring' %( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
             return
         self.setState(state)
 
