@@ -685,6 +685,11 @@ class SeqDelegate(TimeElementDelegate):
                 nextChild = self._nextChild()
                 if nextChild is not None:
                     self.document.schedule(nextChild.delegate.initTimelineElement)
+            elif nextChild.delegate.state == State.idle:
+                # Normally the init for the next child has already been issued, but
+                # if the current child had a DummyDelegate it can happen that it hasn't.
+                # Issue it now.
+                pass # self.document.schedule(nextChild.delegate.initTimelineElement)
             else:
                 # Next child not yet ready to run.
                 nextChild.delegate.assertState('seq-parent-reportChildState()', State.initing)
