@@ -202,7 +202,7 @@ class BaseTimeline:
         if not self.timelineServiceUrl:
             return
         myTimelineUrl = self.timelineServiceUrl + '/timeline/v1/context/' + self.contextId + '/updateDocument'
-        params = dict(url=myTimelineUrl)
+        params = dict(url=myTimelineUrl, contextID=self.contextId)
         u = urlparse.urljoin(self.timelineDocUrl, 'addcallback')
         r = requests.post(u, params=params)
         if r.status_code == requests.codes.ok:
