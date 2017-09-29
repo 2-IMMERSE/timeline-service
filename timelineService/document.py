@@ -119,7 +119,13 @@ class DummyDelegate:
         return self.document.getXPath(self.elt)
         
     def getLogExtra(self):
-    	return dict(xpath=self.getXPath())
+    	rv = dict(xpath=self.getXPath())
+    	uid = self.getId()
+    	if uid:
+    		rv['dmappcID'] = uid
+    	elif hasattr(self, 'componentId'):
+    		rv['dmappcID'] = self.componentId
+    	return rv
     	
     def checkAttributes(self):
         """Check XML attributes for validity"""
