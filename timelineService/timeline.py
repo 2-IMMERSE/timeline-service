@@ -210,7 +210,10 @@ class BaseTimeline:
             
 
     def updateDocument(self, generation, operations, wantStateUpdates=False):
-        self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d, wantUpdates=%s' % (generation, len(operations), wantStateUpdates))
+        if len(operations):
+            self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d, wantUpdates=%s' % (generation, len(operations), wantStateUpdates))
+        else:
+            self.document.report(logging.DEBUG, 'DOCUMENT', 'update', 'generation=%d, count=%d, wantUpdates=%s' % (generation, len(operations), wantStateUpdates))
         stateUpdateCallback = None
         if wantStateUpdates:
             stateUpdateCallback = self._stateUpdateCallback
