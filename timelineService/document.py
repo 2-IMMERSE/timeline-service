@@ -867,7 +867,8 @@ class SleepDelegate(TimeElementDelegate):
         self.setState(State.started)
         self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
-        self.sleepEndTime = self.clock.now() + dur
+        assert self.startTime != None
+        self.sleepEndTime = self.startTime + dur
         self.clock.scheduleAt(self.sleepEndTime, self._done)
         
     def _done(self):
@@ -891,7 +892,8 @@ class SleepDelegate(TimeElementDelegate):
         for k in attrsChanged:
             if k == NS_TIMELINE("dur"):
                 dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
-                newSleepEndTime = self.clock.now() + dur
+                assert self.startTime
+                newSleepEndTime = self.startTime + dur
                 self.document.logger.debug("SleepDelegate(%s): sleepEndTime changed from %.3f to %.3f" % (self.document.getXPath(self.elt), self.sleepEndTime, newSleepEndTime), extra=self.getLogExtra())
                 self.sleepEndTime = newSleepEndTime
                 self.clock.scheduleAt(self.sleepEndTime, self._done)
