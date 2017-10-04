@@ -48,6 +48,7 @@ class BaseTimeline:
         self.logger = document.MyLoggerAdapter(logger, dict(contextID=contextId))
         self.contextId = contextId
         self.timelineDocUrl = None
+        self.timelineDocBaseUrl = None
         self.layoutServiceUrl = layoutServiceUrl
         self.dmappTimeline = None
         self.dmappId = None
@@ -67,6 +68,7 @@ class BaseTimeline:
         del self.ALL_CONTEXTS[self.contextId]
         self.contextId = None
         self.timelineDocUrl = None
+        self.timelineDocBaseUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         self.layoutService = None
@@ -92,12 +94,12 @@ class BaseTimeline:
         return rv
 
     def dmappComponentDelegateFactory(self, elt, document, clock):
-        rv = ProxyDMAppComponent(elt, document, self.timelineDocUrl, clock, self.layoutService)
+        rv = ProxyDMAppComponent(elt, document, self.timelineDocBaseUrl, clock, self.layoutService)
         self.dmappComponents[rv.componentId] = rv
         return rv
 
     def updateDelegateFactory(self, elt, document, clock):
-        rv = UpdateComponent(elt, document, self.timelineDocUrl, clock, self.layoutService)
+        rv = UpdateComponent(elt, document, self.timelineDocBaseUrl, clock, self.layoutService)
         return rv
 
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
@@ -109,6 +111,7 @@ class BaseTimeline:
         assert self.dmappTimeline is None
         assert self.dmappId is None
         self.timelineDocUrl = timelineDocUrl
+        self.timelineDocBaseUrl = timelineDocUrl
         self.dmappId = dmappId
         self.logger = document.MyLoggerAdapter(logger, dict(contextID=self.contextId, dmappID=dmappId))
         assert self.document
@@ -127,6 +130,7 @@ class BaseTimeline:
         assert self.dmappTimeline
         assert self.dmappId == dmappId
         self.timelineDocUrl = None
+        self.timelineDocBaseUrl = None
         self.dmappTimeline = None
         self.dmappId = None
         self.documentHasFinished = False
@@ -185,6 +189,10 @@ class BaseTimeline:
             self.logger.error("Timeline(%s): %s: Error loading document: %s", self.contextId, self.timelineDocUrl, errorStr)
             raise
         self.document.report(logging.INFO, 'DOCUMENT', 'loaded', self.timelineDocUrl)
+        overrideBaseUrl = self.document.root.get(document.NS_2IMMERSE("base"))
+        if overrideBaseUrl:
+            self.timelineDocBaseUrl = overrideBaseUrl
+            self.document.report(logging.INFO, 'DOCUMENT', 'base', self.timelineDocBaseUrl)
         self.document.prepareDocument()
 
     def _stepTimeline(self):
@@ -330,10 +338,10 @@ class ProxyLayoutService:
         r.raise_for_status()
 
 class ProxyMixin:
-    def __init__(self, timelineDocUrl, layoutService, componentId):
+    def __init__(self, timelineDocBaseUrl, layoutService, componentId):
         self.componentId = componentId
         self.logger = layoutService.logger
-        self.timelineDocUrl = timelineDocUrl
+        self.timelineDocBaseUrl = timelineDocBaseUrl
         self.layoutService = layoutService
         
     def getLogExtra(self):
@@ -357,25 +365,25 @@ class ProxyMixin:
                 localName = document.NS_2IMMERSE_COMPONENT.localTag(k)
                 value = self.elt.attrib[k]
                 if 'url' in localName.lower() and value:
-                    value = urllib.basejoin(self.timelineDocUrl, value)
+                    value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv[localName] = value
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)
                 value = self.elt.attrib[k]
                 if 'url' in localName.lower() and value:
-                    value = urllib.basejoin(self.timelineDocUrl, value)
+                    value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
         return rv
 
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
-    def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
+    def __init__(self, elt, doc, timelineDocBaseUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
-        ProxyMixin.__init__(self, timelineDocUrl, layoutService, self.getId())
+        ProxyMixin.__init__(self, timelineDocBaseUrl, layoutService, self.getId())
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         # Allow relative URLs by doing a basejoin to the timeline document URL.
         if self.url:
-            self.url = urllib.basejoin(self.timelineDocUrl, self.url)
+            self.url = urllib.basejoin(self.timelineDocBaseUrl, self.url)
         if not self.componentId:
             self.componentId = "unknown%d" % id(self)
             self.logger.error("Element %s: missing xml:id attribute, invented %s", self.document.getXPath(self.elt), self.componentId, extra=self.getLogExtra())
