@@ -229,18 +229,23 @@ class BaseTimeline:
         self._updateTimeline()
         
     def _stateUpdateCallback(self, documentState):
+        t = threading.Thread(target=self._asyncStateUpdate, args=(documentState,))
+        t.daemon = True
+        t.start()
+        
+    def _asyncStateUpdateCallback(self, documentState):
         u = urlparse.urljoin(self.timelineDocUrl, 'updatedocstate')
-        self.logger.debug("_stateUpdateCallback: send %d elements to %s" % (len(documentState), u))
+        self.logger.debug("_asyncStateUpdateCallback: send %d elements to %s" % (len(documentState), u))
         try:
             requestStartTime = time.time() # Debugging: sometimes requests take a very long time
             r = requests.put(u, json=documentState)
         except requests.exceptions.RequestException:
-            self.logger.warning("_stateUpdateCallback: PUT failed for %s" % u)
+            self.logger.warning("_asyncStateUpdateCallback: PUT failed for %s" % u)
             raise
         else:
             requestDuration = time.time() - requestStartTime
             if requestDuration > 2:
-                self.logger.warning("_stateUpdateCallback: PUT took %d seconds for %s" % (requestDuration, u))
+                self.logger.warning("_asyncStateUpdateCallback: PUT took %d seconds for %s" % (requestDuration, u))
         
 class TimelinePollingRunnerMixin:
     def __init__(self):
