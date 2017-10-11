@@ -1,9 +1,9 @@
 {
-    "version": 3,
+    "version": 4,
     "dmapp": "200",
     "constraints": [
         {
-            "componentId" : "masterVideo",
+            "constraintId" : "masterVideo",
             "personal" : {
                 "aspect": "16:9",
                 "minSize": {
@@ -24,7 +24,7 @@
             }
         },
         {
-            "componentId" : "hello",
+            "constraintId" : "hello",
             "personal": {
                 "minSize": {
                     "width": 100,
@@ -43,7 +43,7 @@
             }
         },
         {
-            "componentId" : "goodbye",
+            "constraintId" : "goodbye",
             "personal": {
                 "minSize": {
                     "width": 100,
@@ -62,7 +62,7 @@
             }
         },
         {
-            "componentId" : "world",
+            "constraintId" : "world",
             "personal": {
                 "minSize": {
                     "width": 100,

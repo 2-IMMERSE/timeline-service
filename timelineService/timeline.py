@@ -300,23 +300,18 @@ class ProxyLayoutService:
         self.actions = []
         self.actionsTimestamp = None
         self.actionsLock = threading.Lock()
-        self._isV4 = ('/v4' in self.contactInfo)
-        self.logger.info("ProxyLayoutService: contextId %s URL %s V4 %s" % (self.contextId, self.contactInfo, repr(self._isV4)))
+        self.logger.info("ProxyLayoutService: contextId %s URL %s" % (self.contextId, self.contactInfo))
 
     def getContactInfo(self):
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
     def scheduleAction(self, timestamp, componentId, verb, config=None, parameters=None, constraintId=None):
-        if self._isV4:
-            if not constraintId:
-                constraintId = componentId
-            componentData = dict(componentId=componentId)
-            if constraintId:
-                componentData['constraintId'] = constraintId
-            action = dict(action=verb, components=[componentData])
-        else:
-            componentData = componentId
-            action = dict(action=verb, componentIds=[componentData])
+        if not constraintId:
+            constraintId = componentId
+        componentData = dict(componentId=componentId)
+        if constraintId:
+            componentData['constraintId'] = constraintId
+        action = dict(action=verb, components=[componentData])
         if config:
             action["config"] = config
         if parameters:

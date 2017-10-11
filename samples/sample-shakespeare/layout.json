@@ -1,9 +1,9 @@
 {
-    "version": 3,
+    "version": 4,
     "dmapp": "200",
     "constraints": [
         {
-            "componentId" : "masterVideo",
+            "constraintId" : "masterVideo",
             "personal" : {
                 "aspect": "16:9",
                 "minSize": {
@@ -24,7 +24,7 @@
             }
         },
         {
-            "componentId" : "aVChat",
+            "constraintId" : "aVChat",
             "personal": {
                 "minSize": {
                     "width": 200,
@@ -43,7 +43,7 @@
             }
         },
         {
-            "componentId" : "scriptWidget",
+            "constraintId" : "scriptWidget",
             "personal" : {
                 "minSize": {
                     "width": 125,
@@ -60,7 +60,7 @@
             }
         },
         {
-            "componentId" : "SubtitleWidget1",
+            "constraintId" : "SubtitleWidget1",
             "personal" : {
                 "minSize": {
                     "width": 400,
@@ -77,7 +77,7 @@
             }
          },
         {
-            "componentId" : "SubtitleWidget2",
+            "constraintId" : "SubtitleWidget2",
             "personal" : {
                 "minSize": {
                     "width": 400,
@@ -94,7 +94,7 @@
             }
          },
         {
-            "componentId" : "auxVideo",
+            "constraintId" : "auxVideo",
             "personal" : {
                 "aspect": "16:9",
                 "minSize": {
