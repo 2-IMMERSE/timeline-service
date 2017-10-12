@@ -198,6 +198,8 @@ class DummyDelegate:
         else:
             progressVal = None
         rv = {NS_TIMELINE_INTERNAL("state"): self.state, NS_TIMELINE_INTERNAL("progress"): progressVal}
+        if self.clock.getRate() > 0:
+            rv[NS_TIMELINE_INTERNAL("clockRunning")] = "true"
         return rv
         
            
