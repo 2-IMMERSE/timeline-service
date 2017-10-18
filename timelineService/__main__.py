@@ -24,7 +24,7 @@ sys.stdout = Unbuffered(sys.stdout)
 logging.basicConfig()
 
 # Default logging configuration: INFO for document and timeline (useful to app developers), WARNING for everything else.
-DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,WARNING"
+DEFAULT_LOG_CONFIG="document:DEBUG,timeline:DEBUG,WARNING"
 
 class MyFormatter(logging.Formatter):
 
