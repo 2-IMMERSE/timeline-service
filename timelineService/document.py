@@ -1262,12 +1262,18 @@ class DocumentModificationMixin:
         #
         return (element.delegate.attributesChanged, attrsChanged)
 
+    def clockChanged(self):
+        """Called by the timeline to inform us that our clock has changed"""
+        self.forwardElementStateChangeToTriggerTool(None)
     
     def forwardElementStateChangeToTriggerTool(self, element):
         """An element state has changed and we should inform the trigger tool"""
         if not self.stateUpdateCallback:
             return
-        self.logger.debug("forwardElementStateChangeToTriggerTool: %s changed state to %s" % (self.getXPath(element), element.delegate.state))
+        if element == None:
+            self.logger.debug("forwardElementStateChangeToTriggerTool: clock changed")
+        else:
+            self.logger.debug("forwardElementStateChangeToTriggerTool: %s changed state to %s" % (self.getXPath(element), element.delegate.state))
         documentState = self.collectStateForTriggerTool()
         self.stateUpdateCallback(documentState)
         

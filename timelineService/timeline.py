@@ -176,7 +176,7 @@ class BaseTimeline:
             else:
                 self.document.report(logging.INFO, 'CLOCK', 'stop', self.clockService.now())
                 self.clockService.stop()
-
+        self.document.clockChanged()
         self._updateTimeline()
         return None
 
