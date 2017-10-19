@@ -4,7 +4,7 @@ import json
 import time
 import argparse
 
-TSURL="https://timeline-service.2immerse.advdev.tv/timeline/v1"
+TSURL="https://timeline-service-edge.platform.2immerse.eu/timeline/v1"
 
 def restGet(url):
     f = urllib.urlopen(url)
