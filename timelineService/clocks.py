@@ -84,7 +84,7 @@ class PausableClock:
             
     def getRate(self):
         if self.running:
-            return 1.0
+            return self.underlyingClock.getRate()
         return 0.0
         
     @synchronized
@@ -231,6 +231,9 @@ class FastClock:
         
     def dumps(self):
         return ""
+        
+    def getRate(self):
+        return 1.0
 
 class SystemClock:
     def __init__(self):
@@ -244,3 +247,6 @@ class SystemClock:
 
     def dumps(self):
         return ""
+        
+    def getRate(self):
+        return 1.0
