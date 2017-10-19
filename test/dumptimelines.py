@@ -3,6 +3,7 @@ import urllib
 import json
 import time
 import argparse
+import sys
 
 TSURL="https://timeline-service-edge.platform.2immerse.eu/timeline/v1"
 
@@ -14,6 +15,8 @@ def restGet(url):
 def main():
     parser = argparse.ArgumentParser(description="Dump 2immerse timeline service status")
     parser.add_argument("--timelineServer", "-s", metavar="URL", help="Specify timeline service URL (default: %s)" % TSURL, default=TSURL)
+    parser.add_argument("--document", "-d", action="store_true", help="Only retrieve current document for single context")
+    parser.add_argument("--nodocument", "-D", action="store_true", help="Don't show document")
     parser.add_argument("context", nargs="*", help="Context to dump (default: all)")
     
     args = parser.parse_args()
@@ -25,15 +28,27 @@ def main():
     else:
         contextIds = restGet(tsUrl + "/context")
     
+    if args.document:
+        if len(contextIds) != 1:
+            print >>sys.stderr, "%s: Use --document only for single context"
+            sys.exit(1)
+        dump = restGet(tsUrl + '/context/' + contextIds[0] + '/dump')
+        print dump['document']
+        sys.exit(0)
     print 'Number of contextts active:', len(contextIds)
     for c in contextIds:
         print '------------- Context', c
-        dump = restGet(tsUrl + '/context/' + c + '/dump')
+        try:
+            dump = restGet(tsUrl + '/context/' + c + '/dump')
+        except ValueError:
+            print '** Warning: dump did not return JSON data'
+            continue
         if 'document' in dump:
-            print '---------- Document and document state:'
-            print dump['document']
+            if not args.nodocument:
+                print '---------- Document and document state:'
+                print dump['document']
+                print '----------'
             del dump['document']
-            print '----------'
         else:
             print '** Warning: no document in dump'
         if 'creationTime' in dump:
