@@ -161,7 +161,7 @@ class BaseTimeline:
         # Adjust clock position, if needed
         #
         delta = contextClock - self.clockService.now()
-        MAX_CLOCK_DISCREPANCY = 0.1 # xxxjack pretty random number, 100ms....
+        MAX_CLOCK_DISCREPANCY = 0.032 # Smaller than a frame duration for both 25fps and 30fps
         if abs(delta) > MAX_CLOCK_DISCREPANCY:
             self.document.report(logging.INFO, 'CLOCK', 'forward', delta)
             self.clockService.set(contextClock)
