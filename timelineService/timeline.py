@@ -363,7 +363,7 @@ class ProxyMixin:
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
-        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, startTime, *extraLogArgs, extra=self.getLogExtra())
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
         self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters, constraintId=self.elt.get(document.NS_2IMMERSE("constraintId")))
 
     def _getParameters(self):
@@ -519,7 +519,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
         for cid in componentIds:
-            self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, *extraLogArgs, extra=self.getLogExtra())
+            self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId"), *extraLogArgs, extra=self.getLogExtra())
             self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters, constraintId=self.elt.get(document.NS_2IMMERSE("constraintId")))
 
 
