@@ -507,7 +507,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
             allMatchingElements = self.document.root.findall(self.targetXPath, document.NAMESPACES)
             componentIds = []
             for elt in allMatchingElements:
-                if elt.delegate.state in document.State.NOT_DONE:
+                if elt.delegate.state in document.State.STOP_NEEDED:
                     componentIds.append(elt.delegate.getId())
             self.scheduleActionMulti("update", componentIds, parameters=parameters)
         else:
