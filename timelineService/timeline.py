@@ -502,7 +502,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         self.assertState('UpdateComponent.initTimelineElement()', document.State.inited)
         document.TimelineDelegate.startTimelineElement(self)
         parameters = self._getParameters()
-        if self.targetGroup:
+        if self.targetXPath:
             # Find all active elements in the group
             allMatchingElements = document.ET.findall(self.targetXPath, document.NAMESPACES)
             componentIds = []
