@@ -504,7 +504,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         parameters = self._getParameters()
         if self.targetXPath:
             # Find all active elements in the group
-            allMatchingElements = document.ET.findall(self.targetXPath, document.NAMESPACES)
+            allMatchingElements = self.document.root.findall(self.targetXPath, document.NAMESPACES)
             componentIds = []
             for elt in allMatchingElements:
                 if elt.delegate.state in document.State.NOT_DONE:
