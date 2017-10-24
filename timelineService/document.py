@@ -53,6 +53,7 @@ NS_2IMMERSE = NameSpace("tim", "http://jackjansen.nl/2immerse")
 NS_2IMMERSE_COMPONENT = NameSpace("tic", "http://jackjansen.nl/2immerse/component")
 NS_XML = NameSpace("xml", "http://www.w3.org/XML/1998/namespace")
 NS_TRIGGER = NameSpace("tt", "http://jackjansen.nl/2immerse/livetrigger")
+NS_AUTH = NameSpace("au", "http://jackjansen.nl/2immerse/authoring")
 NAMESPACES = {}
 NAMESPACES.update(NS_XML.ns())
 NAMESPACES.update(NS_TIMELINE.ns())
@@ -61,6 +62,7 @@ NAMESPACES.update(NS_TIMELINE_CHECK.ns())
 NAMESPACES.update(NS_2IMMERSE.ns())
 NAMESPACES.update(NS_2IMMERSE_COMPONENT.ns())
 NAMESPACES.update(NS_TRIGGER.ns())
+NAMESPACES.update(NS_AUTH.ns())
 for k, v in NAMESPACES.items():
     ET.register_namespace(k, v)
 

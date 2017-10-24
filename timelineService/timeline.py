@@ -495,11 +495,31 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimelineDelegate.__init__(self, elt, doc, clock)
         componentId = self.elt.get(document.NS_2IMMERSE("target"))
+        self.targetXPath = self.elt.get(document.NS_2IMMERSE("targetXPath"))
         ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
 
     def startTimelineElement(self):
         self.assertState('UpdateComponent.initTimelineElement()', document.State.inited)
         document.TimelineDelegate.startTimelineElement(self)
         parameters = self._getParameters()
-        self.scheduleAction("update", parameters=parameters)
+        if self.targetGroup:
+            # Find all active elements in the group
+            allMatchingElements = document.ET.findall(self.targetXPath, document.NAMESPACES)
+            componentIds = []
+            for elt in allMatchingElements:
+                if elt.delegate.state in document.State.NOT_DONE:
+                    componentIds.append(elt.delegate.getId())
+            self.scheduleActionMulti("update", componentIds, parameters=parameters)
+        else:
+            self.scheduleAction("update", parameters=parameters)
         
+    def scheduleActionMulti(self, verb, componentIds, config=None, parameters=None):
+        extraLogArgs = ()
+        if config != None or parameters != None:
+            extraLogArgs = (config, parameters)
+        startTime = self.getStartTime()
+        for cid in componentIds:
+            self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, *extraLogArgs, extra=self.getLogExtra())
+            self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters, constraintId=self.elt.get(document.NS_2IMMERSE("constraintId")))
+
+
