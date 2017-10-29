@@ -56,6 +56,7 @@ class BaseTimeline:
         self.dmappComponents = {}
         self.clockService = clocks.PausableClock(clocks.SystemClock())
         self.documentClock = clocks.CallbackPausableClock(self.clockService)
+        self.documentClock.start()
         self.documentClock.setQueueChangedCallback(self._updateTimeline)
         self.document = document.Document(self.documentClock, idAttribute=document.NS_XML("id"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
