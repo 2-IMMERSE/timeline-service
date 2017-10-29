@@ -82,7 +82,8 @@ class BaseTimeline:
             contextId=self.contextId,
             creationTime=self.creationTime,
             currentPresentationTime=self.clockService.now(),
-            waitingEvents=self.clockService.dumps(),
+            currentDocumentTime=self.documentClock.now(),
+            waitingEvents=self.documentClock.dumps(),
             timelineDocUrl=self.timelineDocUrl,
             dmappTimeline=self.dmappTimeline,
             dmappId=self.dmappId,
@@ -177,6 +178,7 @@ class BaseTimeline:
                 self.document.report(logging.INFO, 'CLOCK', 'stop', self.clockService.now())
                 self.clockService.stop()
         self.document.clockChanged()
+        self.logger.debug("Timeline(%s): after clockChanged clockService=%f, document=%f", self.contextId, self.clockService.now(), self.documentClock.now())
         self._updateTimeline()
         return None
 
