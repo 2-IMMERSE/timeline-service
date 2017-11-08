@@ -788,7 +788,7 @@ class RepeatDelegate(SingleChildDelegate):
             remainingCount = self.elt.get(NS_TIMELINE("count"), "indefinite")
             if remainingCount != "indefinite":
                 remainingCount = str(int(remainingCount)-1)
-                self.elt.set(NS_TIMELINE("count"), str(rcInt))
+                self.elt.set(NS_TIMELINE("count"), remainingCount)
             if remainingCount == "indefinite" or int(remainingCount) > 0:
                 # More repeats to do. Restart child.
                 self.document.schedule(self.elt[0].delegate.initTimelineElement)
@@ -800,7 +800,6 @@ class RepeatDelegate(SingleChildDelegate):
     def startTimelineElement(self):
         remainingCount = self.elt.get(NS_TIMELINE("count"), "indefinite")
         if remainingCount == "indefinite" or int(remainingCount) > 0:
-            self.setState(State.starting)
             SingleChildDelegate.startTimelineElement(self)
         else:
             self.setState(State.finished)
