@@ -423,6 +423,8 @@ class SingleChildDelegate(TimelineDelegate):
         if self.elt[0].delegate.state in State.STOP_NEEDED:
             self.document.schedule(self.elt[0].delegate.stopTimelineElement)
             waitNeeded = True
+        if self.elt[0].delegate.state == State.stopping:
+            waitNeeded = True
         if not waitNeeded:
             self.setState(State.idle)
 
@@ -608,6 +610,8 @@ class ParDelegate(TimeElementDelegate):
             if child.delegate.state in State.STOP_NEEDED:
                 self.document.schedule(child.delegate.stopTimelineElement)
                 waitNeeded = True
+            if child.delegate.state == State.stopping:
+                waitNeeded = True
         if not waitNeeded:
             self.setState(State.idle)
 
@@ -741,6 +745,8 @@ class SeqDelegate(TimeElementDelegate):
         for ch in self.elt:
             if ch.delegate.state in State.STOP_NEEDED:
                 self.document.schedule(ch.delegate.stopTimelineElement)
+                waitNeeded = True
+            if ch.delegate.state == State.stopping:
                 waitNeeded = True
         if not waitNeeded:
             self.setState(State.idle)
