@@ -211,11 +211,15 @@ class DummyDelegate:
             allowedStates = allowedStates[0]
         else:
             allowedStates = set(allowedStates)
+        if not self.state in allowedStates:
+            self.logger.error("Assertion failure: %s: %s: state==%s, expected %s" % (self, action, self.state, allowedStates), extra=self.getLogExtra())
         assert self.state in allowedStates, "%s: %s: state==%s, expected %s" % (self, action, self.state, allowedStates)
         
     def assertDescendentState(self, action, *allowedStates):
         """Check that all descendents of the element are in an expected state"""
         for desc in self.elt.iter():
+            if not desc.delegate.state in set(allowedStates):
+                self.logger.error("Assertion failure: %s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates)), extra=self.getLogExtra())
             assert desc.delegate.state in set(allowedStates), "%s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
             #if not desc.delegate.state in set(allowedStates):
             #    print "WARNING XXXJACK: %s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
@@ -404,13 +408,13 @@ class SingleChildDelegate(TimelineDelegate):
         #self.assertState('reportChildState()', 'no-state-would-be-correct')
 
     def initTimelineElement(self):
-        self.assertState('initTimelineElement()', State.idle)
+        self.assertState('SingleChildDelegate.initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         self.setState(State.initing)
         self.document.schedule(self.elt[0].delegate.initTimelineElement)
         
     def startTimelineElement(self):
-        self.assertState('startTimelineElement()', State.inited)
+        self.assertState('SingleChildDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.inited, State.idle)
         self.setState(State.starting)
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
@@ -584,7 +588,7 @@ class ParDelegate(TimeElementDelegate):
         
         
     def initTimelineElement(self):
-        self.assertState('initTimelineElement()', State.idle)
+        self.assertState('ParDelegate.initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         self.setState(State.initing)
         self.emittedStopForChildren = False # Set to True if we have already emitted the stop clls to the children
@@ -594,7 +598,7 @@ class ParDelegate(TimeElementDelegate):
         # xxxjack: should we go to inited if we have no children?
         
     def startTimelineElement(self):
-        self.assertState('startTimelineElement()', State.inited)
+        self.assertState('ParDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         for child in self.elt: 
@@ -717,7 +721,7 @@ class SeqDelegate(TimeElementDelegate):
             self.setState(State.idle)
             
     def initTimelineElement(self):
-        self.assertState('initTimelineElement()', State.idle)
+        self.assertState('SeqDelegate.initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         self.setState(State.initing)
         if not len(self.elt):
@@ -727,7 +731,7 @@ class SeqDelegate(TimeElementDelegate):
         self.document.schedule(self.elt[0].delegate.initTimelineElement)
         
     def startTimelineElement(self):
-        self.assertState('startTimelineElement()', State.inited)
+        self.assertState('SeqDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         if not len(self.elt):
@@ -819,7 +823,7 @@ class RefDelegate(TimeElementDelegate):
         TimeElementDelegate.initTimelineElement(self)
 
     def startTimelineElement(self):
-        self.assertState('startTimelineElement()', State.inited)
+        self.assertState('RefDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
@@ -908,7 +912,7 @@ class ConditionalDelegate(SingleChildDelegate):
         }
 
     def startTimelineElement(self):
-        self.assertState('startTimelineElement()', State.inited)
+        self.assertState('ConditionalDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.document.report(logging.DEBUG, 'COND', True, self.document.getXPath(self.elt), extra=self.getLogExtra())
@@ -923,7 +927,7 @@ class SleepDelegate(TimeElementDelegate):
     DEFAULT_PRIO="high"
     
     def startTimelineElement(self):
-        self.assertState('startTimelineElement()', State.inited)
+        self.assertState('SleepDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         self.setState(State.started)
@@ -971,7 +975,7 @@ class WaitDelegate(TimeElementDelegate):
     DEFAULT_PRIO="high"
             
     def startTimelineElement(self):
-        self.assertState('startTimelineElement()', State.inited)
+        self.assertState('WaitDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
         eventId = self.elt.get(NS_TIMELINE("event"))
