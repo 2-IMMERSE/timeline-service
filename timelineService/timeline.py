@@ -413,7 +413,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         self.scheduleAction("init", config=config, parameters=parameters)
 
     def startTimelineElement(self):
-        self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.inited)
+        self.assertState('ProxyDMAppComponent.startTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
         self.scheduleAction("start")
 
@@ -502,7 +502,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
 
     def startTimelineElement(self):
-        self.assertState('UpdateComponent.initTimelineElement()', document.State.inited)
+        self.assertState('UpdateComponent.startTimelineElement()', document.State.inited)
         document.TimelineDelegate.startTimelineElement(self)
         parameters = self._getParameters()
         if self.targetXPath:
