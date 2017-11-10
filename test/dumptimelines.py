@@ -33,7 +33,7 @@ def main():
             print >>sys.stderr, "%s: Use --document only for single context"
             sys.exit(1)
         dump = restGet(tsUrl + '/context/' + contextIds[0] + '/dump')
-        print dump['document']
+        print dump['document'].encode('utf-8')
         sys.exit(0)
     print 'Number of contextts active:', len(contextIds)
     for c in contextIds:
