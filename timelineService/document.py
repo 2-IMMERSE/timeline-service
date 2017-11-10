@@ -389,7 +389,7 @@ class SingleChildDelegate(TimelineDelegate):
             else:
                 assert childState == State.starting
                 return
-        if self.state == State.started:
+        if self.state in {State.started, State.finished}:
             if child.delegate.state in State.NOT_DONE:
                 return
             self.setState(State.finished)
@@ -422,6 +422,8 @@ class SingleChildDelegate(TimelineDelegate):
         waitNeeded = False
         if self.elt[0].delegate.state in State.STOP_NEEDED:
             self.document.schedule(self.elt[0].delegate.stopTimelineElement)
+            waitNeeded = True
+        if self.elt[0].delegate.state == State.stopping:
             waitNeeded = True
         if not waitNeeded:
             self.setState(State.idle)
@@ -608,6 +610,8 @@ class ParDelegate(TimeElementDelegate):
             if child.delegate.state in State.STOP_NEEDED:
                 self.document.schedule(child.delegate.stopTimelineElement)
                 waitNeeded = True
+            if child.delegate.state == State.stopping:
+                waitNeeded = True
         if not waitNeeded:
             self.setState(State.idle)
 
@@ -742,6 +746,8 @@ class SeqDelegate(TimeElementDelegate):
             if ch.delegate.state in State.STOP_NEEDED:
                 self.document.schedule(ch.delegate.stopTimelineElement)
                 waitNeeded = True
+            if ch.delegate.state == State.stopping:
+                waitNeeded = True
         if not waitNeeded:
             self.setState(State.idle)
 
@@ -752,6 +758,58 @@ class SeqDelegate(TimeElementDelegate):
             foundCurrent = (ch == self._currentChild)
         return None
     
+class RepeatDelegate(SingleChildDelegate):
+    """<tl:repeat> element. Runs it child if the condition is true."""
+    
+    ALLOWED_ATTRIBUTES = {
+        NS_TIMELINE("count")
+        }
+
+    def reportChildState(self, child, childState):
+        #
+        # We only need to handle special cases while we are started.
+        #
+        if self.state != State.started:
+            SingleChildDelegate.reportChildState(self, child, childState)
+            return
+        if childState == State.initing:
+            return
+        if childState == State.inited:
+            # Another run of the child. Start it.
+            self.document.schedule(self.elt[0].delegate.startTimelineElement)
+            return
+        if childState == State.starting:
+            return
+        if childState == State.started:
+            return
+        if childState == State.finished:
+            # Child has finished its normal run. Stop it.
+            self.document.schedule(child.delegate.stopTimelineElement)
+            return
+        if childState == State.stopping:
+            return
+        if childState == State.idle:
+            # Child stop has completed.
+            # See whether we need another run:
+            remainingCount = self.elt.get(NS_TIMELINE("count"), "indefinite")
+            if remainingCount != "indefinite":
+                remainingCount = str(int(remainingCount)-1)
+                self.elt.set(NS_TIMELINE("count"), remainingCount)
+            if remainingCount == "indefinite" or int(remainingCount) > 0:
+                # More repeats to do. Restart child.
+                self.document.schedule(self.elt[0].delegate.initTimelineElement)
+            else:
+                self.setState(State.finished)
+            return
+        assert 0
+                    
+    def startTimelineElement(self):
+        remainingCount = self.elt.get(NS_TIMELINE("count"), "indefinite")
+        if remainingCount == "indefinite" or int(remainingCount) > 0:
+            SingleChildDelegate.startTimelineElement(self)
+        else:
+            self.setState(State.finished)
+            
 class RefDelegate(TimeElementDelegate):
     """<tl:ref> element. Handles actual media playback. Usually subclassed to actually do something."""
     
@@ -937,6 +995,7 @@ DELEGATE_CLASSES = {
     NS_TIMELINE("document") : DocumentDelegate,
     NS_TIMELINE("par") : ParDelegate,
     NS_TIMELINE("seq") : SeqDelegate,
+    NS_TIMELINE("repeat") : RepeatDelegate,
     NS_TIMELINE("ref") : RefDelegate,
     NS_TIMELINE("conditional") : ConditionalDelegate,
     NS_TIMELINE("sleep") : SleepDelegate,
@@ -947,6 +1006,7 @@ DELEGATE_CLASSES_FASTFORWARD = {
     NS_TIMELINE("document") : DocumentDelegate,
     NS_TIMELINE("par") : ParDelegate,
     NS_TIMELINE("seq") : SeqDelegate,
+    NS_TIMELINE("repeat") : RepeatDelegate,
     NS_TIMELINE("ref") : TimeElementDelegate,
     NS_TIMELINE("conditional") : ConditionalDelegate, # xxxjack should return True depending on tree position?
     NS_TIMELINE("sleep") : SleepDelegate,

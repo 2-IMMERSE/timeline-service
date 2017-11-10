@@ -56,6 +56,7 @@ class BaseTimeline:
         self.dmappComponents = {}
         self.clockService = clocks.PausableClock(clocks.SystemClock())
         self.documentClock = clocks.CallbackPausableClock(self.clockService)
+        self.documentClock.start()
         self.documentClock.setQueueChangedCallback(self._updateTimeline)
         self.document = document.Document(self.documentClock, idAttribute=document.NS_XML("id"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
@@ -82,7 +83,8 @@ class BaseTimeline:
             contextId=self.contextId,
             creationTime=self.creationTime,
             currentPresentationTime=self.clockService.now(),
-            waitingEvents=self.clockService.dumps(),
+            currentDocumentTime=self.documentClock.now(),
+            waitingEvents=self.documentClock.dumps(),
             timelineDocUrl=self.timelineDocUrl,
             dmappTimeline=self.dmappTimeline,
             dmappId=self.dmappId,
@@ -177,6 +179,7 @@ class BaseTimeline:
                 self.document.report(logging.INFO, 'CLOCK', 'stop', self.clockService.now())
                 self.clockService.stop()
         self.document.clockChanged()
+        self.logger.debug("Timeline(%s): after clockChanged clockService=%f, document=%f", self.contextId, self.clockService.now(), self.documentClock.now())
         self._updateTimeline()
         return None
 
@@ -519,7 +522,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
         for cid in componentIds:
-            self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId"), *extraLogArgs, extra=self.getLogExtra())
+            self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
             self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters, constraintId=self.elt.get(document.NS_2IMMERSE("constraintId")))
 
 
