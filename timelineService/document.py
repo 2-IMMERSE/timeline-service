@@ -1667,7 +1667,7 @@ def main():
         timelineDoc = urllib2.urlopen(layout)
         timelineData = json.load(timelineDoc)
         # Get all componentIds mentioned in the constraints
-        layoutComponentIds = map((lambda constraint: constraint['componentId']), timelineData['constraints'])
+        layoutComponentIds = map((lambda constraint: constraint['constraintId']), timelineData['constraints'])
         # Store a set of these into the ref-checker class
         RefDelegate2Immerse.allowedIds = set(layoutComponentIds)
         UpdateDelegate2Immerse.allowedIds = set(layoutComponentIds)

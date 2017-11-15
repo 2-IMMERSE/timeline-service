@@ -6,6 +6,7 @@ import urllib
 #
 REQUIRED_TIC_ATTRIBUTES={
     "video" : ["mediaUrl"],
+    "audio" : ["mediaUrl"],
     "scroll-text" : [],
     "timed-text" : [],
     "title-card" : [],
@@ -21,10 +22,29 @@ REQUIRED_TIC_ATTRIBUTES={
     "FallbackClock" : [],
     "AdobeAnimationDMAppComponent" : ["mediaUrl", "animProp"],
     "PostTimelineEventButtonComponent" : ["text", "eventId"],
+
+    "MotoGpSpooler" : [],
+    "MotoGpPictureInPicture" : ["spoolerComponent"],
+    "HtmlSnippetDMAppComponent" : ["html"],
+    "MotoGpLeaderboard" : ["spoolerComponent"],
+    "MotoGpLapsRemaining" : ["spoolerComponent"],
+    "MotoGPInfoEndResultDMAppComponent" : ["spoolerComponent"],
+    "MotoGPBattleForDMAppComponent" : ["spoolerComponent"],
+    "MotoGPBattleForMultiDMAppComponent" : ["spoolerComponent"],
+    "MotoGPLeadingGroupDMAppComponent" : ["spoolerComponent"],
+    "MotoGPFastestLapDMAppComponent" : ["spoolerComponent", "num"],
+    "MotoGPInfoOnboardDMAppComponent" : ["spoolerComponent"],
+    "MotoGPInfoRiderDMAppComponent" : ["spoolerComponent"],
+    "GoogleAnalyticsDMAppComponent" : [],
+    "MotoGpCompanionControlPanel" : ["spoolerComponent"],
+    "MotoGpCompanionPanelSwitcher" : [],
+    "MotoGpCompanionTopBar" : ["spoolerComponent"],
+    "MotoGpCompanionStats" : ["spoolerComponent"],
     }
 
 ALLOWED_TIC_ATTRIBUTES={
-    "video" : ["mediaUrl", "offset", "startMediaTime", "syncMode", "showControls"],
+    "video" : ["mediaUrl", "auxMediaUrl", "muted", "offset", "startMediaTime", "syncMode", "showControls", "__elementClass", "__writeTimingSignal", "selfDestructOnMediaEnd"],
+    "audio" : ["mediaUrl", "auxMediaUrl", "offset", "startMediaTime", "syncMode", "volumeSignal"],
     "scroll-text" : ["scriptUrl", "clipMapUrl", "clipId", "offset"],
     "timed-text" : [],
     "title-card" : ["title", "author", "synopsis", "brandImageUrl", "brand", "posterUrl"],
@@ -38,8 +58,29 @@ ALLOWED_TIC_ATTRIBUTES={
     "video-chat-controls" : ["groupStateId"],
     "component-switcher" : ["articlegroupid", "imagegroupid", "videogroupid"],
     "FallbackClock" : ["syncMode", "offset", "startMediaTime"],
-    "AdobeAnimationDMAppComponent" : ["mediaUrl", "animProp"],
+    "AdobeAnimationDMAppComponent" : ["mediaUrl", "animProp", "reportAnimDuration", "onRunning", "__notRunnableBeforeTime"],
     "PostTimelineEventButtonComponent" : ["text", "eventId"],
+    
+    "MotoGpSpooler" : ["xmlManifestDir", "dataOffsetMs"],
+    "MotoGpPictureInPicture" : ["localConfig", "localModeConfig", "spoolerComponent"],
+    "HtmlSnippetDMAppComponent" : ["html", "className"],
+    "MotoGpLeaderboard" : ["localModeConfig", "spoolerComponent"],
+    "MotoGpLapsRemaining" : ["spoolerComponent"],
+    "MotoGPInfoEndResultDMAppComponent" : ["spoolerComponent"],
+    "MotoGPBattleForDMAppComponent" : ["spoolerComponent", "number"],
+    "MotoGPBattleForMultiDMAppComponent" : ["spoolerComponent", "showTires", "riders", "pos"],
+    "MotoGPLeadingGroupDMAppComponent" : ["spoolerComponent"],
+    "MotoGPFastestLapDMAppComponent" : ["spoolerComponent", "num"],
+    "MotoGPInfoOnboardDMAppComponent" : ["spoolerComponent", "num"],
+    "MotoGPInfoRiderDMAppComponent" : ["spoolerComponent", "num"],
+    "GoogleAnalyticsDMAppComponent" : [],
+    
+    "MotoGpCompanionControlPanel" : ["spoolerComponent", "eventsOffset", "eventsUrl", "localPipConfig", "localTyreConfig", "localTyreConfig"],
+    "MotoGpCompanionPanelSwitcher" : [],
+    "MotoGpCompanionTopBar" : ["spoolerComponent", "localPipConfig"],
+    "MotoGpCompanionStats" : ["spoolerComponent"],
+    
+    
     }
 
 def checkAttributes(self):
@@ -49,7 +90,7 @@ def checkAttributes(self):
     if not NS_XML("id") in self.elt.keys():
         print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected xml:id attribute"
     if not NS_2IMMERSE("url") in self.elt.keys():
-        if className != "video":   # Video is the only one that doesn't need a tim:url
+        if className not in ("video", "audio"):   # Video is the only one that doesn't need a tim:url
             print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:url attribute"
     else:
         url = self.elt.get(NS_2IMMERSE("url"))
