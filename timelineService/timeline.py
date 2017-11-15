@@ -521,8 +521,14 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
+        newConstraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
         for cid in componentIds:
-            self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
-            self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters, constraintId=self.elt.get(document.NS_2IMMERSE("constraintId")))
+            if newConstraintId:
+                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, 'constraintId=%s' % newConstraintId, *extraLogArgs, extra=self.getLogExtra())
+                self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters, constraintId=newConstraintId)
+            else:
+                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, *extraLogArgs, extra=self.getLogExtra())
+                self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters)
+
 
 
