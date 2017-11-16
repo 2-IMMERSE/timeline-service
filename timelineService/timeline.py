@@ -309,8 +309,6 @@ class ProxyLayoutService:
         return self.contactInfo + '/context/' + self.contextId + '/dmapp/' + self.dmappId
 
     def scheduleAction(self, timestamp, componentId, verb, config=None, parameters=None, constraintId=None):
-        if not constraintId:
-            constraintId = componentId
         componentData = dict(componentId=componentId)
         if constraintId:
             componentData['constraintId'] = constraintId
@@ -367,7 +365,10 @@ class ProxyMixin:
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
         self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
-        self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters, constraintId=self.elt.get(document.NS_2IMMERSE("constraintId")))
+        constraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
+        if not constraintId:
+            constraintId = self.componentId
+        self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters, constraintId=constraintId)
 
     def _getParameters(self):
         rv = {}
