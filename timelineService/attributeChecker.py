@@ -68,7 +68,7 @@ ALLOWED_TIC_ATTRIBUTES={
     "MotoGpLapsRemaining" : ["spoolerComponent"],
     "MotoGPInfoEndResultDMAppComponent" : ["spoolerComponent"],
     "MotoGPBattleForDMAppComponent" : ["spoolerComponent", "number"],
-    "MotoGPBattleForMultiDMAppComponent" : ["spoolerComponent", "showTires", "riders", "pos"],
+    "MotoGPBattleForMultiDMAppComponent" : ["spoolerComponent", "showTyres", "riders", "pos"],
     "MotoGPLeadingGroupDMAppComponent" : ["spoolerComponent"],
     "MotoGPFastestLapDMAppComponent" : ["spoolerComponent", "num"],
     "MotoGPInfoOnboardDMAppComponent" : ["spoolerComponent", "num"],

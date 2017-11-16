@@ -866,19 +866,20 @@ class RefDelegate(TimeElementDelegate):
         
 class RefDelegate2Immerse(RefDelegate):
     """2-Immerse specific RefDelegate that checks the attributes"""
-    allowedIds = None # May be set by main program to enable checking that all refs have a layout
+    allowedConstraints = None # May be set by main program to enable checking that all refs have a layout
     
     def checkAttributes(self):
         RefDelegate.checkAttributes(self)
         attributeChecker.checkAttributes(self)
-        if self.allowedIds != None:
-            uniqId = self.getId()
-            if uniqId and not uniqId in self.allowedIds:
-                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has xml:id="'+uniqId+'" but this does not exist in the layout document'
+        if self.allowedConstraints != None:
+            constraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
+            if not constraintId:
+                constraintId = self.getId()
+            if constraintId and constraintId not in self.allowedConstraints:
+                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:constraintId (or xml:id)="'+constraintId+'" but this does not exist in the layout document'
         
 class UpdateDelegate2Immerse(TimelineDelegate):
     """2-Immerse specific delegate for tim:update that checks the attributes and reports actions"""
-    allowedIds = None # May be set by main program to enable checking that all refs have a layout
     
     def __init__(self, elt, document, clock):
         TimelineDelegate.__init__(self, elt, document, clock)
@@ -888,7 +889,8 @@ class UpdateDelegate2Immerse(TimelineDelegate):
         #attributeChecker.checkAttributes(self)
         uniqId = self.elt.get(NS_2IMMERSE("target"))
         if not uniqId:
-            print >> sys.stderr, "* element", self.getXPath(), 'misses required tim:target attribute'
+            if not self.elt.get(NS_2IMMERSE("targetXPath")):
+                print >> sys.stderr, "* element", self.getXPath(), 'misses required tim:target attribute'
         if uniqId and not uniqId in self.document.idMap:
             print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:target="'+uniqId+'" but this xml:id does not exist in the document'
                 
@@ -1669,8 +1671,7 @@ def main():
         # Get all componentIds mentioned in the constraints
         layoutComponentIds = map((lambda constraint: constraint['constraintId']), timelineData['constraints'])
         # Store a set of these into the ref-checker class
-        RefDelegate2Immerse.allowedIds = set(layoutComponentIds)
-        UpdateDelegate2Immerse.allowedIds = set(layoutComponentIds)
+        RefDelegate2Immerse.constraintIds = set(layoutComponentIds)
     if not args.realtime:
         clock = clocks.CallbackPausableClock(clocks.FastClock())
     else:
