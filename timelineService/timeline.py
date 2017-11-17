@@ -526,10 +526,10 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                 targetElt = self.document.getElementById(self.componentId)
                 if targetElt != None:
                     for attrName, attrValue in parameters.items():
-                        origAttrValue = targetElt.get(NS_2IMMERSE_COMPONENT(attrName))
+                        origAttrValue = targetElt.get(document.NS_2IMMERSE_COMPONENT(attrName))
                         if origAttrValue:
                             attrValue = origAttrValue + ',' + attrValue
-                        targetElt.set(NS_2IMMERSE_COMPONENT(attrName), attrValue)
+                        targetElt.set(document.NS_2IMMERSE_COMPONENT(attrName), attrValue)
                         parameters[attrName] = attrValue
                 else:
                     self.logger.error('tim:update: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
