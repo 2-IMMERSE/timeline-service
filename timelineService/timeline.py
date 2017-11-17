@@ -524,13 +524,14 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                 # and recorded in the document.
                 # xxxjack should this recording always be done???
                 targetElt = self.document.getElementById(self.componentId)
+                print 'xxxjack tl:update componentId', self.componentId, 'targetElt', targetElt
                 if targetElt:
-                    for attrName, attrValue in parameters:
-                        origAttrValue = targetElt.get(attrName)
+                    for attrName, attrValue in parameters.items():
+                        origAttrValue = targetElt.get(NS_2IMMERSE_COMPONENT(attrName))
                         if origAttrValue:
                             attrValue = origAttrValue + ',' + attrValue
                         self.logger.debug("xxxjack targetElt %s attrName %s origValue %s value %s" % (self.componentId, attrName, origAttrValue, attrValue), extra=self.getLogExtra())
-                        targetElt.set(attrName, attrValue)
+                        targetElt.set(NS_2IMMERSE_COMPONENT(attrName), attrValue)
                         parameters[attrName] = attrValue
                 else:
                     self.logger.error('tim:update: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
