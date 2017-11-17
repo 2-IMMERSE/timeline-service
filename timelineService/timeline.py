@@ -501,6 +501,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         componentId = self.elt.get(document.NS_2IMMERSE("target"))
         self.targetXPath = self.elt.get(document.NS_2IMMERSE("targetXPath"))
         self.append = not not self.elt.get(document.NS_2IMMERSE("append"))
+        self.logger
         if self.targetXPath and self.append:
             self.logger.error('%s uses both tim:targetXPath and tim:append which is not implemented' % self.document.getXPath(self.elt), extra=self.getLogExtra())
         ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
@@ -528,8 +529,10 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                         origAttrValue = targetElt.get(attrName)
                         if origAttrValue:
                             attrValue = origAttrValue + ',' + attrValue
-                            targetElt.set(attrName, attrValue)
-                            parameters[attrName] = attrValue
+                        targetElt.set(attrName, attrValue)
+                        parameters[attrName] = attrValue
+                else:
+                    self.logger.error('tim:update: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
             self.scheduleAction("update", parameters=parameters)
         
     def scheduleActionMulti(self, verb, componentIds, config=None, parameters=None):
