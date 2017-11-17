@@ -519,20 +519,20 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                     componentIds.append(elt.delegate.getId())
             self.scheduleActionMulti("update", componentIds, parameters=parameters)
         else:
-            if self.append:
-                # New value should be appended (comma-separated) to current value
-                # and recorded in the document.
-                # xxxjack should this recording always be done???
-                targetElt = self.document.getElementById(self.componentId)
-                if targetElt != None:
-                    for attrName, attrValue in parameters.items():
+            # xxxjack should this recording always be done???
+            targetElt = self.document.getElementById(self.componentId)
+            if targetElt != None:
+                for attrName, attrValue in parameters.items():
+                    if self.append:
+                        # New value should be appended (comma-separated) to current value
+                        # and recorded in the document.
                         origAttrValue = targetElt.get(document.NS_2IMMERSE_COMPONENT(attrName))
                         if origAttrValue:
                             attrValue = origAttrValue + ',' + attrValue
-                        targetElt.set(document.NS_2IMMERSE_COMPONENT(attrName), attrValue)
-                        parameters[attrName] = attrValue
-                else:
-                    self.logger.error('tim:update: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
+                    targetElt.set(document.NS_2IMMERSE_COMPONENT(attrName), attrValue)
+                    parameters[attrName] = attrValue
+            else:
+                self.logger.error('tim:update: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
             self.scheduleAction("update", parameters=parameters)
         
     def scheduleActionMulti(self, verb, componentIds, config=None, parameters=None):
