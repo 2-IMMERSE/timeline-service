@@ -529,6 +529,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                         origAttrValue = targetElt.get(attrName)
                         if origAttrValue:
                             attrValue = origAttrValue + ',' + attrValue
+                        self.logger.debug("xxxjack targetElt %s attrName %s origValue %s value %s" % (self.componentId, attrName, origAttrValue, attrValue), extra=self.getLogExtra())
                         targetElt.set(attrName, attrValue)
                         parameters[attrName] = attrValue
                 else:
