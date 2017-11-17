@@ -1521,6 +1521,9 @@ class Document(DocumentModificationMixin):
         element = positions[0]
         return element
         
+    def getElementById(self, id):
+        return self.idMap.get(id)
+        
     def dump(self, fp):
         if self.root is None:
             return

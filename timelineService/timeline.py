@@ -500,6 +500,9 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         document.TimelineDelegate.__init__(self, elt, doc, clock)
         componentId = self.elt.get(document.NS_2IMMERSE("target"))
         self.targetXPath = self.elt.get(document.NS_2IMMERSE("targetXPath"))
+        self.append = not not self.elt.get(document.NS_2IMMERSE("append"))
+        if self.targetXPath and self.append:
+            self.logger.error('%s uses both tim:targetXPath and tim:append which is not implemented' % self.document.getXPath(self.elt), extra=self.getLogExtra())
         ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
 
     def startTimelineElement(self):
@@ -515,6 +518,18 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                     componentIds.append(elt.delegate.getId())
             self.scheduleActionMulti("update", componentIds, parameters=parameters)
         else:
+            if self.append:
+                # New value should be appended (comma-separated) to current value
+                # and recorded in the document.
+                # xxxjack should this recording always be done???
+                targetElt = self.document.getElementById(self.componentId)
+                if targetElt:
+                    for attrName, attrValue in parameters:
+                        origAttrValue = targetElt.get(attrName)
+                        if origAttrValue:
+                            attrValue = origAttrValue + ',' + attrValue
+                            targetElt.set(attrName, attrValue)
+                            parameters[attrName] = attrValue
             self.scheduleAction("update", parameters=parameters)
         
     def scheduleActionMulti(self, verb, componentIds, config=None, parameters=None):
