@@ -435,51 +435,46 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
             durargs = ('duration=%s' % duration,)
             
         self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt), duration, *durargs, extra=self.getLogExtra())
-        # XXXJACK quick stopgap until I implement duration
-        if state == document.State.started and (duration != None or fromLayout):
-            self._scheduleFinished(duration)
+
         #
         # Sanity check for state change report
         #
         if state == document.State.inited:
             if self.state == document.State.initing:
-                pass # This is the expected transition
+                self.setState(state) # This is the expected transition
             elif self.state in {document.State.inited, document.State.starting, document.State.started, document.State.finished, document.State.stopping}:
-                return # This is a second inited, probably because the layout service decided to place the dmappc on an appeared handheld
+                pass # This is a second inited, probably because the layout service decided to place the dmappc on an appeared handheld
             elif self.state == document.State.idle:
                 self.logger.error('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 self.scheduleAction('destroy')
-                return
             else:
                 self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-                return
         elif state == document.State.started:
             if self.state == document.State.starting:
-                pass # This is the expected transition
+                self.setState(state) # This is the expected transition
             elif self.state == document.State.finished and duration != 0 and duration != None:
                 self.document.report(logging.INFO, 'REVIVE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
                 self.setState(state)
-                return
             elif self.state in {document.State.started, document.State.stopping}:
-                return # This is a second started, probably because the layout service decided to place the dmappc on an appeared handheld
+                pass # This is a second started, probably because the layout service decided to place the dmappc on an appeared handheld
             elif self.state == document.State.idle:
                 self.logger.error('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 self.scheduleAction('destroy')
-                return
             else:
                 self.logger.error('Ignoring unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-                return
         elif state == document.State.idle:
-            pass # idle is always allowed
+            self.setState(state) # idle is always allowed
         elif state == "destroyed":
             # destroyed is translated into idle, unless we're in idle already
-            if self.state == document.State.idle:
-                return
-            state = document.State.idle
+            if self.state != document.State.idle:
+                state = document.State.idle
+                self.setState(state)
         else:
             self.logger.error('Unknown "%s" state update for node %s (in state %s), ignoring' %( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-            return
-        self.setState(state)
+
+        # XXXJACK quick stopgap until I implement duration
+        if state == document.State.started and (duration != None or fromLayout):
+            self._scheduleFinished(duration)
 
     def _scheduleFinished(self, dur):
         if not dur: 
