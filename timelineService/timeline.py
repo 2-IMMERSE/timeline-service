@@ -317,13 +317,15 @@ class ProxyLayoutService:
             action["config"] = config
         if parameters:
             action["parameters"] = parameters
-        if self.actionsTimestamp and self.actionsTimestamp != timestamp:
-            # Different timestamp, output the old ones first. Note this
+        currentActionTimestamp = self.actionsTimestamp
+        if currentActionTimestamp and abs(currentActionTimestamp - timestamp) >= 0.1:
+            # Timestamp differs by >= 100ms, output the old ones first. Note this
             # looks thread-unsafe but isn't, because at worst forwardActions will be
             # called for nothing.
             self.forwardActions()
         with self.actionsLock:
-            self.actionsTimestamp = timestamp
+            if not self.actionsTimestamp
+                self.actionsTimestamp = timestamp
             self.actions.append(action)
 
     def forwardActions(self):
