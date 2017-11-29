@@ -324,7 +324,7 @@ class ProxyLayoutService:
             # called for nothing.
             self.forwardActions()
         with self.actionsLock:
-            if not self.actionsTimestamp
+            if not self.actionsTimestamp:
                 self.actionsTimestamp = timestamp
             self.actions.append(action)
 
