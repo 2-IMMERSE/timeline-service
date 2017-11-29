@@ -456,7 +456,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         elif state == document.State.started:
             if self.state == document.State.starting:
                 pass # This is the expected transition
-            elif self.state == document.State.finished and duration != 0:
+            elif self.state == document.State.finished and duration != 0 and duration != None:
                 self.document.report(logging.INFO, 'REVIVE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
                 self.setState(state)
                 return
