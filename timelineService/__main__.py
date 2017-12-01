@@ -86,7 +86,10 @@ class timelineServerServer:
 
     def POST(self):
         args = web.input()
-        rv = timeline.Timeline.createTimeline(timelineServiceUrl=web.ctx.homedomain, **args)
+
+        timelineServiceUrl = web.ctx.env.get("wsgi.url_scheme", "http") + "://" + web.ctx.env.get("HTTP_HOST")
+        rv = timeline.Timeline.createTimeline(timelineServiceUrl=timelineServiceUrl, **args)
+
         if rv == None or rv == '':
             web.ctx.status = '204 No Content'
             return ''
