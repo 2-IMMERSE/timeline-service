@@ -212,10 +212,14 @@ class BaseTimeline:
     def _registerForChanges(self):
         if not self.timelineServiceUrl:
             return
+
         myTimelineUrl = self.timelineServiceUrl + '/timeline/v1/context/' + self.contextId + '/updateDocument'
         params = dict(url=myTimelineUrl, contextID=self.contextId)
         u = urlparse.urljoin(self.timelineDocUrl, 'addcallback')
         r = requests.post(u, params=params)
+
+        self.logger.debug("Registering callback using URL %s" % self.timelineServiceUrl)
+
         if r.status_code == requests.codes.ok:
             self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
             
