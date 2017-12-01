@@ -218,7 +218,7 @@ class BaseTimeline:
         u = urlparse.urljoin(self.timelineDocUrl, 'addcallback')
         r = requests.post(u, params=params)
 
-        self.logger.debug("Registering callback using URL %s" % self.timelineServiceUrl)
+        self.logger.info("Registering callback using URL %s" % self.timelineServiceUrl)
 
         if r.status_code == requests.codes.ok:
             self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
