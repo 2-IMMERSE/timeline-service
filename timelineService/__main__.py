@@ -7,6 +7,7 @@ import json
 import argparse
 import logging
 import traceback
+import os
 
 # Make stdout unbuffered
 class Unbuffered(object):
@@ -87,7 +88,12 @@ class timelineServerServer:
     def POST(self):
         args = web.input()
 
-        timelineServiceUrl = web.ctx.env.get("wsgi.url_scheme", "http") + "://" + web.ctx.env.get("HTTP_HOST")
+        # XXX Ugly hack because I don't know what else to do
+        timelineServiceUrl = os.getenv("TIMELINE_SERVICE_URL")
+
+        if timelineServiceUrl is None:
+            timelineServiceUrl = web.ctx.env.get("wsgi.url_scheme", "http") + "://" + web.ctx.env.get("HTTP_HOST")
+
         rv = timeline.Timeline.createTimeline(timelineServiceUrl=timelineServiceUrl, **args)
 
         if rv == None or rv == '':
