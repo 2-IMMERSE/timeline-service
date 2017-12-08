@@ -5,7 +5,9 @@ import time
 import argparse
 import sys
 
-TSURL="https://timeline-service-edge.platform.2immerse.eu/timeline/v1"
+TSURL="https://timeline-service.platform.2immerse.eu/timeline/v1"
+TSURL_EDGE="https://timeline-service.edge.platform.2immerse.eu/timeline/v1"
+TSURL_TEST="https://timeline-service.test.platform.2immerse.eu/timeline/v1"
 
 def restGet(url):
     f = urllib.urlopen(url)
@@ -15,6 +17,8 @@ def restGet(url):
 def main():
     parser = argparse.ArgumentParser(description="Dump 2immerse timeline service status")
     parser.add_argument("--timelineServer", "-s", metavar="URL", help="Specify timeline service URL (default: %s)" % TSURL, default=TSURL)
+    parser.add_argument("--edge", action="store_true", help="Use edge timeline service")
+    parser.add_argument("--test", action="store_true", help="Use test timeline service")
     parser.add_argument("--document", "-d", action="store_true", help="Only retrieve current document for single context")
     parser.add_argument("--nodocument", "-D", action="store_true", help="Don't show document")
     parser.add_argument("context", nargs="*", help="Context to dump (default: all)")
@@ -22,6 +26,10 @@ def main():
     args = parser.parse_args()
     
     tsUrl = args.timelineServer
+    if args.edge:
+        tsUrl = TSURL_EDGE
+    if args.test:
+        tsUrl = TSURL_TEST
     
     if args.context:
         contextIds = args.context
