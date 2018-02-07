@@ -162,6 +162,16 @@ class timelineServer:
         if not verb:
             return web.badrequest()
         args = web.input()
+        data = web.data()
+        if data:
+            args2 = json.loads(data)
+            if type(args2) == type('') or type(args2) == type(u''):
+                # xxxjack Bug workaround, 21-Dec-2016
+                args2 = json.loads(args2)
+            # Sometimes it is an object, sometimes it is something else (like an array)
+            if type(args2) != type({}):
+                args2 = {'postData' : args2}
+            args.update(args2)
         tl = timeline.Timeline.get(contextId)
         if not tl:
             return web.notfound("404 No such context: %s" % contextId)
@@ -216,6 +226,7 @@ def main():
     rootLogger = logging.getLogger()
     rootLogger.handlers[0].setFormatter(MyFormatter())
 
+    rootLogger.log(logging.WARN, "xxxjack my temp number two")
     if True:
         # Temporary measure: the origin server certificate is untrusted on our docker containers.
         rootLogger.log(logging.WARN, "https verification disabled for now (Nov 2016)")

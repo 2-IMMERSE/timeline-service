@@ -28,6 +28,34 @@ schemas:
       },
       "required": ["status"]
     }
+  ComponentStatusList: |
+    {
+      "title": "ComponentStatusList",
+      "type" : "array",
+      "items" : {
+		  "type": "object",
+		  "properties":{
+			"componentId" : {
+			  "type": "string",
+			  "description": "to which component this record pertains"
+			},
+			"status" : {
+			  "type": "string",
+			  "description": "Current component execution state, as per timeline service documentation"
+			},
+			"fromLayout" : {
+			  "type": "boolean",
+			  "default" : false,
+			  "description": "True if this status update was invented by the layout service"
+			},
+			"duration" : {
+			  "type": "number",
+			  "description": "Filled in by client if (and only if) it knows the intrinsic duration of the underlying media element"
+			}
+		  },
+		  "required": ["componentId", "status"]
+		}
+    }
   
 /context:
   post:
@@ -98,6 +126,26 @@ schemas:
                         "fromLayout" : false,
                         "duration" : 123.45
                     }
+        responses:
+          204:
+    /multiStatus:
+      post:
+        queryParameters:
+          dmappId:
+            description: The DMApp that the component belongs to
+            required: true
+        body:
+            application/json:
+                schema: ComponentStatusList
+                example: | 
+                	[
+						{
+							"componentId" : "video-1",
+							"status" : "started",
+							"fromLayout" : false,
+							"duration" : 123.45
+						}
+					]
         responses:
           204:
     /timelineEvent:

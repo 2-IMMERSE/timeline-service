@@ -138,14 +138,20 @@ class BaseTimeline:
         self.documentHasFinished = False
         return None
 
-    def dmappcStatus(self, dmappId, componentId, status, fromLayout=False, duration=None):
+    def dmappcStatus(self, componentId, status, dmappId=None, fromLayout=False, duration=None):
         self.logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout=%s, duration=%s)" % (self.contextId, dmappId, componentId, status, fromLayout, duration))
-        assert dmappId == self.dmappId
+        assert dmappId == None or dmappId == self.dmappId
         c = self.dmappComponents[componentId]
         c.statusReport(status, duration, fromLayout)
         self._updateTimeline()
         return None
 
+    def multiStatus(self, postData):
+        self.logger.debug("Timeline(%s): multiStatus([%d items])" % (self.contextId, len(postData)))
+        for statusData in postData:
+            self.dmappcStatus(**statusData)
+        return None
+        
     def timelineEvent(self, eventId):
         self.document.report(logging.INFO, 'EVENT', 'event', eventId)
         if '(' in eventId:
