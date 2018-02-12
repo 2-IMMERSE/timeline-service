@@ -130,10 +130,6 @@ schemas:
           204:
     /multiStatus:
       post:
-        queryParameters:
-          dmappId:
-            description: The DMApp that the component belongs to
-            required: true
         body:
             application/json:
                 schema: ComponentStatusList
