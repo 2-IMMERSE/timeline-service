@@ -105,6 +105,12 @@ class timelineServerServer:
 class timelineServer:
     """Per-timeline service. Need to work out which verbs allow get/put/post and how to encode that."""
 
+    def OPTIONS(self, *args):
+        web.ctx.headers.append(('Allow', 'GET,PUT,POST,DELETE'))
+        web.ctx.headers.append(('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'))
+        web.ctx.headers.append(('Access-Control-Allow-Origin', '*'))
+        return ''
+        
     def GET(self, contextId, verb=None):
         if not verb:
             return web.badrequest()
