@@ -72,6 +72,11 @@ urls = (
 
 app = web.application(urls, globals())
 
+def appendCorsHeaders():
+    web.ctx.headers.append(('Allow', 'GET,PUT,POST,DELETE'))
+    web.ctx.headers.append(('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'))
+    web.ctx.headers.append(('Access-Control-Allow-Origin', '*'))
+
 class timelineServerServer:
     """Toplevel REST interface: create new timeline servers and get the identity of existing ones"""
     # Note this is hack-y: post/get work with both /timelineServer and /timelineServer/createTimeline
@@ -82,10 +87,12 @@ class timelineServerServer:
         # HACK WARNING: GET with arguments is treated as POST
         if web.input():
             return self.POST()
+        appendCorsHeaders()
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
     def POST(self):
+        appendCorsHeaders()
         args = web.input()
 
         # XXX Ugly hack because I don't know what else to do
@@ -106,12 +113,11 @@ class timelineServer:
     """Per-timeline service. Need to work out which verbs allow get/put/post and how to encode that."""
 
     def OPTIONS(self, *args):
-        web.ctx.headers.append(('Allow', 'GET,PUT,POST,DELETE'))
-        web.ctx.headers.append(('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'))
-        web.ctx.headers.append(('Access-Control-Allow-Origin', '*'))
+        appendCorsHeaders()
         return ''
-        
+
     def GET(self, contextId, verb=None):
+        appendCorsHeaders()
         if not verb:
             return web.badrequest()
         args = web.input()
@@ -133,6 +139,7 @@ class timelineServer:
         return json.dumps(rv)
 
     def PUT(self, contextId, verb=None):
+        appendCorsHeaders()
         if not verb:
             return web.badrequest()
         args = dict(web.input())
@@ -165,6 +172,7 @@ class timelineServer:
         return json.dumps(rv)
 
     def POST(self, contextId, verb=None):
+        appendCorsHeaders()
         if not verb:
             return web.badrequest()
         args = web.input()
@@ -199,6 +207,7 @@ class timelineServer:
         return json.dumps(rv)
 
     def DELETE(self, contextId, verb=None):
+        appendCorsHeaders()
         args = web.input()
         if verb != None or args:
             return web.badrequest()
