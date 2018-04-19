@@ -482,8 +482,11 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         else:
             self.logger.error('Unknown "%s" state update for node %s (in state %s), ignoring' %( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
 
-        # XXXJACK quick stopgap until I implement duration
-        if state == document.State.started and (duration != None or fromLayout):
+        # Note: we used to call _scheduleFinished also when duration==None and fromLayout. But this had the effect that if the layout service
+        # decided to send a quick "fromlayout" update we might terminate the document before it got actually started.
+        # The current solution, not scheduling a synthesized finished, has the disadvantage that if there are no clients at all and they'll never appear
+        # either the whole context will sit waiting infinitely long.
+        if state == document.State.started and duration != None:
             self._scheduleFinished(duration)
 
     def _scheduleFinished(self, dur):
