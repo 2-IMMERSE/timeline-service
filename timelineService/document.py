@@ -316,7 +316,13 @@ class DummyDelegate:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
                 assert self.conformTargetDelegate.startTime != None
                 self.conformTargetDelegate.startTime += adjustment
-        
+            # We also move all finished lements back to started. They should re-finish if their
+            # natural duration has run out (because we will fast-forward them past their end)
+            # and this should cater for restarting things with unknown durations (and also their
+            # ancestors)
+            if self.conformTargetDelegate.state == State.finished:
+                self.conformTargetDelegate.state = State.started
+                
     def getStartTime(self):
         """Return the time at which this element should have started, or now."""
         # xxxjack this does not yet handle seeking during playback, for elements which only
