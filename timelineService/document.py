@@ -295,7 +295,7 @@ class DummyDelegate:
         if not startAllowed:
             return
         if self.conformTargetDelegate.state in {State.started, State.finished}:
-            self.startTimelineElement() # xxxjack need to pass time offset from conformTargetElement.startTime
+            self.startTimelineElement() # xxxjack need to pass time offset from conformTargetDelegate.startTime
         self.assertState("stepMoveStateToConform:start", State.MOVE_ALLOWED_START_STATES)
         
     def hasFinishedMoveStateToConform(self):
@@ -316,12 +316,6 @@ class DummyDelegate:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
                 assert self.conformTargetDelegate.startTime != None
                 self.conformTargetDelegate.startTime += adjustment
-            # We also move all finished lements back to started. They should re-finish if their
-            # natural duration has run out (because we will fast-forward them past their end)
-            # and this should cater for restarting things with unknown durations (and also their
-            # ancestors)
-            if self.conformTargetDelegate.state == State.finished:
-                self.conformTargetDelegate.state = State.started
                 
     def getStartTime(self):
         """Return the time at which this element should have started, or now."""
@@ -410,8 +404,6 @@ class SingleChildDelegate(TimelineDelegate):
                 return
             assert childState == State.stopping
             return
-        #import pdb ; pdb.set_trace()
-        #self.assertState('reportChildState()', 'no-state-would-be-correct')
 
     def initTimelineElement(self):
         self.assertState('SingleChildDelegate.initTimelineElement()', State.idle)
@@ -462,15 +454,40 @@ class TimeElementDelegate(TimelineDelegate):
         val = int(val)
         return val
 
-    def isCurrentTimingMaster(self):
+    def isCurrentTimingMaster(self, future=False):
         # xxxjack only correct for 2immerse....
-        if self.state != State.started:
+        if not future and self.state != State.started:
+            return False
+        if self.state not in {State.inited, State.starting, State.started}:
             return False
         syncMode = self.elt.get(NS_2IMMERSE_COMPONENT("syncMode"), "unspecified")
         if syncMode != "master":
             return False
         return True
         
+class FFWDTimeElementDelegate(TimeElementDelegate):
+    """Timed element (ref) fast-forward handling. All items finish directly, except timing masters"""
+    
+    def startTimelineElement(self):
+        """Called by parent or outer control to start the element"""
+        if not self.isCurrentTimingMaster(future=True):
+            return TimeElementDelegate.startTimelineElement(self)
+        print 'xxxjack FFWDTimeElementDelegate master', self.getXPath()
+        self.assertState('startTimelineElement()', State.inited)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
+        self.setState(State.started)
+        expectedDuration = float(self.elt.get(NS_TIMELINE_CHECK("dur"), 0))
+        if not expectedDuration:
+            self.logger.warn("%s: syncMode=master element without tlcheck:dur may cause dmapp to finish early" % self.getXPath())
+        self.clock.schedule(expectedDuration, self._done)
+               
+    def _done(self):
+        if self.state == State.started:
+            # Do nothing if we aren't in the started state anymore (probably because we've been stopped)
+            self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
+            self.setState(State.finished)
+            
+
 class ParDelegate(TimeElementDelegate):
     """<tl:par> element. Runs all its children in parallel."""
     
@@ -1019,7 +1036,7 @@ DELEGATE_CLASSES_FASTFORWARD = {
     NS_TIMELINE("par") : ParDelegate,
     NS_TIMELINE("seq") : SeqDelegate,
     NS_TIMELINE("repeat") : RepeatDelegate,
-    NS_TIMELINE("ref") : TimeElementDelegate,
+    NS_TIMELINE("ref") : FFWDTimeElementDelegate,
     NS_TIMELINE("conditional") : ConditionalDelegate, # xxxjack should return True depending on tree position?
     NS_TIMELINE("sleep") : SleepDelegate,
     NS_TIMELINE("wait") : DummyDelegate, # xxxjack This makes all events appear to happen instantaneous...
@@ -1159,6 +1176,7 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
         document.clock.start()
         
     def nudgeClock(self):
+        print 'xxxjack DocumentStateSeekTimeStart.nudgeClock()'
     	self.document.clock.sleepUntilNextEvent()
     	
     def stateFinished(self):
@@ -1171,7 +1189,23 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
 class DocumentStateSeekFinish(DocumentState):
     def __init__(self, document):
         DocumentState.__init__(self, document)
+        #
+        # Reset finished elements to started
+        #
+        for elt in document.tree.iter():
+            if elt.delegate.state in State.finished:
+                elt.delegate.state = State.started
+                        
         document.replaceDelegates(None)
+        #
+        # Bug fix: any par element that is started is moved back to starting
+        # xxxjack this is a hack, to forestall pars ending early because all the
+        # children are idle.
+        #
+        for elt in document.tree.iter():
+            if elt.delegate.__class__ == ParDelegate and elt.delegate.state == State.started:
+                elt.delegate.state = State.starting
+                elt.delegate.startTime = None
         #
         # Now re-execute all external inits and destroys.
         #
