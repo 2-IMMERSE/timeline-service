@@ -472,7 +472,6 @@ class FFWDTimeElementDelegate(TimeElementDelegate):
         """Called by parent or outer control to start the element"""
         if not self.isCurrentTimingMaster(future=True):
             return TimeElementDelegate.startTimelineElement(self)
-        print 'xxxjack FFWDTimeElementDelegate master', self.getXPath()
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.started)
@@ -1176,7 +1175,6 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
         document.clock.start()
         
     def nudgeClock(self):
-        print 'xxxjack DocumentStateSeekTimeStart.nudgeClock()'
     	self.document.clock.sleepUntilNextEvent()
     	
     def stateFinished(self):
@@ -1184,6 +1182,10 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
 
     def nextState(self):
         self.document.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.document.clock.now())
+        delta = self.document.clock.now() - self.startTime
+        assert delta >= 0
+        self.document.clock.set(self.startTime)
+        self.document.report(logging.INFO, 'FFWD', 'target', '#t=%f' % self.document.clock.now())
         return DocumentStateSeekFinish(self.document)
 
 class DocumentStateSeekFinish(DocumentState):
