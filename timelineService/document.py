@@ -106,6 +106,7 @@ class DummyDelegate:
         self.clock = clock
         self.startTime = None
         self.conformTargetDelegate = None
+        self.mediaClockSeek = None # If set this is how far the media clock should be seeked ahead.
         
     def __repr__(self):
         return 'Delegate(%s)' % self.getXPath()
@@ -318,9 +319,10 @@ class DummyDelegate:
         """Start times recorded during seek should be converted to the runtime document clock."""
         if self.conformTargetDelegate != None:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
-#                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): clock=%f, startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.clock.now(), self.startTime, self.conformTargetDelegate.startTime)
+                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): clock=%f, startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.clock.now(), self.startTime, self.conformTargetDelegate.startTime)
                 assert self.conformTargetDelegate.startTime != None
                 self.conformTargetDelegate.startTime += adjustment
+                self.mediaClockSeek = adjustment
                 
     def getStartTime(self):
         """Return the time at which this element should have started, or now."""
