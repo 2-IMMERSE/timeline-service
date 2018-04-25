@@ -1178,14 +1178,18 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
     	self.document.clock.sleepUntilNextEvent()
     	
     def stateFinished(self):
-        return self.document.clock.now() >= self.startTime
+        deltaT = self.document.clock.nextEventTime(None)
+        if deltaT is None: 
+            return False 
+        nextEventTime = self.document.clock.now() + deltaT
+        if nextEventTime > self.startTime:
+            self.document.report(logging.INFO, 'FFWD', 'overshoot', '#t=%f' % nextEventTime)
+            self.document.clock.set(self.startTime)
+        return nextEventTime >= self.startTime
+            
 
     def nextState(self):
         self.document.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.document.clock.now())
-        delta = self.document.clock.now() - self.startTime
-        assert delta >= 0
-        self.document.clock.set(self.startTime)
-        self.document.report(logging.INFO, 'FFWD', 'target', '#t=%f' % self.document.clock.now())
         return DocumentStateSeekFinish(self.document)
 
 class DocumentStateSeekFinish(DocumentState):
@@ -1197,7 +1201,6 @@ class DocumentStateSeekFinish(DocumentState):
         for elt in document.tree.iter():
             if elt.delegate.state in State.finished:
                 elt.delegate.state = State.started
-                        
         document.replaceDelegates(None)
         #
         # Bug fix: any par element that is started is moved back to starting
@@ -1224,6 +1227,9 @@ class DocumentStateSeekFinish(DocumentState):
         #
         # Now use the real clock again
         #
+        if self.document.clock.nextEventTime(None) != None:
+        	count = self.document.clock.flushEvents()
+        	self.document.logger.info("Flushed %d pending events while ending seek." % count)
         adjustment = self.document.clock.restoreUnderlyingClock(True)
         #
         # Now do the set-position on the clock of the current master timing element.

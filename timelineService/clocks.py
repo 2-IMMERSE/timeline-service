@@ -171,7 +171,18 @@ class CallbackPausableClock(PausableClock):
         self.queue.put((timestamp, callback, args, kwargs))
         if self.queueChanged:
             self.queueChanged()
-        
+
+    @synchronized
+    def flushEvents(self):
+        count = 0
+        while True:
+            try:
+                peek = self.queue.get(False)
+                count += 1
+            except Queue.Empty:
+                break
+        return count
+                
     @synchronized
     def handleEvents(self, handler):
         """Retrieve all callbacks that are runnable"""
