@@ -137,7 +137,7 @@ class DummyDelegate:
         """Check XML children for validity"""
         pass
         
-    def isCurrentTimingMaster(self):
+    def isCurrentTimingMaster(self, future=False):
         """Return True if this element currently has control over its own clock"""
         return False
         
@@ -145,8 +145,11 @@ class DummyDelegate:
         """Store internal state in XML, prior to serialisation"""
         if self.state != State.idle:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
-        if self.isCurrentTimingMaster() and self.startTime != None:
-            self.elt.set(NS_TIMELINE_INTERNAL("progress"), str(self.clock.now()-self.startTime))
+        if self.startTime != None:
+            if self.isCurrentTimingMaster():
+                self.elt.set(NS_TIMELINE_INTERNAL("progress"), str(self.clock.now()-self.startTime))
+            else:
+                self.elt.set(NS_TIMELINE_INTERNAL("slavedProgress"), str(self.clock.now()-self.startTime))
             
     def setState(self, state):
         """Advance element state to a new one. Subclasses will add side effects (such as actually playing media)"""
@@ -296,6 +299,7 @@ class DummyDelegate:
             return
         if self.conformTargetDelegate.state in {State.started, State.finished}:
             self.startTimelineElement() # xxxjack need to pass time offset from conformTargetDelegate.startTime
+            print 'xxxjack need to pass time offset from conformTargetDelegate.startTime', self.conformTargetDelegate.startTime
         self.assertState("stepMoveStateToConform:start", State.MOVE_ALLOWED_START_STATES)
         
     def hasFinishedMoveStateToConform(self):
@@ -314,6 +318,7 @@ class DummyDelegate:
         """Start times recorded during seek should be converted to the runtime document clock."""
         if self.conformTargetDelegate != None:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
+                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.startTime, self.conformTargetDelegate.startTime)
                 assert self.conformTargetDelegate.startTime != None
                 self.conformTargetDelegate.startTime += adjustment
                 
@@ -1195,12 +1200,17 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
 class DocumentStateSeekFinish(DocumentState):
     def __init__(self, document):
         DocumentState.__init__(self, document)
+        self.document.dump(open('end-of-seek.xml', 'w'))
         #
         # Reset finished elements to started
+        # xxxjack is this needed?
         #
         for elt in document.tree.iter():
             if elt.delegate.state in State.finished:
                 elt.delegate.state = State.started
+        #
+        # Put the normal delegates in place
+        #
         document.replaceDelegates(None)
         #
         # Bug fix: any par element that is started is moved back to starting
