@@ -299,7 +299,7 @@ class DummyDelegate:
             return
         if self.conformTargetDelegate.state in {State.started, State.finished}:
             self.startTimelineElement() # xxxjack need to pass time offset from conformTargetDelegate.startTime
-            print 'xxxjack need to pass time offset from conformTargetDelegate.startTime', self.conformTargetDelegate.startTime
+#            print 'xxxjack need to pass time offset from conformTargetDelegate.startTime', self.conformTargetDelegate.startTime
         self.assertState("stepMoveStateToConform:start", State.MOVE_ALLOWED_START_STATES)
         
     def hasFinishedMoveStateToConform(self):
@@ -318,7 +318,7 @@ class DummyDelegate:
         """Start times recorded during seek should be converted to the runtime document clock."""
         if self.conformTargetDelegate != None:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
-                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.startTime, self.conformTargetDelegate.startTime)
+#                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.startTime, self.conformTargetDelegate.startTime)
                 assert self.conformTargetDelegate.startTime != None
                 self.conformTargetDelegate.startTime += adjustment
                 
@@ -1075,7 +1075,7 @@ class DocumentState:
         document.report(logging.DEBUG, 'DOCSTATE', self.__class__.__name__)
         
     def nudgeClock(self):
-    	pass
+    	return False
     	
     def stateFinished(self):
         return True
@@ -1160,12 +1160,17 @@ class DocumentStateSeekElementStart(DocumentStateStart):
         document.clock.start()
         
     def nudgeClock(self):
-    	self.document.clock.sleepUntilNextEvent()
+    	return self.document.clock.sleepUntilNextEvent()
     	
     def stateFinished(self):
-         return self.startElement.delegate.seekPositionReached
+        if self.document.root.delegate.state == State.finished:
+            self.document.report(logging.ERROR, 'FFWD', 'end-of-document', '#t=%f' % self.document.clock.now())
+            return True
+        return self.startElement.delegate.seekPositionReached
         
     def nextState(self):
+        if self.document.root.delegate.state == State.finished:
+            return DocumentStateStopDocument(self.document)
         self.document.report(logging.INFO, 'FFWD', 'reached', self.startElement.delegate.getXPath())
         return DocumentStateSeekFinish(self.document)
 
@@ -1180,27 +1185,32 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
         document.clock.start()
         
     def nudgeClock(self):
-    	self.document.clock.sleepUntilNextEvent()
+    	return self.document.clock.sleepUntilNextEvent()
     	
     def stateFinished(self):
+        if self.document.root.delegate.state == State.finished:
+            self.document.report(logging.ERROR, 'FFWD', 'end-of-document', '#t=%f' % self.document.clock.now())
+            return True
         deltaT = self.document.clock.nextEventTime(None)
         if deltaT is None: 
             return False 
         nextEventTime = self.document.clock.now() + deltaT
-        if nextEventTime > self.startTime:
-            self.document.report(logging.INFO, 'FFWD', 'overshoot', '#t=%f' % nextEventTime)
-            self.document.clock.set(self.startTime)
         return nextEventTime >= self.startTime
             
 
     def nextState(self):
+        if self.document.root.delegate.state == State.finished:
+            return DocumentStateStopDocument(self.document)
         self.document.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.document.clock.now())
+        if self.document.clock.now() != self.startTime:
+            self.document.clock.set(self.startTime)            
+            self.document.report(logging.INFO, 'FFWD', 'nudge', '#t=%f' % self.document.clock.now())
         return DocumentStateSeekFinish(self.document)
 
 class DocumentStateSeekFinish(DocumentState):
     def __init__(self, document):
         DocumentState.__init__(self, document)
-        self.document.dump(open('end-of-seek.xml', 'w'))
+#        self.document.dump(open('end-of-seek.xml', 'w'))
         #
         # Reset finished elements to started
         # xxxjack is this needed?
@@ -1589,6 +1599,7 @@ class Document(DocumentModificationMixin):
             elt.delegate.storeStateForSave()
         self.tree.write(fp)
         fp.write('\n')
+        self.logger.info("created XML document dump")
         
     def dumps(self):
         if self.root is None:
@@ -1596,6 +1607,7 @@ class Document(DocumentModificationMixin):
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
         xmlstr = ET.tostring(self.root, encoding='utf8', method='xml')
+        self.logger.info("created XML document dump")
         return xmlstr
     
     def _addDelegates(self, delegateClasses, root=None):
@@ -1686,7 +1698,9 @@ class Document(DocumentModificationMixin):
             else:
                 # No events to handle. See if the clock has any more imminent events.
                 # If we are fastforwarding we nudge the clock so it is at the next event time.
-                self.documentState.nudgeClock()
+                if self.documentState.nudgeClock():
+                    # If the clock actually moved forward we return to the outer loop
+                    return
                 self.clock.handleEvents(self)
                 if not self.toDo: break
 

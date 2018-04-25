@@ -149,7 +149,7 @@ class CallbackPausableClock(PausableClock):
         return t-self._now()
         
     def sleepUntilNextEvent(self):
-        """Sleep until next callback. Do not use with multithreading."""
+        """Sleep until next callback, return True if we actually slept. Do not use with multithreading."""
         try:
             peek = self.queue.get(False)
         except Queue.Empty:
@@ -160,6 +160,8 @@ class CallbackPausableClock(PausableClock):
         delta = t-self.now()
         if delta > 0:
             self.underlyingClock.sleep(delta)
+            return True
+        return False
         
     def schedule(self, delay, callback, *args, **kwargs):
         """Schedule a callback"""
