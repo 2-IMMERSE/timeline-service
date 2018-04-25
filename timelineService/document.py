@@ -318,7 +318,7 @@ class DummyDelegate:
         """Start times recorded during seek should be converted to the runtime document clock."""
         if self.conformTargetDelegate != None:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
-#                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.startTime, self.conformTargetDelegate.startTime)
+#                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): clock=%f, startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.clock.now(), self.startTime, self.conformTargetDelegate.startTime)
                 assert self.conformTargetDelegate.startTime != None
                 self.conformTargetDelegate.startTime += adjustment
                 
@@ -1247,9 +1247,15 @@ class DocumentStateSeekFinish(DocumentState):
         #
         # Now use the real clock again
         #
-        if self.document.clock.nextEventTime(None) != None:
+        if False and self.document.clock.nextEventTime(None) != None:
+            # xxxjack code temporarily disabled. Some of the events we have to flush
+            # (specifically _done events for real media items), so we have to keep
+            # (done events for sleeps). Have to work out whether to restart the
+            # sleeps and put in the flushEvents or sort through the events
+            # to see which ones are needed.
         	count = self.document.clock.flushEvents()
         	self.document.logger.info("Flushed %d pending events while ending seek." % count)
+
         adjustment = self.document.clock.restoreUnderlyingClock(True)
         #
         # Now do the set-position on the clock of the current master timing element.
