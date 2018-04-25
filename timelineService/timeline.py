@@ -397,6 +397,11 @@ class ProxyMixin:
                 if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
+        # Also get the initial seek, for sync masters. Assume the syntax for the attributes is as for the video dmappc.
+        if self.mediaClockSeek != None and self.isCurrentTimingMaster(future=True):
+            self.document.report(logging.INFO, 'FFWD', 'seekMaster', self.document.getXPath(self.elt), self.mediaClockSeek)
+            rv['startMediaTime'] = str(self.mediaClockSeek)
+            rv['offset'] = "0"
         return rv
 
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
