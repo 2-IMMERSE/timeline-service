@@ -484,7 +484,7 @@ class FFWDTimeElementDelegate(TimeElementDelegate):
         self.setState(State.started)
         expectedDuration = float(self.elt.get(NS_TIMELINE_CHECK("dur"), 0))
         if expectedDuration == 0:
-            self.logger.warn("%s: syncMode=master element without tlcheck:dur. Guessing at 10 hours." % self.getXPath())
+            self.logger.warning("%s: syncMode=master element without tlcheck:dur. Guessing at 10 hours." % self.getXPath())
             expectedDuration = 36000
         self.clock.schedule(expectedDuration, self._done)
                
