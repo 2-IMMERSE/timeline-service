@@ -465,7 +465,7 @@ class TimeElementDelegate(TimelineDelegate):
         # xxxjack only correct for 2immerse....
         if not future and self.state != State.started:
             return False
-        if self.state not in {State.inited, State.starting, State.started}:
+        if self.state not in {State.initing, State.inited, State.starting, State.started}:
             return False
         syncMode = self.elt.get(NS_2IMMERSE_COMPONENT("syncMode"), "unspecified")
         if syncMode != "master":

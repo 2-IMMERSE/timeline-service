@@ -398,10 +398,19 @@ class ProxyMixin:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
         # Also get the initial seek, for sync masters. Assume the syntax for the attributes is as for the video dmappc.
-#        self.logger.info('xxxjack _getParameters(%s) mediaClockSeek %s isCurrentTimingMaster %s', self.getXPath(), self.mediaClockSeek, self.isCurrentTimingMaster(future=True))
+        #self.logger.info('xxxjack _getParameters(%s) mediaClockSeek %s isCurrentTimingMaster %s', self.getXPath(), self.mediaClockSeek, self.isCurrentTimingMaster(future=True))
         if self.mediaClockSeek != None and self.isCurrentTimingMaster(future=True):
             self.document.report(logging.INFO, 'FFWD', 'seekMaster', self.document.getXPath(self.elt), self.mediaClockSeek)
-            rv['startMediaTime'] = str(self.mediaClockSeek)
+            #
+            # Note that we set both startMediaTime (which you can think of as an initial seek into the media file) and offset
+            # (which is the delta-T between the time position in the media file and the time position of the internal clock of the dmappc).
+            # Normally, offset defaults to startMediaTime, and because offset is "backward pointing" this means that only setting startMediaTime
+            # will still cause the dmappc to start at t=0 (internal clock).
+            #
+            # Normally that is what you want, but for our case, seeking the media because the whole presentation has been seeked) it is not:
+            # we want the clock to behave as if the media seek hadn't happened.
+            #
+            rv['startMediaTime'] = str(-self.mediaClockSeek)
             rv['offset'] = "0"
         return rv
 
