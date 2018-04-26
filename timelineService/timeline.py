@@ -398,7 +398,7 @@ class ProxyMixin:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
         # Also get the initial seek, for sync masters. Assume the syntax for the attributes is as for the video dmappc.
-        self.logger.info('xxxjack _getParameters(%s) mediaClockSeek %s isCurrentTimingMaster %s', self.getXPath(), self.mediaClockSeek, self.isCurrentTimingMaster(future=True))
+#        self.logger.info('xxxjack _getParameters(%s) mediaClockSeek %s isCurrentTimingMaster %s', self.getXPath(), self.mediaClockSeek, self.isCurrentTimingMaster(future=True))
         if self.mediaClockSeek != None and self.isCurrentTimingMaster(future=True):
             self.document.report(logging.INFO, 'FFWD', 'seekMaster', self.document.getXPath(self.elt), self.mediaClockSeek)
             rv['startMediaTime'] = str(self.mediaClockSeek)
