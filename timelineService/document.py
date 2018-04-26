@@ -1234,6 +1234,15 @@ class DocumentStateSeekFinish(DocumentState):
                 elt.delegate.state = State.starting
                 elt.delegate.startTime = None
         #
+        # Now do the set-position on the clock of the current master timing element.
+        #
+        adjustment = self.document.clock.restoreUnderlyingClock(True)
+        for elt in self.document.tree.iter():
+            elt.delegate.adjustStartTimeRecordedDuringSeek(adjustment)
+#        	if not elt.delegate.startTime is None:
+#        		elt.delegate.startTime += adjustment
+        self.document.report(logging.INFO, 'FFWD', 'reposition', 'delta-t=%f' % adjustment)
+        #
         # Now re-execute all external inits and destroys.
         #
         for elt in document.tree.iter():
@@ -1257,17 +1266,7 @@ class DocumentStateSeekFinish(DocumentState):
             # to see which ones are needed.
         	count = self.document.clock.flushEvents()
         	self.document.logger.info("Flushed %d pending events while ending seek." % count)
-
-        adjustment = self.document.clock.restoreUnderlyingClock(True)
-        #
-        # Now do the set-position on the clock of the current master timing element.
-        #
-        for elt in self.document.tree.iter():
-            elt.delegate.adjustStartTimeRecordedDuringSeek(adjustment)
-#        	if not elt.delegate.startTime is None:
-#        		elt.delegate.startTime += adjustment
         		
-        self.document.report(logging.INFO, 'FFWD', 'reposition', 'delta-t=%f' % adjustment)
         #
         # Now (re)issue the start calls
         #
