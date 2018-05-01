@@ -417,6 +417,7 @@ class ProxyMixin:
             #
             rv['startMediaTime'] = str(-self.mediaClockSeek)
             rv['offset'] = "0"
+            self.mediaClockSeek = None
         return rv
 
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
