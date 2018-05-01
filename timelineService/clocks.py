@@ -89,6 +89,7 @@ class PausableClock:
         
     @synchronized
     def replaceUnderlyingClock(self, newClock):
+        """Set the underlying clock aside and temporarily use newClock as our underlying clock"""
         assert newClock
         assert self.underlyingClock == self.originalUnderlyingClock
         wasRunning = self.running
@@ -100,14 +101,16 @@ class PausableClock:
         
     @synchronized
     def restoreUnderlyingClock(self, restoreTime):
+        """Restore the underlying clock from the previous call to replaceUnderlying Clock. Reset clock is restoreTime is true.
+        Always return the clock adjustment (even when not restoring the time)."""
         assert self.underlyingClock != self.originalUnderlyingClock
         adjustment = 0
         wasRunning = self.running
         self.stop()
+        # Compute how far we have moved time forward while running on the replacement
+        # clock, and then possibly adjust accordingly
+        adjustment = self.replacementTime - self._now()
         if restoreTime:
-            # Compute how far we have moved time forward while running on the replacement
-            # clock, and then adjust accordingly
-            adjustment = self.replacementTime - self._now()
             self._adjust(adjustment)
         self.underlyingClock = self.originalUnderlyingClock
 
@@ -197,7 +200,7 @@ class CallbackPausableClock(PausableClock):
             t, callback, args, kwargs = peek
             if self._now() >= t:
                 if self._now() > t + 0.1:
-                    print 'xxxjack scheduling', self.now() - t, 'seconds too late...'
+#                    print 'xxxjack scheduling', self.now() - t, 'seconds too late...'
                 handler.schedule(callback, *args, **kwargs)
             else:
                 assert not self.queue.full()

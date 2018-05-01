@@ -410,6 +410,8 @@ class ProxyMixin:
             # Normally that is what you want, but for our case, seeking the media because the whole presentation has been seeked) it is not:
             # we want the clock to behave as if the media seek hadn't happened.
             #
+            # Still need to check (as of May 1, 2018) that this is also correct for live feeds.
+            #
             rv['startMediaTime'] = str(-self.mediaClockSeek)
             rv['offset'] = "0"
         return rv

@@ -868,6 +868,8 @@ class RefDelegate(TimeElementDelegate):
         else:
             dft_dur = 42.345
         dur = float(self.elt.get(NS_TIMELINE_CHECK("dur"), dft_dur))
+        if self.mediaClockSeek != None:
+            dur += self.mediaClockSeek
         self.clock.schedule(dur, self._done)
                
     def _done(self):
@@ -967,6 +969,8 @@ class SleepDelegate(TimeElementDelegate):
         dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
         assert self.startTime != None
         self.sleepEndTime = self.startTime + dur
+        if self.mediaClockSeek != None:
+            self.document.logger.warning("SleepDelegate(%s): ignored mediaClockSeek %s" % self.document.getXPath(self.elt), self.mediaClockSeek, extra=self.getLogExtra())
         self.clock.scheduleAt(self.sleepEndTime, self._done)
         
     def _done(self):
@@ -1114,7 +1118,7 @@ class DocumentStateInit(DocumentState):
             document.report(logging.INFO, 'FFWD', 'goto', document.startElement.delegate.getXPath())
         elif self.hasSeekToTime:
             # Monitoring is done by checking the clock
-            document.report(logging.INFO, 'FFWD', 'goto', '#t=%f' % document.startTime)
+            document.report(logging.INFO, 'FFWD', 'goto', '#t=%f' % document.startTime, '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
         else:
             pass
 
@@ -1167,7 +1171,7 @@ class DocumentStateSeekElementStart(DocumentStateStart):
     	
     def stateFinished(self):
         if self.document.root.delegate.state == State.finished:
-            self.document.report(logging.ERROR, 'FFWD', 'end-of-document', '#t=%f' % self.document.clock.now())
+            self.document.report(logging.ERROR, 'FFWD', 'end-of-document', '#t=%f' % self.document.clock.now(), '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
             return True
         return self.startElement.delegate.seekPositionReached
         
@@ -1204,10 +1208,10 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
     def nextState(self):
         if self.document.root.delegate.state == State.finished:
             return DocumentStateStopDocument(self.document)
-        self.document.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.document.clock.now())
+        self.document.report(logging.INFO, 'FFWD', 'reached', '#t=%f' % self.document.clock.now(), '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
         if self.document.clock.now() != self.startTime:
             self.document.clock.set(self.startTime)            
-            self.document.report(logging.INFO, 'FFWD', 'nudge', '#t=%f' % self.document.clock.now())
+            self.document.report(logging.INFO, 'FFWD', 'nudge', '#t=%f' % self.document.clock.now(), '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
         return DocumentStateSeekFinish(self.document)
 
 class DocumentStateSeekFinish(DocumentState):
@@ -1237,12 +1241,12 @@ class DocumentStateSeekFinish(DocumentState):
         #
         # Now do the set-position on the clock of the current master timing element.
         #
-        adjustment = self.document.clock.restoreUnderlyingClock(True)
+        adjustment = self.document.clock.restoreUnderlyingClock(False)
         for elt in self.document.tree.iter():
             elt.delegate.adjustStartTimeRecordedDuringSeek(adjustment)
 #        	if not elt.delegate.startTime is None:
 #        		elt.delegate.startTime += adjustment
-        self.document.report(logging.INFO, 'FFWD', 'reposition', 'delta-t=%f' % adjustment)
+        self.document.report(logging.INFO, 'FFWD', 'reposition', 'delta-t=%f' % adjustment, '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
         #
         # Now re-execute all external inits and destroys.
         #
@@ -1273,7 +1277,7 @@ class DocumentStateSeekFinish(DocumentState):
         #
         for elt in self.document.tree.iter():
             elt.delegate.stepMoveStateToConform(startAllowed=True)
-        self.document.report(logging.INFO, 'FFWD', 'done')
+        self.document.report(logging.INFO, 'FFWD', 'done', '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
         return DocumentStateRunDocument(self.document)
         
 class DocumentStateRunDocument(DocumentState):
