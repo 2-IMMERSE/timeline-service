@@ -416,7 +416,7 @@ class ProxyMixin:
             # Still need to check (as of May 1, 2018) that this is also correct for live feeds.
             #
             rv['startMediaTime'] = str(-self.mediaClockSeek)
-#            rv['offset'] = "0"
+            rv['offset'] = "0"
             self.mediaClockSeek = None
         return rv
 
