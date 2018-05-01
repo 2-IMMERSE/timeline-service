@@ -369,7 +369,9 @@ class ProxyMixin:
     	return dict(xpath=self.getXPath(), dmappcID=self.componentId)
     	
     def _getTime(self, timestamp):
-        return timestamp + 0.0
+        """Convert document time to the time used by the external agents (clients, layout)"""
+        deltaDocToUnderlying = self.clock.now() - self.clock.underlyingClock.now()
+        return timestamp - deltaDocToUnderlying
 
     def scheduleAction(self, verb, config=None, parameters=None):
         extraLogArgs = ()
