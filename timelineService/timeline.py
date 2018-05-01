@@ -171,8 +171,17 @@ class BaseTimeline:
         delta = contextClock - self.clockService.now()
         MAX_CLOCK_DISCREPANCY = 0.032 # Smaller than a frame duration for both 25fps and 30fps
         if abs(delta) > MAX_CLOCK_DISCREPANCY:
-            self.document.report(logging.INFO, 'CLOCK', 'forward', delta)
+            self.document.report(logging.INFO, 'CLOCK', 'forward', delta, '(underlyingClock=%f)' % self.clock.underlyingClock.now())
             self.clockService.set(contextClock)
+        #
+        # Check whether we should move the document clock in the reverse direction
+        # (effectively not changing it) because we expected this clock delta due to a seek
+        #
+        adjustDocClock = self.layoutService.adjustExpectedClockOffset(delta)
+        if adjustDocClock:
+            self.logger.info('clockChanged: delta=%f adjustDocClock=%f', delta, adjustDocClock)
+            self.documentClock.set(self.documentClock.now() + adjustDocClock)
+            self.document.report(logging.INFO, 'CLOCK', 'adjusted', adjustDocClock, '(underlyingClock=%f)' % self.clock.underlyingClock.now())
             
         #
         # Adjust clock rate, if needed
@@ -312,6 +321,10 @@ class ProxyLayoutService:
         self.dmappId = dmappId
         self.actions = []
         self.actionsTimestamp = None
+        # We need somewhere to record the delta we expect from the clock in the near future (because the
+        # way we map document clock to playout clock). The ProxyLayoutService is the object that
+        # is available both where we know the delay and where we resync the clock
+        self.expectedClockOffset = None
         self.actionsLock = threading.Lock()
         self.logger.info("ProxyLayoutService: contextId %s URL %s" % (self.contextId, self.contactInfo))
 
@@ -358,6 +371,27 @@ class ProxyLayoutService:
             raise
         r.raise_for_status()
 
+    def recordExpectedClockOffset(self, offset):
+        """Called when we expect a future clock offset (from the player) with this delta-T"""
+        if self.expectedClockOffset != None:
+            self.logger.warn("Recording expected clock offset %f overrides old value %f" % (offset, self.expectedClockOffset))
+        self.expectedClockOffset = offset
+        
+    def adjustExpectedClockOffset(self, delta):
+        """A client clock adjustment of delta has come in. Return the amount we should adjust the document clock the other direction."""
+        # Note that all values tend to be negative (because the document clock has been seeked forward)
+        if self.expectedClockOffset == None:
+            return 0
+        if delta >= self.expectedClockOffset:
+            rv = delta
+            self.expectedClockOffset -= rv
+            if abs(self.expectedClockOffset) < 0.1:
+                self.expectedClockOffset = None
+        else:
+            rv = self.expectedClockOffset
+            self.expectedClockOffset = None
+        return rv
+        
 class ProxyMixin:
     def __init__(self, timelineDocBaseUrl, layoutService, componentId):
         self.componentId = componentId
@@ -400,7 +434,12 @@ class ProxyMixin:
                 if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
-        # Also get the initial seek, for sync masters. Assume the syntax for the attributes is as for the video dmappc.
+        return rv
+        
+    def _addSeekParameter(self, parameters):
+        """# Also get the initial seek, for sync masters. Assume the syntax for the attributes is as for the video dmappc.
+        If the parameters are updated we expect a CLOCK seek later, we return the expected clock seek value (which we will ignore
+        for the document clock"""
         #self.logger.info('xxxjack _getParameters(%s) mediaClockSeek %s isCurrentTimingMaster %s', self.getXPath(), self.mediaClockSeek, self.isCurrentTimingMaster(future=True))
         if self.mediaClockSeek != None and self.isCurrentTimingMaster(future=True):
             self.document.report(logging.INFO, 'FFWD', 'seekMaster', self.document.getXPath(self.elt), self.mediaClockSeek)
@@ -415,10 +454,10 @@ class ProxyMixin:
             #
             # Still need to check (as of May 1, 2018) that this is also correct for live feeds.
             #
-            rv['startMediaTime'] = str(-self.mediaClockSeek)
-            rv['offset'] = "0"
-            self.mediaClockSeek = None
-        return rv
+            parameters['startMediaTime'] = str(-self.mediaClockSeek)
+            parameters['offset'] = "0"
+            return -self.mediaClockSeek
+        return None
 
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocBaseUrl, clock, layoutService):
@@ -444,6 +483,9 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         self.setState(document.State.initing)
         config = {'class':self.klass, 'url':self.url}
         parameters = self._getParameters()
+        expectedClockOffset = self._addSeekParameter(parameters)
+        if expectedClockOffset:
+            self.layoutService.recordExpectedClockOffset(expectedClockOffset)
         self.scheduleAction("init", config=config, parameters=parameters)
 
     def startTimelineElement(self):
