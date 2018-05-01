@@ -371,6 +371,7 @@ class ProxyMixin:
     def _getTime(self, timestamp):
         """Convert document time to the time used by the external agents (clients, layout)"""
         deltaDocToUnderlying = self.clock.now() - self.clock.underlyingClock.now()
+        self.logger.info('xxxjack _getTime(%f): now=%f underlyingNow=%f delta=%f', timestamp, self.clock.now(), self.clock.underlyingClock.now(), deltaDocToUnderlying)
         return timestamp - deltaDocToUnderlying
 
     def scheduleAction(self, verb, config=None, parameters=None):
