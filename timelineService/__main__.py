@@ -19,13 +19,25 @@ class Unbuffered(object):
    def __getattr__(self, attr):
        return getattr(self.stream, attr)
 
-import sys
-sys.stdout = Unbuffered(sys.stdout)
+class StreamToLogger(object):
+   def __init__(self, logger, log_level=logging.INFO):
+      self.logger = logger
+      self.log_level = log_level
+      self.linebuf = ''
+
+   def write(self, buf):
+      for line in buf.rstrip().splitlines():
+         self.logger.log(self.log_level, line.rstrip())
 
 logging.basicConfig()
 
+import sys
+# sys.stdout = Unbuffered(sys.stdout)
+sys.stdout = StreamToLogger(logging.getLogger('stdout'), logging.INFO)
+sys.stderr = StreamToLogger(logging.getLogger('stderr'), logging.INFO)
+
 # Default logging configuration: INFO for document and timeline (useful to app developers), WARNING for everything else.
-DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,WARNING"
+DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,INFO"
 
 class MyFormatter(logging.Formatter):
 
@@ -241,7 +253,9 @@ def main():
     rootLogger = logging.getLogger()
     rootLogger.handlers[0].setFormatter(MyFormatter())
 
-    rootLogger.log(logging.WARN, "xxxjack my temp number two")
+    rootLogger.log(logging.INFO, "Timeline service INFO log line")
+    print "Timeline service stdout print"
+    print >> sys.stderr, "Timeline service stderr print"
     if True:
         # Temporary measure: the origin server certificate is untrusted on our docker containers.
         rootLogger.log(logging.WARN, "https verification disabled for now (Nov 2016)")
