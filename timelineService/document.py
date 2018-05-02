@@ -595,8 +595,12 @@ class ParDelegate(TimeElementDelegate):
         self.setState(State.initing)
         self.emittedStopForChildren = False # Set to True if we have already emitted the stop clls to the children
         self.childrenToAutoStart = [] # Children that we start on inited (have been added during runtime with childAdded)
-        for child in self.elt: 
+        if self.mediaClockSeek != None:
+            self.logger.debug("ParDelegate(%s): forwarding mediaClockSeek %s" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
+        for child in self.elt:
+            child.delegate.mediaClockSeek = self.mediaClockSeek
             self.document.schedule(child.delegate.initTimelineElement)
+        self.mediaClockSeek = None
         # xxxjack: should we go to inited if we have no children?
         
     def startTimelineElement(self):
@@ -647,6 +651,9 @@ class ParDelegate(TimeElementDelegate):
                 pass
             else:
                 self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==started, init+start child" % (self.getXPath(), self.document.getXPath(child)))
+                tooLate = self.startTime - self.clock.now() # This is a negative number
+                child.delegate.mediaClockSeek = tooLate
+                self.logger.debug("%s: child seek %f seconds" % (self.getXPath(), child.delegate.mediaClockSeek))
                 self.document.schedule(child.delegate.initTimelineElement)
             self.childrenToAutoStart.append(child)
         elif self.state == State.stopping:
@@ -658,6 +665,9 @@ class ParDelegate(TimeElementDelegate):
             self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==finished, revert to started, init+start child." % (self.getXPath(), self.document.getXPath(child)))
             self.setState(State.started)
             self.emittedStopForChildren = False
+            tooLate = self.startTime - self.clock.now() # This is a negative number
+            child.delegate.mediaClockSeek = tooLate
+            self.logger.debug("%s: child seek %f seconds" % (self.getXPath(), child.delegate.mediaClockSeek))
             self.document.schedule(child.delegate.initTimelineElement)
             self.childrenToAutoStart.append(child)
         else:
@@ -667,8 +677,18 @@ class ParDelegate(TimeElementDelegate):
 class SeqDelegate(TimeElementDelegate):
     """<tl:seq> element. Runs its children in succession."""
 
+    def __init__(self, elt, document, clock):
+        TimeElementDelegate.__init__(self, elt, document, clock)
+        self.mediaClockSeekEndTime = None
+
     def reportChildState(self, child, childState):
         assert len(self.elt)
+        # We first do the seektime administration for this seq element
+        if self.mediaClockSeek != None and self.startTime != None:
+            # We know when seeking should end
+            self.mediaClockSeekEndTime = self.startTime + self.mediaClockSeek
+            self.logger.debug("%s: mediaClockSeek %f converted to mediaClockSeekEndTime %f" % (self.getXPath(), self.mediaClockSeek, self.mediaClockSeekEndTime))
+            self.mediaClockSeek = None
         if self.state == State.idle:
             # We're idle. We don't care about children state changes.
             return
@@ -730,6 +750,10 @@ class SeqDelegate(TimeElementDelegate):
             self.setState(State.inited)
             return
         self._currentChild = None
+        if self.mediaClockSeek != None:
+            self.logger.debug("SeqDelegate(%s): forward mediaClockSeek %s to first element" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
+            self.elt[0].delegate.mediaClockSeek = self.mediaClockSeek
+            # Keep self.mediaClockSeek. We may need to forward it to later children too.
         self.document.schedule(self.elt[0].delegate.initTimelineElement)
         
     def startTimelineElement(self):
@@ -942,10 +966,14 @@ class SleepDelegate(TimeElementDelegate):
         assert self.startTime != None
         self.sleepEndTime = self.startTime + dur
         if self.mediaClockSeek != None:
-            self.document.logger.warning("SleepDelegate(%s): ignored mediaClockSeek %s" % self.document.getXPath(self.elt), self.mediaClockSeek, extra=self.getLogExtra())
+            self.document.logger.debug("SleepDelegate(%s): adjusted mediaClockSeek %s" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
+            dur += self.mediaClockSeek
+            self.mediaClockSeek = None
+        print 'xxxjack sleep.start. clock=%f startTime=%f dur=%f endtime=%f' % (self.clock.now(), self.startTime, dur, self.sleepEndTime)
         self.clock.scheduleAt(self.sleepEndTime, self._done)
         
     def _done(self):
+        print 'xxxjack sleep.done. clock=%f startTime=%f endtime=%f' % (self.clock.now(), self.startTime, self.sleepEndTime)
         if self.state != State.started:
             self.document.logger.debug("SleepDelegate(%s): spurious _done callback" % self.document.getXPath(self.elt), extra=self.getLogExtra())
             return
