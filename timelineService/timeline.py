@@ -385,7 +385,6 @@ class ProxyLayoutService:
             return 0
         if delta > 0:
             # If the client clock is moving _forward_ we ignore it
-            # xxxjack we could increase expectedClockOffset with this value?
             return 0
         if delta >= self.expectedClockOffset:
             rv = delta
@@ -410,7 +409,6 @@ class ProxyMixin:
     def _getTime(self, timestamp):
         """Convert document time to the time used by the external agents (clients, layout)"""
         deltaDocToUnderlying = self.clock.now() - self.clock.underlyingClock.now()
-        self.logger.info('xxxjack _getTime(%f): now=%f underlyingNow=%f delta=%f', timestamp, self.clock.now(), self.clock.underlyingClock.now(), deltaDocToUnderlying)
         return timestamp - deltaDocToUnderlying
 
     def scheduleAction(self, verb, config=None, parameters=None):
@@ -445,7 +443,6 @@ class ProxyMixin:
         """# Also get the initial seek, for sync masters. Assume the syntax for the attributes is as for the video dmappc.
         If the parameters are updated we expect a CLOCK seek later, we return the expected clock seek value (which we will ignore
         for the document clock"""
-        #self.logger.info('xxxjack _getParameters(%s) mediaClockSeek %s isCurrentTimingMaster %s', self.getXPath(), self.mediaClockSeek, self.isCurrentTimingMaster(future=True))
         if self.mediaClockSeek != None and self.isCurrentTimingMaster(future=True):
             self.document.report(logging.INFO, 'FFWD', 'seekMaster', self.document.getXPath(self.elt), self.mediaClockSeek)
             #

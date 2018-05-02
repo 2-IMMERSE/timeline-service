@@ -225,8 +225,6 @@ class DummyDelegate:
             if not desc.delegate.state in set(allowedStates):
                 self.logger.error("Assertion failure: %s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates)), extra=self.getLogExtra())
             assert desc.delegate.state in set(allowedStates), "%s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
-            #if not desc.delegate.state in set(allowedStates):
-            #    print "WARNING XXXJACK: %s: %s: descendent %s: state==%s, expected %s" % (self, action, desc.delegate, desc.delegate.state, set(allowedStates))
          
     def reportChildState(self, child, childState):
         """Called by direct children when they change their state"""
@@ -286,7 +284,6 @@ class DummyDelegate:
             self.conformTargetDelegate = None
             return
         # xxxjack we really need a matrix here....
-        # print 'xxxjack stepMoveStateToConform(%s): move from %s to %s' % (self, self.state, self.conformTargetDelegate.state)
         if self.conformTargetDelegate.state == State.idle:
             if self.state in State.STOP_NEEDED:
                 self.stopTimelineElement()
@@ -299,8 +296,8 @@ class DummyDelegate:
         if not startAllowed:
             return
         if self.conformTargetDelegate.state in {State.started, State.finished}:
-            self.startTimelineElement() # xxxjack need to pass time offset from conformTargetDelegate.startTime
-#            print 'xxxjack need to pass time offset from conformTargetDelegate.startTime', self.conformTargetDelegate.startTime
+            self.startTimelineElement()
+            # Note that any initial seek is recorded later.
         self.assertState("stepMoveStateToConform:start", State.MOVE_ALLOWED_START_STATES)
         
     def hasFinishedMoveStateToConform(self):
@@ -510,10 +507,8 @@ class ParDelegate(TimeElementDelegate):
             # We're initializing. Go to initialized once all our children have.
             for ch in self.elt:
                 if ch.delegate.state not in {State.inited}:
-#                    print 'xxxjack par initing', self.document.getXPath(self.elt), 'waitforchild', self.document.getXPath(ch)
                     return
             self.setState(State.inited)
-#            print 'xxxjack par inited'
             return
         #
         # See if this child should be auto-started (because it was inserted during runtime)
@@ -533,7 +528,6 @@ class ParDelegate(TimeElementDelegate):
             # First check whether any of the children that are relevant to our lifetime are still not finished.
             # 
             relevantChildren = self._getRelevantChildren()
-#            print 'xxxjack par relevant children', relevantChildren
             for ch in relevantChildren:
                 if ch.delegate.state in State.NOT_DONE:
                     return
@@ -561,27 +555,6 @@ class ParDelegate(TimeElementDelegate):
                     return
             self.setState(State.finished)
             return
-#            self.setState(State.stopping)
-#             needToWait = False
-#             for ch in self.elt:
-#                 if ch.delegate.state == State.stopping:
-# #                    print 'xxxjack par stopping, need to wait for', ch.delegate
-#                     needToWait = True
-#                 elif ch.delegate.state != State.stopped:
-# #                    print 'xxxjack par stopping, need to stop', ch.delegate
-#                     self.document.schedule(ch.delegate.stopTimelineElement)
-#                     needToWait = True
-#                 else:
-# #                    print 'xxxjack par stopping, already stopped', ch.delegate
-#                     pass
-#             if not needToWait:
-#                 self.setState(State.stopped)
-#         elif self.state == State.stopping:
-#             for ch in self.elt:
-#                 if ch.delegate.state != State.stopped:
-#                     return
-#             self.setState(State.stopped)
-#             self.assertDescendentState('reportChildState[self.state==stopped]', State.stopped, State.idle)
         if self.state == State.stopping:
             # We're stopping. When all our children have stopped so have we.
             for ch in self.elt:
@@ -1073,7 +1046,6 @@ class SeekToElementAdapter(DelegateAdapter):
     def startTimelineElement(self):
         self._adapter_delegate.startTimelineElement()
         self.seekPositionReached = True
-        # print 'xxxjack seekPositionReached has triggered'
         
 class DocumentState:
     def __init__(self, document):
