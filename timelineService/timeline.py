@@ -171,7 +171,7 @@ class BaseTimeline:
         delta = contextClock - self.clockService.now()
         MAX_CLOCK_DISCREPANCY = 0.032 # Smaller than a frame duration for both 25fps and 30fps
         if abs(delta) > MAX_CLOCK_DISCREPANCY:
-            self.document.report(logging.INFO, 'CLOCK', 'forward', delta, '(underlyingClock=%f)' % self.clock.underlyingClock.now())
+            self.document.report(logging.INFO, 'CLOCK', 'forward', delta, '(underlyingClock=%f)' % self.clockService.now())
             self.clockService.set(contextClock)
         #
         # Check whether we should move the document clock in the reverse direction
@@ -181,17 +181,17 @@ class BaseTimeline:
         if adjustDocClock:
             self.logger.info('clockChanged: delta=%f adjustDocClock=%f', delta, adjustDocClock)
             self.documentClock.set(self.documentClock.now() + adjustDocClock)
-            self.document.report(logging.INFO, 'CLOCK', 'adjusted', adjustDocClock, '(underlyingClock=%f)' % self.clock.underlyingClock.now())
+            self.document.report(logging.INFO, 'CLOCK', 'adjusted', adjustDocClock, '(underlyingClock=%f)' % self.clockService.now())
             
         #
         # Adjust clock rate, if needed
         #
         if contextClockRate != self.clockService.getRate():
             if contextClockRate:
-                self.document.report(logging.INFO, 'CLOCK', 'start', self.clockService.now())
+                self.document.report(logging.INFO, 'CLOCK', 'start', '(underlyingClock=%f)' % self.clockService.now())
                 self.clockService.start()
             else:
-                self.document.report(logging.INFO, 'CLOCK', 'stop', self.clockService.now())
+                self.document.report(logging.INFO, 'CLOCK', 'stop', '(underlyingClock=%f)' % self.clockService.now())
                 self.clockService.stop()
         self.document.clockChanged()
         self.logger.debug("Timeline(%s): after clockChanged clockService=%f, document=%f", self.contextId, self.clockService.now(), self.documentClock.now())
