@@ -319,7 +319,6 @@ class DummyDelegate:
         """Start times recorded during seek should be converted to the runtime document clock."""
         if self.conformTargetDelegate != None:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
-                print 'xxxjack %s.adjustStartTimeRecordedDuringSeek(%f): clock=%f, startTime=%s, conformTargetDelegate.startTime=%s' % (self.getXPath(), adjustment, self.clock.now(), self.startTime, self.conformTargetDelegate.startTime)
                 assert self.conformTargetDelegate.startTime != None
                 self.conformTargetDelegate.startTime += adjustment
                 self.mediaClockSeek = adjustment
@@ -1217,14 +1216,6 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
 class DocumentStateSeekFinish(DocumentState):
     def __init__(self, document):
         DocumentState.__init__(self, document)
-#        self.document.dump(open('end-of-seek.xml', 'w'))
-        #
-        # Reset finished elements to started
-        # xxxjack is this needed?
-        #
-        for elt in document.tree.iter():
-            if elt.delegate.state in State.finished:
-                elt.delegate.state = State.started
         #
         # Put the normal delegates in place
         #
