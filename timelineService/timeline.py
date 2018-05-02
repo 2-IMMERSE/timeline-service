@@ -381,6 +381,11 @@ class ProxyLayoutService:
         """A client clock adjustment of delta has come in. Return the amount we should adjust the document clock the other direction."""
         # Note that all values tend to be negative (because the document clock has been seeked forward)
         if self.expectedClockOffset == None:
+            # If we have no expected seek we don't want the document clock to adjust
+            return 0
+        if delta > 0:
+            # If the client clock is moving _forward_ we ignore it
+            # xxxjack we could increase expectedClockOffset with this value?
             return 0
         if delta >= self.expectedClockOffset:
             rv = delta
@@ -485,7 +490,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         parameters = self._getParameters()
         expectedClockOffset = self._addSeekParameter(parameters)
         if expectedClockOffset:
-            self.layoutService.recordExpectedClockOffset(expectedClockOffset)
+            self.layoutService.recordExpectedClockOffset(-expectedClockOffset)
         self.scheduleAction("init", config=config, parameters=parameters)
 
     def startTimelineElement(self):
