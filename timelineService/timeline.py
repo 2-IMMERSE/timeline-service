@@ -180,7 +180,7 @@ class BaseTimeline:
         adjustDocClock = self.layoutService.adjustExpectedClockOffset(delta)
         if adjustDocClock:
             self.logger.info('clockChanged: delta=%f adjustDocClock=%f', delta, adjustDocClock)
-            self.documentClock.set(self.documentClock.now() + adjustDocClock)
+            self.documentClock.set(self.documentClock.now() - adjustDocClock)
             self.document.report(logging.INFO, 'CLOCK', 'adjusted', adjustDocClock, '(underlyingClock=%f)' % self.clockService.now())
             
         #
