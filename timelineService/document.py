@@ -312,12 +312,10 @@ class DummyDelegate:
         """Returns False if this element is still waiting for inited callback."""
         return self.hasFinishedMoveStateToConform() or self.state in State.MOVE_ALLOWED_START_STATES
         
-    def adjustStartTimeRecordedDuringSeek(self, adjustment):
-        """Start times recorded during seek should be converted to the runtime document clock."""
+    def updateMediaSeekForDocumentSeek(self, adjustment):
+        """We may need to seek the media for this element, record that."""
         if self.conformTargetDelegate != None:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
-                assert self.conformTargetDelegate.startTime != None
-                self.conformTargetDelegate.startTime += adjustment
                 self.mediaClockSeek = adjustment
                 
     def getStartTime(self):
@@ -1250,9 +1248,7 @@ class DocumentStateSeekFinish(DocumentState):
         #
         adjustment = self.document.clock.restoreUnderlyingClock(False)
         for elt in self.document.tree.iter():
-            elt.delegate.adjustStartTimeRecordedDuringSeek(adjustment)
-#        	if not elt.delegate.startTime is None:
-#        		elt.delegate.startTime += adjustment
+            elt.delegate.updateMediaSeekForDocumentSeek(adjustment)
         self.document.report(logging.INFO, 'FFWD', 'reposition', 'delta-t=%f' % adjustment, '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
         #
         # Now re-execute all external inits and destroys.
