@@ -523,6 +523,9 @@ class ParDelegate(TimeElementDelegate):
         if child in self.childrenToAutoStart and childState == State.inited:
             self.logger.debug("%s: autostarting child %s" % (self.getXPath(), self.document.getXPath(child)))
             self.document.schedule(child.delegate.startTimelineElement)
+        if self.state == State.inited and childState in {State.initing, State.inited}:
+            # This can happen after fast-forward. Ignore.
+            return
         if self.state == State.starting:
             # We're starting. Wait for all our children to have started (or started-and-finished).
             for ch in self.elt:
