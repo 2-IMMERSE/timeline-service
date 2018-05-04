@@ -1000,7 +1000,8 @@ class SleepDelegate(TimeElementDelegate):
         for k in attrsChanged:
             if k == NS_TIMELINE("dur"):
                 dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
-                assert self.startTime != None
+                if self.startTime != None or self.state != started:
+                    continue
                 newSleepEndTime = self.startTime + dur
                 self.document.logger.debug("SleepDelegate(%s): sleepEndTime changed from %.3f to %.3f" % (self.document.getXPath(self.elt), self.sleepEndTime, newSleepEndTime), extra=self.getLogExtra())
                 self.sleepEndTime = newSleepEndTime
