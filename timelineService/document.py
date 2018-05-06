@@ -1322,10 +1322,12 @@ class DocumentModificationMixin:
     def __init__(self):
         self.stateUpdateCallback = None
         
-    def modifyDocument(self, generation, commands, stateUpdateCallback=None):
+    def setStateUpdateCallback(self, stateUpdateCallback):
+        self.stateUpdateCallback = stateUpdateCallback
+        
+    def modifyDocument(self, generation, commands):
         """Modify the running document from the given command list"""
         updateCallbacks = []
-        self.stateUpdateCallback = stateUpdateCallback
         for command in commands:
             cmd = command['verb']
             del command['verb']

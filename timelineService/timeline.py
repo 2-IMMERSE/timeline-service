@@ -246,8 +246,8 @@ class BaseTimeline:
             self.document.report(logging.DEBUG, 'DOCUMENT', 'update', 'generation=%d, count=%d, wantUpdates=%s' % (generation, len(operations), wantStateUpdates))
         stateUpdateCallback = None
         if wantStateUpdates:
-            stateUpdateCallback = self._stateUpdateCallback
-        self.document.modifyDocument(generation, operations, stateUpdateCallback)
+            self.document.setStateUpdateCallback(self._stateUpdateCallback)
+        self.document.modifyDocument(generation, operations)
         self._updateTimeline()
         
     def _stateUpdateCallback(self, documentState):
@@ -256,6 +256,7 @@ class BaseTimeline:
         t.start()
         
     def _asyncStateUpdate(self, documentState):
+        """Asynchronous method (uses thread every time) to call editor backend .../updatedocstate method with documentState argument"""
         u = urlparse.urljoin(self.timelineDocUrl, 'updatedocstate')
         self.logger.debug("_asyncStateUpdate: send %d elements to %s" % (len(documentState), u))
         try:
