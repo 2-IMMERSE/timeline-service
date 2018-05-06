@@ -53,6 +53,7 @@ class BaseTimeline:
         self.dmappTimeline = None
         self.dmappId = None
         self.documentHasFinished = False
+        self.asyncHandler = None
         self.dmappComponents = {}
         self.clockService = clocks.PausableClock(clocks.SystemClock())
         self.documentClock = clocks.CallbackPausableClock(self.clockService)
@@ -75,6 +76,9 @@ class BaseTimeline:
         self.layoutService = None
         self.dmappComponents = {}
         self.document = None
+        if self.asyncHandler:
+            self.asyncHandler.close()
+        self.asyncHandler = None
         # Do other cleanup
         return None
 
@@ -119,11 +123,12 @@ class BaseTimeline:
         assert self.document
         self.document.setExtraLoggerArgs(dict(contextID=self.contextId, dmappID=dmappId))
 
+        self.checkForAsyncUpdates()
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId, self.logger)
         self._populateTimeline()
         self._startTimeline()
         self._updateTimeline()
-        self._registerForChanges() # xxxjack At what point should this be done? Here, or earlier?
+        self.startAsyncUpdates() # xxxjack At what point should this be done? Here, or earlier?
         return None
 
     def unloadDMAppTimeline(self, dmappId):
@@ -223,6 +228,20 @@ class BaseTimeline:
         self.document.advanceDocument()
         self.document.runAvailable()
         self.layoutService.forwardActions()
+        
+    def checkForAsyncUpdates(self):
+        """Check to see whether we are running under control of an editor backend"""
+        backendEndpoint = urlparse.urljoin(self.timelineDocUrl, 'getliveinfo')
+        r = requests.get(backendEndpoint, params={'contextID' : self.contextId})
+        if r.status_code != requests.codes.ok:
+            # Assume any incorrect reply means we are not under control of an editor backend. Probably running a normal document.
+            return
+        self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
+        self.asyncHandler = socketIOHandler(self, **r.json())
+        
+    def startAsyncUpdates(self):
+        if self.asyncHandler:
+            self.asyncHandler.start()
         
     def _registerForChanges(self):
         if not self.timelineServiceUrl:
