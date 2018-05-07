@@ -243,8 +243,9 @@ class BaseTimeline:
         self.asyncHandler = socketIOhandler.SocketIOHandler(self, **r.json())
         
     def startAsyncUpdates(self):
-        if self.asyncHandler:
+        if self.asyncHandler and self.asyncHandler.wantStatusUpdate():
             self.document.setStateUpdateCallback(self._stateUpdateCallback)
+        if self.asyncHandler:
             self.asyncHandler.start()
         
     def updateDocument(self, generation, operations):

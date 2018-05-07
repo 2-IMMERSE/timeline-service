@@ -8,12 +8,16 @@ logger = logging.getLogger(__name__)
 class SocketIOHandler(threading.Thread):
     def __init__(self, timeline, toTimeline=None, fromTimeline=None):
         threading.Thread.__init__(self)
+        print 'xxxjack SocketIOHandler'
+        
         self.timeline = timeline
         self.socket = None
         self.channel = None
         self.roomIncomingUpdates = None
         self.roomOutgoingStatus = None
         self.logger = document.MyLoggerAdapter(logger, dict(contextID=self.timeline.contextId, dmappID=self.timeline.dmappId))
+        self.logger.error('xxxjack SocketIOHanrlder error')
+        self.logger.debug('xxxjack SocketIOHanrlder debug')
         if not toTimeline:
             self.logger.error("SocketIOHandler requires toTimeline argument (missing)")
             return
@@ -34,12 +38,11 @@ class SocketIOHandler(threading.Thread):
         self._setup()
         
     def _setup(self):
-        self.socket.on('UPDATES', self._incomingUpdates)
+        self.channel.on('UPDATES', self._incomingUpdates)
         self.channel.emit('JOIN', self.roomIncomingUpdates)
-        if self.roomOutgoingStatus:
-            self.channel.emit('JOIN', self.roomOutgoingStatus)
 
     def start(self):
+        self.logger.debug('SocketIOHandler: thread listener starting')
         threading.Thread.start(self)
         
     def close(self):
@@ -47,8 +50,6 @@ class SocketIOHandler(threading.Thread):
             return
         if self.roomIncomingUpdates:
             self.channel.emit('LEAVE', self.roomIncomingUpdates)
-        if self.roomOutgoingStatus:
-            self.channel.emit('LEAVE', self.roomOutgoingStatus)
         self.running = False
         self.socket = None
         
@@ -73,8 +74,11 @@ class SocketIOHandler(threading.Thread):
         assert 'operations' in modifications
         self.timeline.updateDocument(modifications['generation'], modifications['operations'])
         
+    def wantStatusUpdate(self):
+        return not not self.roomOutgoingStatus
+        
     def sendStatusUpdate(self, documentState):
-        self.logger.debug('SocketIOHandler.sendStatusUpdate(%s)' % repr(documentState))
+        self.logger.debug('SocketIOHandler.sendStatusUpdate(%s) to %s' % (repr(documentState), self.roomOutgoingStatus))
         assert self.socket
         assert self.channel
         assert self.roomOutgoingStatus
