@@ -9,6 +9,7 @@ import threading
 import time
 import traceback
 import sys
+import socketIOhandler
 
 logger = logging.getLogger(__name__)
 
@@ -232,47 +233,31 @@ class BaseTimeline:
     def checkForAsyncUpdates(self):
         """Check to see whether we are running under control of an editor backend"""
         backendEndpoint = urlparse.urljoin(self.timelineDocUrl, 'getliveinfo')
+        self.logger.debug("checkForAsyncUpdates: attempt to contact %s" % backendEndpoint)
         r = requests.get(backendEndpoint, params={'contextID' : self.contextId})
         if r.status_code != requests.codes.ok:
             # Assume any incorrect reply means we are not under control of an editor backend. Probably running a normal document.
+            self.logger.debug("checkForAsyncUpdates: error contacting %s: %s" % (backendEndpoint, repr(r.status_code)))
             return
-        self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
-        self.asyncHandler = socketIOHandler(self, **r.json())
+        self.document.report(logging.INFO, 'DOCUMENT', 'master', backendEndpoint)
+        self.asyncHandler = socketIOhandler.SocketIOHandler(self, **r.json())
         
     def startAsyncUpdates(self):
         if self.asyncHandler:
+            self.document.setStateUpdateCallback(self._stateUpdateCallback)
             self.asyncHandler.start()
         
-    def _registerForChanges(self):
-        if not self.timelineServiceUrl:
-            return
-
-        myTimelineUrl = self.timelineServiceUrl + '/timeline/v1/context/' + self.contextId + '/updateDocument'
-        params = dict(url=myTimelineUrl, contextID=self.contextId)
-        u = urlparse.urljoin(self.timelineDocUrl, 'addcallback')
-        r = requests.post(u, params=params)
-
-        self.logger.info("Registering callback using URL %s" % self.timelineServiceUrl)
-
-        if r.status_code == requests.codes.ok:
-            self.document.report(logging.INFO, 'DOCUMENT', 'master', u)
-            
-
-    def updateDocument(self, generation, operations, wantStateUpdates=False):
-        if len(operations):
-            self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d, wantUpdates=%s' % (generation, len(operations), wantStateUpdates))
-        else:
-            self.document.report(logging.DEBUG, 'DOCUMENT', 'update', 'generation=%d, count=%d, wantUpdates=%s' % (generation, len(operations), wantStateUpdates))
+    def updateDocument(self, generation, operations):
+        self.document.report(logging.INFO, 'DOCUMENT', 'update', 'generation=%d, count=%d' % (generation, len(operations)))
         stateUpdateCallback = None
-        if wantStateUpdates:
-            self.document.setStateUpdateCallback(self._stateUpdateCallback)
         self.document.modifyDocument(generation, operations)
         self._updateTimeline()
         
     def _stateUpdateCallback(self, documentState):
-        t = threading.Thread(target=self._asyncStateUpdate, args=(documentState,))
-        t.daemon = True
-        t.start()
+        if not self.asyncHandler:
+            self.logger.warning("_stateUpdateCallback without asyncHandler")
+            return
+        self.asyncHandler.sendStatusUpdate(documentState)
         
     def _asyncStateUpdate(self, documentState):
         """Asynchronous method (uses thread every time) to call editor backend .../updatedocstate method with documentState argument"""

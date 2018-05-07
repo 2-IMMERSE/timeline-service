@@ -1,12 +1,13 @@
 from socketIO_client import SocketIO, SocketIONamespace
 import document
 import logging
-import Threading
+import threading
 
 logger = logging.getLogger(__name__)
 
-class SocketIOHandler(Threading.thread):
+class SocketIOHandler(threading.Thread):
     def __init__(self, timeline, toTimeline=None, fromTimeline=None):
+        threading.Thread.__init__(self)
         self.timeline = timeline
         self.socket = None
         self.channel = None
@@ -28,9 +29,18 @@ class SocketIOHandler(Threading.thread):
             # For now we assume the backchannel is the same as the forward channel
             assert fromTimeline['server'] == toTimeline['server']
             assert fromTimeline['channel'] == toTimeline['channel']
+            self.roomOutgoingStatus = fromTimeline['room']
+        self.logger.debug('SocketIOHandler: url=%s channel=%s roomIncoming=%s roomOutgoing=%s' % (toTimeline['server'], toTimeline['channel'], self.roomIncomingUpdates, self.roomOutgoingStatus))
+        self._setup()
+        
+    def _setup(self):
+        self.socket.on('UPDATES', self._incomingUpdates)
+        self.channel.emit('JOIN', self.roomIncomingUpdates)
+        if self.roomOutgoingStatus:
+            self.channel.emit('JOIN', self.roomOutgoingStatus)
 
     def start(self):
-        pass
+        threading.Thread.start(self)
         
     def close(self):
         if not self.socket:
@@ -47,3 +57,26 @@ class SocketIOHandler(Threading.thread):
         
     def run(self):
         self.running = True
+        self.logger.debug('SocketIOHandler: thread listener running')
+        while self.running and self.socket:
+            try:
+                self.socket.wait(5)
+            except:
+                # I hate bare except clauses, but I don't know what to do else...
+                import traceback
+                traceback.print_exc()
+        self.logger.debug('SocketIOHandler: thread listener finished')
+
+    def _incomingUpdates(self, modifications):
+        self.logger.debug('SocketIOHandler._incomingUpdates(%s)' % repr(modifications))
+        assert 'generation' in modifications
+        assert 'operations' in modifications
+        self.timeline.updateDocument(modifications['generation'], modifications['operations'])
+        
+    def sendStatusUpdate(self, documentState):
+        self.logger.debug('SocketIOHandler.sendStatusUpdate(%s)' % repr(documentState))
+        assert self.socket
+        assert self.channel
+        assert self.roomOutgoingStatus
+        self.channel.emit("BROADCAST_STATUS", self.roomOutgoingStatus, documentState)
+        
