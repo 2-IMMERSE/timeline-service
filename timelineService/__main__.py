@@ -37,7 +37,7 @@ sys.stdout = StreamToLogger(logging.getLogger('stdout'), logging.INFO)
 sys.stderr = StreamToLogger(logging.getLogger('stderr'), logging.INFO)
 
 # Default logging configuration: INFO for document and timeline (useful to app developers), WARNING for everything else.
-DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,socketIOhandler:DEBUG,INFO"
+DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,INFO"
 
 class MyFormatter(logging.Formatter):
 
