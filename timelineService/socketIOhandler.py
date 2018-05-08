@@ -22,6 +22,7 @@ class SocketIOHandler(threading.Thread):
         if not 'server' in toTimeline or not 'channel' in toTimeline or not 'room' in toTimeline:
             self.logger.error("SocketIOHandler: missing required argument in toTimeline: %s" % repr(toTimeline))
             return
+        self.logger.debug("SocketIOHandler: connecting to %s" % toTimeline['server'])
         self.socket = SocketIO(toTimeline['server'])
         self.channel = self.socket.define(SocketIONamespace, toTimeline['channel'])
         self.roomIncomingUpdates = toTimeline['room']
