@@ -246,7 +246,7 @@ class BaseTimeline:
             currentTime = previewParameters.pop('currentTime')
             # Remove any start time from the URL
             if '#t=' in self.timelineDocUrl:
-                self.timelineDocUrl.split('#t=')[0]
+                self.timelineDocuUrl = self.timelineDocUrl.split('#t=')[0]
             self.timelineDocUrl += '#t=%f' % currentTime
             self.document.report(logging.INFO, 'DOCUMENT', 'addStart', self.timelineDocUrl)
         self.asyncHandler = socketIOhandler.SocketIOHandler(self, **previewParameters)
