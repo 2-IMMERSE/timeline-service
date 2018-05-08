@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 class SocketIOHandler(threading.Thread):
     def __init__(self, timeline, toTimeline=None, fromTimeline=None):
         threading.Thread.__init__(self)
-        print 'xxxjack SocketIOHandler'
         
         self.timeline = timeline
         self.socket = None
@@ -16,8 +15,7 @@ class SocketIOHandler(threading.Thread):
         self.roomIncomingUpdates = None
         self.roomOutgoingStatus = None
         self.logger = document.MyLoggerAdapter(logger, dict(contextID=self.timeline.contextId, dmappID=self.timeline.dmappId))
-        self.logger.error('xxxjack SocketIOHanrlder error')
-        self.logger.debug('xxxjack SocketIOHanrlder debug')
+        self.logger.debug('SocketIOhandler: created')
         if not toTimeline:
             self.logger.error("SocketIOHandler requires toTimeline argument (missing)")
             return
