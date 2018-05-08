@@ -260,21 +260,6 @@ class BaseTimeline:
             return
         self.asyncHandler.sendStatusUpdate(documentState)
         
-    def _asyncStateUpdate(self, documentState):
-        """Asynchronous method (uses thread every time) to call editor backend .../updatedocstate method with documentState argument"""
-        u = urlparse.urljoin(self.timelineDocUrl, 'updatedocstate')
-        self.logger.debug("_asyncStateUpdate: send %d elements to %s" % (len(documentState), u))
-        try:
-            requestStartTime = time.time() # Debugging: sometimes requests take a very long time
-            r = requests.put(u, json=documentState)
-        except requests.exceptions.RequestException:
-            self.logger.warning("_asyncStateUpdate: PUT failed for %s" % u)
-            raise
-        else:
-            requestDuration = time.time() - requestStartTime
-            if requestDuration > 2:
-                self.logger.warning("_asyncStateUpdate: PUT took %d seconds for %s" % (requestDuration, u))
-        
 class TimelinePollingRunnerMixin:
     def __init__(self):
         pass
