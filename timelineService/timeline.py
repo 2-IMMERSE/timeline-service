@@ -125,6 +125,7 @@ class BaseTimeline:
         self.document.setExtraLoggerArgs(dict(contextID=self.contextId, dmappID=dmappId))
 
         self.checkForAsyncUpdates()
+        # Check whe
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId, self.logger)
         self._populateTimeline()
         self._startTimeline()
@@ -240,7 +241,15 @@ class BaseTimeline:
             self.logger.debug("checkForAsyncUpdates: error contacting %s: %s" % (backendEndpoint, repr(r.status_code)))
             return
         self.document.report(logging.INFO, 'DOCUMENT', 'master', backendEndpoint)
-        self.asyncHandler = socketIOhandler.SocketIOHandler(self, **r.json())
+        previewParameters = r.json()
+        if 'currentTime' in previewParameters:
+            currentTime = previewParameters.pop('currentTime')
+            # Remove any start time from the URL
+            if '#t=' in self.timelineDocUrl:
+                self.timelineDocUrl.split('#t=')[0]
+            self.timelineDocUrl += '#t=%f' % currentTime
+            self.document.report(logging.INFO, 'DOCUMENT', 'addStart', self.timelineDocUrl)
+        self.asyncHandler = socketIOhandler.SocketIOHandler(self, **previewParameters)
         
     def startAsyncUpdates(self):
         if self.asyncHandler and self.asyncHandler.wantStatusUpdate():
