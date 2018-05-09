@@ -169,7 +169,8 @@ class DummyDelegate:
             # Remember the time this element actually started. A bit convoluted
             # because of reviving of elements in 2immerse
             if oldState not in {State.started, State.finished}:
-                assert self.startTime == None
+                # Unfortunately we also come here when we re-start the pars after seeking.
+                pass # assert self.startTime == None
             if self.startTime == None:
                 self.startTime = self.clock.now()
         elif self.state == State.finished:
@@ -664,7 +665,7 @@ class ParDelegate(TimeElementDelegate):
                 self.logger.debug("%s: call to ParDelegate.childAdded(%s): self.state==started, init+start child" % (self.getXPath(), self.document.getXPath(child)))
                 tooLate = self.startTime - self.clock.now() # This is a negative number
                 child.delegate.setMediaClockSeek(tooLate)
-                self.logger.debug("%s: child seek %s seconds (we started %d seconds ago)" % (self.getXPath(), child.delegate.mediaClockSeek, tooLate))
+                self.logger.debug("%s: child seek %s seconds (tooLate %s, we started %s now %s)" % (self.getXPath(), child.delegate.mediaClockSeek, tooLate, self.startTime, self.clock.now()))
                 self.document.schedule(child.delegate.initTimelineElement)
             self.childrenToAutoStart.append(child)
         elif self.state == State.stopping:
@@ -678,7 +679,7 @@ class ParDelegate(TimeElementDelegate):
             self.emittedStopForChildren = False
             tooLate = self.startTime - self.clock.now() # This is a negative number
             child.delegate.setMediaClockSeek(tooLate)
-            self.logger.debug("%s: child seek %f seconds" % (self.getXPath(), child.delegate.mediaClockSeek))
+            self.logger.debug("%s: child seek %s seconds (tooLate %s, we started %s now %s)" % (self.getXPath(), child.delegate.mediaClockSeek, tooLate, self.startTime, self.clock.now()))
             self.document.schedule(child.delegate.initTimelineElement)
             self.childrenToAutoStart.append(child)
         else:
@@ -1247,7 +1248,7 @@ class DocumentStateSeekFinish(DocumentState):
         for elt in document.tree.iter():
             if elt.delegate.__class__ == ParDelegate and elt.delegate.state == State.started:
                 elt.delegate.state = State.starting
-                elt.delegate.startTime = None
+                #elt.delegate.startTime = None
         #
         # Now do the set-position on the clock of the current master timing element.
         #
