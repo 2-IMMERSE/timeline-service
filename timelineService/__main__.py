@@ -31,10 +31,6 @@ class StreamToLogger(object):
 
 logging.basicConfig()
 
-import sys
-# sys.stdout = Unbuffered(sys.stdout)
-sys.stdout = StreamToLogger(logging.getLogger('stdout'), logging.INFO)
-sys.stderr = StreamToLogger(logging.getLogger('stderr'), logging.INFO)
 
 # Default logging configuration: INFO for document and timeline (useful to app developers), WARNING for everything else.
 DEFAULT_LOG_CONFIG="document:INFO,timeline:INFO,INFO"
@@ -249,6 +245,9 @@ def main():
                 loggerToModify = logging.getLogger()
                 newLevel = getattr(logging, ll)
             loggerToModify.setLevel(newLevel)
+    else:
+        sys.stdout = StreamToLogger(logging.getLogger('stdout'), logging.INFO)
+        sys.stderr = StreamToLogger(logging.getLogger('stderr'), logging.INFO)
     
     rootLogger = logging.getLogger()
     rootLogger.handlers[0].setFormatter(MyFormatter())
