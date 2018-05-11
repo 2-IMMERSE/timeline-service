@@ -183,7 +183,10 @@ class DummyDelegate:
             
         parentElement = self.document.getParent(self.elt)
         if parentElement is not None:
+#            self.logger.info('xxxjack report statechange for %s to %s' % (self.getXPath(), parentElement.delegate.getXPath()))
             parentElement.delegate.reportChildState(self.elt, self.state)
+        else:
+            self.logger.error("setState for element %s which has no parent" % self.getXPath(), extra=self.getLogExtra())
             
         if self.state == State.idle:
             self.destroyTimelineElement()
@@ -520,6 +523,7 @@ class ParDelegate(TimeElementDelegate):
         }
         
     def reportChildState(self, child, childState):
+#        self.logger.info('xxxjack par %s state %s child %s state %s' % (self.getXPath(), self.state, self.document.getXPath(child), childState))
         if self.state == State.idle:
             # If the <par> is idle we do not care about children changing state.
             return
@@ -543,6 +547,11 @@ class ParDelegate(TimeElementDelegate):
             # We're starting. Wait for all our children to have started (or started-and-finished).
             for ch in self.elt:
                 if ch.delegate.state not in {State.started, State.finished}:
+#                    self.logger.info('xxxjack starting %s waitforchild %s in state %s' % (self.getXPath(), ch.delegate.getXPath(), ch.delegate.state))
+#                    if ch.delegate.state == State.inited:
+#                        # xxxjack I am not sure why these "straddlers" exist, sometime, after seeking. Push it along.
+#                        self.logger.debug("%s: autostarting child %s" % (self.getXPath(), self.document.getXPath(ch)))
+#                        self.document.schedule(ch.delegate.startTimelineElement)
                     return
             self.setState(State.started)
             # Note that we fall through into the next if straight away
@@ -1293,13 +1302,14 @@ class DocumentStateSeekFinish(DocumentState):
             # to see which ones are needed.
         	count = self.document.clock.flushEvents()
         	self.document.logger.info("Flushed %d pending events while ending seek." % count)
-        		
+#        self.document.dump(open('seekend1.xml', 'w')) # xxxjack
         #
         # Now (re)issue the start calls
         #
         for elt in self.document.tree.iter():
             elt.delegate.stepMoveStateToConform(startAllowed=True)
         self.document.report(logging.INFO, 'FFWD', 'done', '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
+#        self.document.dump(open('seekend2.xml', 'w')) #xxxjack
         return DocumentStateRunDocument(self.document)
         
 class DocumentStateRunDocument(DocumentState):
