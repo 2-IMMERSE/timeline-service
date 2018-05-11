@@ -486,6 +486,8 @@ class FFWDTimeElementDelegate(TimeElementDelegate):
         self.assertState('startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.started)
+        # Quick hack: tim:update elements don't finish (because they have a side effect)
+        # For other media see if we can determine their expected duration
         expectedDuration = float(self.elt.get(NS_TIMELINE_CHECK("dur"), 0))
         if expectedDuration == 0:
             self.logger.warning("%s: syncMode=master element without tlcheck:dur. Guessing at 10 hours." % self.getXPath())
@@ -498,6 +500,16 @@ class FFWDTimeElementDelegate(TimeElementDelegate):
             self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
             self.setState(State.finished)
             
+
+class FFWDSideEffectTimeElementDelegate(TimeElementDelegate):
+    """Timed element with side effect (tim:update) fast-forward handling."""
+    
+    def startTimelineElement(self):
+        """Called by parent or outer control to start the element"""
+        self.assertState('startTimelineElement()', State.inited)
+        self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
+        self.setState(State.started)
+        # Never finishes...
 
 class ParDelegate(TimeElementDelegate):
     """<tl:par> element. Runs all its children in parallel."""
@@ -1068,6 +1080,7 @@ DELEGATE_CLASSES_FASTFORWARD = {
     NS_TIMELINE("seq") : SeqDelegate,
     NS_TIMELINE("repeat") : RepeatDelegate,
     NS_TIMELINE("ref") : FFWDTimeElementDelegate,
+    NS_2IMMERSE("update") : FFWDSideEffectTimeElementDelegate,
     NS_TIMELINE("conditional") : ConditionalDelegate, # xxxjack should return True depending on tree position?
     NS_TIMELINE("sleep") : SleepDelegate,
     NS_TIMELINE("wait") : DummyDelegate, # xxxjack This makes all events appear to happen instantaneous...
