@@ -1089,7 +1089,7 @@ DELEGATE_CLASSES_FASTFORWARD = {
     NS_TIMELINE("seq") : SeqDelegate,
     NS_TIMELINE("repeat") : RepeatDelegate,
     NS_TIMELINE("ref") : FFWDTimeElementDelegate,
-    NS_2IMMERSE("update") : FFWDSideEffectTimeElementDelegate,
+#    NS_2IMMERSE("update") : FFWDSideEffectTimeElementDelegate,
     NS_TIMELINE("conditional") : ConditionalDelegate, # xxxjack should return True depending on tree position?
     NS_TIMELINE("sleep") : SleepDelegate,
     NS_TIMELINE("wait") : DummyDelegate, # xxxjack This makes all events appear to happen instantaneous...
