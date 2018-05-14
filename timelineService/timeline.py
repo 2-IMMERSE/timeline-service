@@ -430,6 +430,12 @@ class ProxyMixin:
                 value = self.elt.attrib[k]
                 if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
+                # Special case for communicating timestamps to Chyron Hego Prime graphics
+                if localName == 'startedRefTime' and value:
+                    value = float(value)
+                    newValue = self._getTime(value)
+                    self.logger.info("startedRefTime: converted from %s to %s", value, newValue, extra=self.getLogExtra())
+                    value = str(value)
                 rv[localName] = value
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)
