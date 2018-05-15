@@ -191,7 +191,7 @@ class BaseTimeline:
                     self.documentClock.set(oldDocumentNow)
                     self.document.report(logging.INFO, 'CLOCK', 'timewarped', contextClock, '(underlyingClock=%f)' % self.clockService.now())
                     # No need to call _updateTimeline: the document clock has not changed.
-                    return None
+                    delta = 0
                 
         MAX_CLOCK_DISCREPANCY = 0.032 # Smaller than a frame duration for both 25fps and 30fps
         if abs(delta) > MAX_CLOCK_DISCREPANCY:
