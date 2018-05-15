@@ -429,6 +429,7 @@ class ProxyMixin:
         return timestamp - deltaDocToUnderlying
 
     def scheduleAction(self, verb, config=None, parameters=None):
+        self._fix2immerseTimeParameters(parameters)
         extraLogArgs = ()
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
@@ -447,12 +448,6 @@ class ProxyMixin:
                 value = self.elt.attrib[k]
                 if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
-                # Special case for communicating timestamps to Chyron Hego Prime graphics
-                if localName == 'startedRefTime' and value:
-                    value = float(value)
-                    newValue = self._getTime(value)
-                    self.logger.info("startedRefTime: converted from %s to %s", value, newValue, extra=self.getLogExtra())
-                    value = str(value)
                 rv[localName] = value
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)
@@ -462,6 +457,17 @@ class ProxyMixin:
                 rv['debug-2immerse-' + localName] = value
         return rv
         
+    def _fix2immerseTimeParameters(self, parameters):
+        # Special case for communicating timestamps to Chyron Hego Prime graphics.
+        # These are converted from document time to contextclock
+        if not parameters: return
+        if 'startedRefTime' in parameters:
+            value = float(parameters['startedRefTime'])
+            newValue = self._getTime(value)
+            self.logger.info("startedRefTime: converted from %s to %s", value, newValue, extra=self.getLogExtra())
+            value = str(newValue)
+            parameters['startedRefTime'] = value
+
     def _addSeekParameter(self, parameters):
         """# Also get the initial seek, for sync masters. Assume the syntax for the attributes is as for the video dmappc.
         If the parameters are updated we expect a CLOCK seek later, we return the expected clock seek value (which we will ignore
@@ -635,6 +641,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         
     def scheduleActionMulti(self, verb, componentIds, config=None, parameters=None):
         extraLogArgs = ()
+        self._fix2immerseTimeParameters(parameters)
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
         startTime = self.getStartTime()
