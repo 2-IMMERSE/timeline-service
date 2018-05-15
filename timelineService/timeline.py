@@ -171,11 +171,28 @@ class BaseTimeline:
     def clockChanged(self, contextClock, contextClockRate, wallClock):
         self.logger.debug("Timeline(%s): clockChanged(contextClock=%s, contextClockRate=%f, wallClock=%s)", self.contextId, contextClock, contextClockRate, wallClock)
         # self.clockService.setxxxxx(contextClock, wallClock)
-
         #
         # Adjust clock position, if needed
         #
         delta = contextClock - self.clockService.now()
+        #
+        # Stopgap measure for 2immerse live: if the clock appears to be wallclock-ish and
+        # we are a preview player we _only_ adjust the underlying clock, not the document clock
+        #
+        if delta > 360000:
+            # More than 100 hours difference with old document time
+            if abs(contextClock - time.time()) < 36000:
+                # Less than 10 hours difference with wallclock time
+                if self.asyncHandler and self.asyncHandler.wantStatusUpdate():
+                    # And we are the preview player
+                    self.document.report(logging.INFO, 'CLOCK', 'timewarp', contextClock, '(underlyingClock=%f)' % self.clockService.now())
+                    oldDocumentNow = self.documentClock.now()
+                    self.clockService.set(contextClock)
+                    self.documentClock.set(oldDocumentNow)
+                    self.document.report(logging.INFO, 'CLOCK', 'timewarped', contextClock, '(underlyingClock=%f)' % self.clockService.now())
+                    # No need to call _updateTimeline: the document clock has not changed.
+                    return None
+                
         MAX_CLOCK_DISCREPANCY = 0.032 # Smaller than a frame duration for both 25fps and 30fps
         if abs(delta) > MAX_CLOCK_DISCREPANCY:
             self.document.report(logging.INFO, 'CLOCK', 'forward', delta, '(underlyingClock=%f)' % self.clockService.now())
