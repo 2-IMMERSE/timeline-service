@@ -186,7 +186,8 @@ class DummyDelegate:
 #            self.logger.info('xxxjack report statechange for %s to %s' % (self.getXPath(), parentElement.delegate.getXPath()))
             parentElement.delegate.reportChildState(self.elt, self.state)
         else:
-            self.logger.error("setState for element %s which has no parent" % self.getXPath(), extra=self.getLogExtra())
+            if self.elt != self.document.root:
+                self.logger.error("setState for element %s which has no parent" % self.getXPath(), extra=self.getLogExtra())
             
         if self.state == State.idle:
             self.destroyTimelineElement()
