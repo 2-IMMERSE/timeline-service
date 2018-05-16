@@ -266,6 +266,10 @@ class BaseTimeline:
                 self.timelineDocUrl = self.timelineDocUrl.split('#t=')[0]
             self.timelineDocUrl += '#t=%f' % currentTime
             self.document.report(logging.INFO, 'DOCUMENT', 'addStart', self.timelineDocUrl)
+        if 'clockEpoch' in previewParameters:
+            masterStartTime = float(previewParameters.pop('clockEpoch'))
+            self.document.report(logging.INFO, 'DOCUMENT', 'masterEpoch', masterStartTime)
+            # xxxjack more to be done
         self.asyncHandler = socketIOhandler.SocketIOHandler(self, **previewParameters)
         
     def startAsyncUpdates(self):
@@ -280,11 +284,14 @@ class BaseTimeline:
         self.document.modifyDocument(generation, operations)
         self._updateTimeline()
         
-    def _stateUpdateCallback(self, documentState):
+    def _stateUpdateCallback(self, elementStates):
         if not self.asyncHandler:
             self.logger.warning("_stateUpdateCallback without asyncHandler")
             return
-        self.asyncHandler.sendStatusUpdate(documentState)
+        clockEpoch = self.clockService.now() - self.documentClock.now()
+        documentState = {'elementStates' : elementStates, 'clockEpoch' : clockEpoch}
+        
+        self.asyncHandler.sendStatusUpdate(dict(documentState))
         
 class TimelinePollingRunnerMixin:
     def __init__(self):
