@@ -23,5 +23,5 @@ COPY samples/ samples/
 EXPOSE 8080
 
 ENTRYPOINT [ "/usr/bin/python" ]
-CMD [ "/usr/src/app/timelineService", "--noKibana", "--logLevel", "document:DEBUG,timeline:INFO,WARN" ]
-# CMD [ "/usr/src/app/timelineService" ]
+# CMD [ "/usr/src/app/timelineService", "--noKibana", "--logLevel", "document:DEBUG,timeline:DEBUG,WARN" ]
+CMD [ "/usr/src/app/timelineService" ]

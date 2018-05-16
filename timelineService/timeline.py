@@ -332,7 +332,7 @@ class BaseTimeline:
         self.document.report(logging.INFO, "CLOCK", "fixEpoch", self.masterEpoch - self.ourEpoch)
         if not self.documentInitialSeek:
             self.documentInitialSeek = 0
-        self.documentInitialSeek += self.masterEpoch - self.ourEpoch
+        self.documentInitialSeek -= self.masterEpoch - self.ourEpoch
         if self.documentInitialSeek < 0:
             self.logger.warning("_fixEpochs: resultant seek time is negative: %f" % self.documentInitialSeek)
         self.prepareDMAppTimeline()
