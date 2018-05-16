@@ -236,6 +236,10 @@ def main():
     if args.noKibana:
         global MyFormatter
         MyFormatter = logging.Formatter
+        sys.stdout = Unbuffered(sys.stdout)
+    else:
+        sys.stdout = StreamToLogger(logging.getLogger('stdout'), logging.INFO)
+        sys.stderr = StreamToLogger(logging.getLogger('stderr'), logging.INFO)
     if args.logLevel:
         for ll in args.logLevel.split(','):
             if ':' in ll:
@@ -245,9 +249,6 @@ def main():
                 loggerToModify = logging.getLogger()
                 newLevel = getattr(logging, ll)
             loggerToModify.setLevel(newLevel)
-    else:
-        sys.stdout = StreamToLogger(logging.getLogger('stdout'), logging.INFO)
-        sys.stderr = StreamToLogger(logging.getLogger('stderr'), logging.INFO)
     
     rootLogger = logging.getLogger()
     rootLogger.handlers[0].setFormatter(MyFormatter())
