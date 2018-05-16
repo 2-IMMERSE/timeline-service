@@ -63,6 +63,9 @@ class BaseTimeline:
         self.document = document.Document(self.documentClock, idAttribute=document.NS_XML("id"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         self.document.setDelegateFactory(self.updateDelegateFactory, tag=document.NS_2IMMERSE("update"))
+        # Initialize clock values used to synchronize concurrent live viewing
+        self.masterEpoch = None
+        self.ourEpoch = None
         # Do other initialization
 
     def delete(self):
@@ -125,7 +128,10 @@ class BaseTimeline:
         self.document.setExtraLoggerArgs(dict(contextID=self.contextId, dmappID=dmappId))
 
         self.checkForAsyncUpdates()
-        # Check whe
+        
+        self.prepareDMAppTimeline()
+        
+    def prepareDMAppTimeline(self):
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId, self.logger)
         self._populateTimeline()
         self._startTimeline()
@@ -192,6 +198,8 @@ class BaseTimeline:
                     self.document.report(logging.INFO, 'CLOCK', 'timewarped', contextClock, '(underlyingClock=%f)' % self.clockService.now())
                     # No need to call _updateTimeline: the document clock has not changed.
                     delta = 0
+                else:
+                    self._setOurEpoch(contextClock)
                 
         MAX_CLOCK_DISCREPANCY = 0.032 # Smaller than a frame duration for both 25fps and 30fps
         if abs(delta) > MAX_CLOCK_DISCREPANCY:
@@ -269,6 +277,7 @@ class BaseTimeline:
         if 'clockEpoch' in previewParameters:
             masterStartTime = float(previewParameters.pop('clockEpoch'))
             self.document.report(logging.INFO, 'DOCUMENT', 'masterEpoch', masterStartTime)
+            self._setMasterEpoch(masterStartTime)
             # xxxjack more to be done
         self.asyncHandler = socketIOhandler.SocketIOHandler(self, **previewParameters)
         
@@ -292,6 +301,24 @@ class BaseTimeline:
         documentState = {'elementStates' : elementStates, 'clockEpoch' : clockEpoch}
         
         self.asyncHandler.sendStatusUpdate(dict(documentState))
+        
+    def _setMasterEpoch(self, masterEpoch):
+        """Called if we get a master epoch: the underlying clock value for t=0 on the master player document timeline"""
+        if masterEpoch:
+            self.masterEpoch = masterEpoch
+        if self.masterEpoch and self.ourEpoch:
+            self._fixEpochs()
+        
+    def _setOurEpoch(self, ourEpoch):
+        """Called when we know our epoch: the underlying clock value that corresponds to t=0 on our player document timeline"""
+        if ourEpoch:
+            self.ourEpoch = ourEpoch
+        if self.masterEpoch and self.ourEpoch:
+            self._fixEpochs()
+            
+    def _fixEpochs(self):
+        """Called to fix the epoch of our document if master and our epoch have been set previously"""
+        self.document.report(logging.INFO, "CLOCK", "fixEpoch", self.masterEpoch - self.ourEpoch)
         
 class TimelinePollingRunnerMixin:
     def __init__(self):
