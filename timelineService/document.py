@@ -1581,7 +1581,6 @@ class Document(DocumentModificationMixin):
     def runDocument(self):
         """Run the whole document."""
         assert self.documentState is not None
-        
         while not self.isDocumentDone():
             self.runloop()
             assert self.documentState.stateFinished()

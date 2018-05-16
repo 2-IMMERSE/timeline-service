@@ -197,16 +197,15 @@ class BaseTimeline:
             # More than 100 hours difference with old document time
             if abs(contextClock - time.time()) < 36000:
                 # Less than 10 hours difference with wallclock time
-                if self.asyncHandler and self.asyncHandler.wantStatusUpdate():
-                    # And we are the preview player
-                    self.document.report(logging.INFO, 'CLOCK', 'timewarp', contextClock, '(underlyingClock=%f)' % self.clockService.now())
-                    oldDocumentNow = self.documentClock.now()
-                    self.clockService.set(contextClock)
-                    self.documentClock.set(oldDocumentNow)
-                    self.document.report(logging.INFO, 'CLOCK', 'timewarped', contextClock, '(underlyingClock=%f)' % self.clockService.now())
-                    # No need to call _updateTimeline: the document clock has not changed.
-                    delta = 0
-                else:
+                self.document.report(logging.INFO, 'CLOCK', 'timewarp', contextClock, '(underlyingClock=%f)' % self.clockService.now())
+                oldDocumentNow = self.documentClock.now()
+                self.clockService.set(contextClock)
+                self.documentClock.set(oldDocumentNow)
+                self.document.report(logging.INFO, 'CLOCK', 'timewarped', contextClock, '(underlyingClock=%f)' % self.clockService.now())
+                # No need to call _updateTimeline: the document clock has not changed.
+                delta = 0
+                if not (self.asyncHandler and self.asyncHandler.wantStatusUpdate()):
+                    # We are not the preview player but a normal viewer (slaved to the preview player)
                     self._setOurEpoch(contextClock)
                 
         MAX_CLOCK_DISCREPANCY = 0.032 # Smaller than a frame duration for both 25fps and 30fps
@@ -360,11 +359,13 @@ class TimelineThreadedRunnerMixin:
     def _runTimeline(self):
         assert self.document
         assert self.document.getDocumentState()
+        assert self.document.documentState
         with self.timelineCondition:
             while self.document and not self.document.isDocumentDone():
                 self._stepTimeline()
                 maxSleep = self.documentClock.nextEventTime(default=None)
-                self.timelineCondition.wait(maxSleep)
+                if not self.document.documentState.nudgeClock():
+                    self.timelineCondition.wait(maxSleep)
             
     def _updateTimeline(self):
         with self.timelineCondition:
