@@ -55,6 +55,7 @@ class BaseTimeline:
         self.dmappId = None
         self.documentHasFinished = False
         self.asyncHandler = None
+        self.documentInitialSeek = None
         self.dmappComponents = {}
         self.clockService = clocks.PausableClock(clocks.SystemClock())
         self.documentClock = clocks.CallbackPausableClock(self.clockService)
@@ -129,9 +130,16 @@ class BaseTimeline:
 
         self.checkForAsyncUpdates()
         
-        self.prepareDMAppTimeline()
+        if not self._waitForLiveEpochs():
+            self.prepareDMAppTimeline()
         
     def prepareDMAppTimeline(self):
+        if self.documentInitialSeek:
+            # Remove any start time from the URL
+            if '#t=' in self.timelineDocUrl:
+                self.timelineDocUrl = self.timelineDocUrl.split('#t=')[0]
+            self.timelineDocUrl += '#t=%f' % self.documentInitialSeek
+            self.document.report(logging.INFO, 'DOCUMENT', 'addSeek', self.timelineDocUrl)
         self.layoutService = ProxyLayoutService(self.layoutServiceUrl, self.contextId, self.dmappId, self.logger)
         self._populateTimeline()
         self._startTimeline()
@@ -269,11 +277,7 @@ class BaseTimeline:
         previewParameters = r.json()
         if 'currentTime' in previewParameters:
             currentTime = previewParameters.pop('currentTime')
-            # Remove any start time from the URL
-            if '#t=' in self.timelineDocUrl:
-                self.timelineDocUrl = self.timelineDocUrl.split('#t=')[0]
-            self.timelineDocUrl += '#t=%f' % currentTime
-            self.document.report(logging.INFO, 'DOCUMENT', 'addStart', self.timelineDocUrl)
+            self.documentInitialSeek = float(currentTime)
         if 'clockEpoch' in previewParameters:
             masterStartTime = float(previewParameters.pop('clockEpoch'))
             self.document.report(logging.INFO, 'DOCUMENT', 'masterEpoch', masterStartTime)
@@ -297,8 +301,11 @@ class BaseTimeline:
         if not self.asyncHandler:
             self.logger.warning("_stateUpdateCallback without asyncHandler")
             return
+        documentState = {'elementStates' : elementStates}
         clockEpoch = self.clockService.now() - self.documentClock.now()
-        documentState = {'elementStates' : elementStates, 'clockEpoch' : clockEpoch}
+        # If this is a very large number we assume we're a live player. We report our underlying clock start time.
+        if clockEpoch > 360000:
+            documentState['clockEpoch'] = clockEpoch
         
         self.asyncHandler.sendStatusUpdate(dict(documentState))
         
@@ -315,10 +322,21 @@ class BaseTimeline:
             self.ourEpoch = ourEpoch
         if self.masterEpoch and self.ourEpoch:
             self._fixEpochs()
-            
+
+    def _waitForLiveEpochs(self):
+        """Return True if we have to wait for a second epoch before we can fast-forward the clocks"""
+        return not not (self.ourEpoch or self.masterEpoch)
+        
     def _fixEpochs(self):
         """Called to fix the epoch of our document if master and our epoch have been set previously"""
+        self.logger.info("xxxjack fixEpochs masterEpoch=%s ourEpoch=%s initialSeek=%s" % (self.masterEpoch, self.ourEpoch, self.documentInitialSeek))
         self.document.report(logging.INFO, "CLOCK", "fixEpoch", self.masterEpoch - self.ourEpoch)
+        if not self.documentInitialSeek:
+            self.documentInitialSeek = 0
+        self.documentInitialSeek += self.masterEpoch - self.ourEpoch
+        if self.documentInitialSeek < 0:
+            self.logger.warning("_fixEpochs: resultant seek time is negative: %f" % self.documentInitialSeek)
+        self.prepareDMAppTimeline()
         
 class TimelinePollingRunnerMixin:
     def __init__(self):
