@@ -156,10 +156,10 @@ class DummyDelegate:
         """Advance element state to a new one. Subclasses will add side effects (such as actually playing media)"""
         self.document.report(logging.DEBUG, 'STATE', state, self.document.getXPath(self.elt), extra=self.getLogExtra())
         if self.state == state:
-            self.logger.warning('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)), extra=self.getLogExtra())
+            self.logger.info('superfluous state change: %-8s %-8s %s' % ('STATE', state, self.document.getXPath(self.elt)), extra=self.getLogExtra())
             if state == State.idle:
                 # Defensive programming: destroy it again...
-                self.logger.warning('Re-issuing destroy for %s' % self.document.getXPath(self.elt), extra=self.getLogExtra())
+                self.logger.info('Re-issuing destroy for %s' % self.document.getXPath(self.elt), extra=self.getLogExtra())
                 self.destroyTimelineElement()
             return
         oldState = self.state
