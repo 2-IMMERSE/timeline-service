@@ -1353,6 +1353,12 @@ class DocumentModificationMixin:
         
     def modifyDocument(self, generation, commands):
         """Modify the running document from the given command list"""
+        # First check generation
+        myGeneration = self.root.get(NS_AUTH("generation"), "0")
+        if int(generation) != int(myGeneration)+1:
+            self.logger.warning("modifyDocument: current generation=%s new generation=%s" % (myGeneration, generation))
+        self.root.attrib[NS_AUTH("generation")] = str(generation)
+        
         updateCallbacks = []
         for command in commands:
             cmd = command['verb']
