@@ -337,11 +337,11 @@ class DummyDelegate:
         
     def attributesChanged(self, attrs):
         """Called after an edit operation has changed attributes on this element."""
-        self.logger.warning("%s: Unexpected call to attributesChanged(%s)" % (self.getXPath(), repr(attrs)))
+        self.logger.debug("%s: Unexpected call to attributesChanged(%s)" % (self.getXPath(), repr(attrs)))
         
     def childAdded(self, child):
         """Called after an edit operation when a new child has been added."""
-        self.logger.warning("%s: Unexpected call to childAdded(%s)" % (self.getXPath(), self.document.getXPath(child)))
+        self.logger.debug("%s: Unexpected call to childAdded(%s)" % (self.getXPath(), self.document.getXPath(child)))
         
     def setMediaClockSeek(self, mediaClockSeek):
         """Tell item to seek this amount when started (negative number for forward in the media). Returns how much of this it will _not_ use."""

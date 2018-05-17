@@ -615,10 +615,10 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
             elif self.state in {document.State.started, document.State.stopping}:
                 pass # This is a second started, probably because the layout service decided to place the dmappc on an appeared handheld
             elif self.state == document.State.idle:
-                self.logger.error('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+                self.logger.info('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
                 self.scheduleAction('destroy')
             else:
-                self.logger.error('Ignoring unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
+                self.logger.info('Ignoring unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
         elif state == document.State.idle:
             self.setState(state) # idle is always allowed
         elif state == "destroyed":
