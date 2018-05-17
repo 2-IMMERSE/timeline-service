@@ -329,10 +329,10 @@ class BaseTimeline:
     def _fixEpochs(self):
         """Called to fix the epoch of our document if master and our epoch have been set previously"""
         self.logger.info("xxxjack fixEpochs masterEpoch=%s ourEpoch=%s initialSeek=%s" % (self.masterEpoch, self.ourEpoch, self.documentInitialSeek))
-        self.document.report(logging.INFO, "CLOCK", "fixEpoch", self.masterEpoch - self.ourEpoch)
+        self.document.report(logging.INFO, "CLOCK", "fixEpoch", self.ourEpoch - self.masterEpoch)
         if not self.documentInitialSeek:
             self.documentInitialSeek = 0
-        self.documentInitialSeek -= self.masterEpoch - self.ourEpoch
+        self.documentInitialSeek = self.ourEpoch - self.masterEpoch
         if self.documentInitialSeek < 0:
             self.logger.warning("_fixEpochs: resultant seek time is negative: %f" % self.documentInitialSeek)
         self.prepareDMAppTimeline()
