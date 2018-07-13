@@ -615,9 +615,9 @@ class ParDelegate(TimeElementDelegate):
             for ch in self.elt:
                 if ch.delegate.state in State.NOT_DONE:
                     return list(self.elt)
-                return []
-        assert 0, "Only all and master are implemented"
-        return [self.elt[0]]
+            return []
+        self.logger.error('par[%s]: unknown value in end=%s' % (self.document.getXPath(self.elt), childSelector), extra=self.getLogExtra())
+        return list(self.elt)
         
     def _getMasterChild(self):
         prioritiesAndChildren = []
