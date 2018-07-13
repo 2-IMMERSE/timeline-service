@@ -610,6 +610,12 @@ class ParDelegate(TimeElementDelegate):
         elif childSelector == "master":
             child = self._getMasterChild()
             return [child]
+        elif childSelector == "first":
+            # If any child is finished we return an empty list
+            for ch in self.elt:
+                if ch.delegate.state in State.NOT_DONE:
+                    return list(self.elt)
+                return []
         assert 0, "Only all and master are implemented"
         return [self.elt[0]]
         
