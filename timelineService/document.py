@@ -741,13 +741,13 @@ class ParDelegate(TimeElementDelegate):
         self.setState(State.initing)
         self.emittedStopForChildren = False # Set to True if we have already emitted the stop clls to the children
         self.childrenToAutoStart = [] # Children that we start on inited (have been added during runtime with childAdded)
-        if self.mediaClockSeek != None:
+        if self.timingModel != "deterministic" and self.mediaClockSeek != None:
             self.logger.debug("ParDelegate(%s): forwarding mediaClockSeek %s" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
         for child in self.elt:
             if self.timingModel == "deterministic" and self.startTime is not None:
                 child.delegate.startTime = self.startTime
                 child.delegate.startTimeFixed = True
-            if self.mediaClockSeek:
+            if self.timingModel != "deterministic" and self.mediaClockSeek:
                 child.delegate.setMediaClockSeek(self.mediaClockSeek)
             self.document.schedule(child.delegate.initTimelineElement)
         self.mediaClockSeek = None
@@ -830,30 +830,103 @@ class ParDelegate(TimeElementDelegate):
 class SeqDelegate(TimeElementDelegate):
     """<tl:seq> element. Runs its children in succession."""
 
+    def _checkSkipChildren(self, nextChild):
+        if self.timingModel == "deterministic":
+            childEndTime = self.startTime
+            useNext = False
+            for ch in self.elt:
+                if useNext:
+                    nextChild = ch
+                    useNext = False
+                prevStopTime = childEndTime
+                childEndTime = ch.delegate.predictStopTime("deterministic", childEndTime)
+                if childEndTime is None:
+                    break
+                if ch == nextChild:
+                    # found the current child, check if it should be skipped entirely
+                    if self.clock.now() >= childEndTime:
+                        # skip it
+                        if nextChild.delegate.state in State.STOP_NEEDED:
+                            # skipped child needs to be stopped
+                            self._currentChild = nextChild
+                            self.document.schedule(nextChild.delegate.stopTimelineElement)
+                            return None, None, True
+                        else:
+                            # try the next one
+                            useNext = True
+                    else:
+                        return nextChild, prevStopTime, False
+            # component not found
+            return None, None, False
+        else:
+            return nextChild, None, False
+
     def reportChildState(self, child, childState):
+        self._advanceState()
+
+    def _preInitNextChild(self):
+        nextChild = self._nextChild()
+        if nextChild is not None:
+            if self.timingModel != "deterministic" and self.mediaClockSeek != None:
+                self.logger.debug("SeqDelegate(%s): forward mediaClockSeek %s to next child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
+                self.mediaClockSeek = nextChild.delegate.setMediaClockSeek(self.mediaClockSeek)
+                self.logger.debug("SeqDelegate(%s): leftover mediaClockSeek %s from next child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
+                if self.mediaClockSeek >= 0:
+                    self.mediaClockSeek = None
+            self.document.schedule(nextChild.delegate.initTimelineElement)
+
+    def _advanceState(self):
         assert len(self.elt)
         if self.state == State.idle:
             # We're idle. We don't care about children state changes.
             return
         if self.state == State.initing:
-            # Initializing. We're initialized when our first child is.
-            if self.elt[0].delegate.state not in {State.inited}:
-                return
+            # Initializing. We're initialized when our first (useful) child is.
+            nextChild, prevStopTime, tryAgainLater = self._checkSkipChildren(self.elt[0])
+            if tryAgainLater: return
+            if nextChild is not None:
+                if nextChild.delegate.state in {State.idle}:
+                    self.document.schedule(nextChild.delegate.initTimelineElement)
+                    return
+                elif nextChild.delegate.state not in {State.inited}:
+                    return
             self.setState(State.inited)
             return
         if self.state == State.starting:
-            # We're starting. Once our first child has started (or started and stopped) so have we.
-            if self.elt[0].delegate.state not in {State.started, State.finished}:
+            # We're starting. Once our first (useful) child has started (or started and stopped) so have we.
+            nextChild, prevStopTime, tryAgainLater = self._checkSkipChildren(self.elt[0])
+            if tryAgainLater: return
+            if nextChild is None:
+                self.setState(State.finished)
                 return
-            self.setState(State.started)
+            if nextChild.delegate.state in {State.idle}:
+                self.document.schedule(nextChild.delegate.initTimelineElement)
+                return
+            elif nextChild.delegate.state in {State.inited}:
+                self._currentChild = nextChild
+                if self.timingModel == "deterministic":
+                    if prevStopTime is not None:
+                        nextChild.delegate.startTime = prevStopTime
+                        nextChild.delegate.startTimeFixed = True
+                self.document.schedule(nextChild.delegate.startTimelineElement)
+                self._preInitNextChild()
+                return
+            elif nextChild.delegate.state not in {State.started, State.finished}:
+                return
+            else:
+                self._currentChild = nextChild
+                self.setState(State.started)
             # Note that we fall through into the next "if" straight away.
         if self.state == State.started:
             # Started. Check whether our current child is still active.
             if self._currentChild.delegate.state in State.NOT_DONE:
                 return
             # Our current child is no longer active, advance to the next (if any)
-            prevChild = self._currentChild            
-            nextChild = self._nextChild()
+            prevChild = self._currentChild
+            if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
+                self.document.schedule(prevChild.delegate.stopTimelineElement)
+            nextChild, prevStopTime, tryAgainLater = self._checkSkipChildren(self._nextChild())
+            if tryAgainLater: return
             if nextChild is None:
                  #That was the last child. We are done.
                 self.setState(State.finished)
@@ -865,31 +938,20 @@ class SeqDelegate(TimeElementDelegate):
                 # Next child is ready to run. Start it, and initialize the one after that, then stop old one.
                 self._currentChild = nextChild
                 if self.timingModel == "deterministic":
-                    prevStopTime = prevChild.delegate.predictStopTime("deterministic")
                     if prevStopTime is not None:
                         self._currentChild.delegate.startTime = prevStopTime
                         self._currentChild.delegate.startTimeFixed = True
                 self.document.schedule(self._currentChild.delegate.startTimelineElement)
-                nextChild = self._nextChild()
-                if nextChild is not None:
-                    if self.mediaClockSeek != None:
-                        self.logger.debug("SeqDelegate(%s): forward mediaClockSeek %s to next child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
-                        self.mediaClockSeek = nextChild.delegate.setMediaClockSeek(self.mediaClockSeek)
-                        self.logger.debug("SeqDelegate(%s): leftover mediaClockSeek %s from next child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
-                        if self.mediaClockSeek >= 0:
-                            self.mediaClockSeek = None
-                    self.document.schedule(nextChild.delegate.initTimelineElement)
+                self._preInitNextChild()
             elif nextChild.delegate.state == State.idle:
                 # Normally the init for the next child has already been issued, but
                 # if the current child had a DummyDelegate it can happen that it hasn't.
                 # Issue it now.
-                pass # self.document.schedule(nextChild.delegate.initTimelineElement)
+                self.document.schedule(nextChild.delegate.initTimelineElement)
             else:
                 # Next child not yet ready to run.
                 nextChild.delegate.assertState('seq-parent-reportChildState()', State.initing)
                 pass # Wait for inited callback from nextChild
-            if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
-                self.document.schedule(prevChild.delegate.stopTimelineElement)
         if self.state == State.stopping:
             for ch in self.elt:
                 if ch.delegate.state != State.idle:
@@ -903,8 +965,7 @@ class SeqDelegate(TimeElementDelegate):
         if not len(self.elt):
             self.setState(State.inited)
             return
-        self._currentChild = None
-        if self.mediaClockSeek != None:
+        if self.timingModel != "deterministic" and self.mediaClockSeek != None:
             self.logger.debug("SeqDelegate(%s): forward mediaClockSeek %s to first child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
             # xxxjack the following code is incorrect. It will only really work for initial seq children
             # that do nothing.
@@ -912,8 +973,8 @@ class SeqDelegate(TimeElementDelegate):
             self.logger.debug("SeqDelegate(%s): leftover mediaClockSeek %s from first child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
             if self.mediaClockSeek >= 0:
                 self.mediaClockSeek = None
-        self.document.schedule(self.elt[0].delegate.initTimelineElement)
-        
+        self._advanceState()
+
     def startTimelineElement(self):
         self.assertState('SeqDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
@@ -921,15 +982,8 @@ class SeqDelegate(TimeElementDelegate):
         if not len(self.elt):
             self.setState(State.finished)
             return
-        self._currentChild = self.elt[0]
-        if self.timingModel == "deterministic" and self.startTime is not None:
-            self._currentChild.delegate.startTime = self.startTime
-            self._currentChild.delegate.startTimeFixed = True
-        self.document.schedule(self._currentChild.delegate.startTimelineElement)
-        nextChild = self._nextChild()
-        if nextChild is not None:
-            self.document.schedule(nextChild.delegate.initTimelineElement)
-                    
+        self._advanceState()
+
     def stopTimelineElement(self):
         self.setState(State.stopping)
         waitNeeded = False
