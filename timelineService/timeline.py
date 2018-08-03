@@ -479,17 +479,16 @@ class ProxyMixin:
         """Convert document time to the time used by the external agents (clients, layout)"""
         return timestamp - self.clock.offsetFromUnderlyingClock()
 
-    def scheduleAction(self, verb, config=None, parameters=None):
+    def scheduleAction(self, verb, timestamp, config=None, parameters=None):
         self._fix2immerseTimeParameters(parameters)
         extraLogArgs = ()
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
-        startTime = self.getStartTime()
-        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, timestamp, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
         constraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
         if not constraintId:
             constraintId = self.componentId
-        self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters, constraintId=constraintId)
+        self.layoutService.scheduleAction(self._getTime(timestamp), self.componentId, verb, config=config, parameters=parameters, constraintId=constraintId)
 
     def _getParameters(self):
         rv = {}
@@ -547,6 +546,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         ProxyMixin.__init__(self, timelineDocBaseUrl, layoutService, self.getId())
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
+        self.lastReceivedDuration = None
         # Allow relative URLs by doing a basejoin to the timeline document URL.
         if self.url:
             self.url = urllib.basejoin(self.timelineDocBaseUrl, self.url)
@@ -568,19 +568,19 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         expectedClockOffset = self._addSeekParameter(parameters)
         if expectedClockOffset:
             self.layoutService.recordExpectedClockOffset(-expectedClockOffset)
-        self.scheduleAction("init", config=config, parameters=parameters)
+        self.scheduleAction("init", self.clock.now(), config=config, parameters=parameters)
 
     def startTimelineElement(self):
         self.assertState('ProxyDMAppComponent.startTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
-        self.scheduleAction("start")
+        self.scheduleAction("start", self.getStartTime())
 
     def stopTimelineElement(self):
         self.setState(document.State.stopping)
-        self.scheduleAction("stop")
+        self.scheduleAction("stop", self.getStopTime())
             
     def destroyTimelineElement(self):
-        self.scheduleAction("destroy")
+        self.scheduleAction("destroy", self.getStopTime())
 
     def statusReport(self, state, duration, fromLayout):
         durargs = ()
@@ -588,6 +588,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
             durargs = ('fromLayout',)
         if duration != None:
             durargs = ('duration=%s' % duration,)
+            self.lastReceivedDuration = duration
             
         self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt), duration, *durargs, extra=self.getLogExtra())
 
@@ -601,7 +602,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
                 pass # This is a second inited, probably because the layout service decided to place the dmappc on an appeared handheld
             elif self.state == document.State.idle:
                 self.logger.error('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-                self.scheduleAction('destroy')
+                self.scheduleAction('destroy', self.getStopTime())
             else:
                 self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
         elif state == document.State.started:
@@ -614,7 +615,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
                 pass # This is a second started, probably because the layout service decided to place the dmappc on an appeared handheld
             elif self.state == document.State.idle:
                 self.logger.info('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-                self.scheduleAction('destroy')
+                self.scheduleAction('destroy', self.getStopTime())
             else:
                 self.logger.info('Ignoring unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
         elif state == document.State.idle:
@@ -631,14 +632,14 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         # decided to send a quick "fromlayout" update we might terminate the document before it got actually started.
         # The current solution, not scheduling a synthesized finished, has the disadvantage that if there are no clients at all and they'll never appear
         # either the whole context will sit waiting infinitely long.
-        if state == document.State.started and duration != None:
+        if state == document.State.started and duration != None and self.startTime != None:
             self._scheduleFinished(duration)
 
     def _scheduleFinished(self, dur):
         if not dur: 
             dur = 0
         if self.expectedDuration is None or self.expectedDuration > dur:
-            self.clock.schedule(dur, self._emitFinished)
+            self.clock.scheduleAt(self.startTime + dur, self._emitFinished)
         if self.expectedDuration != None and self.expectedDuration != dur:
             self.logger.warning('Expected duration of %s changed from %s to %s' % (self.document.getXPath(self.elt), self.expectedDuration, dur), extra=self.getLogExtra())
             self.expectedDuration = dur 
@@ -649,6 +650,20 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
             self.setState(document.State.finished)
         else:
             self.document.report(logging.INFO, 'SYN-IGN', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        if mode == "deterministic":
+            return None
+        if startTimeOverride is not None:
+            startTime = startTimeOverride
+        elif self.startTime is not None:
+            startTime = self.startTime
+        else:
+            return None
+        if self.lastReceivedDuration is not None:
+            return startTime + self.lastReceivedDuration
+        else:
+            return None
 
 class UpdateComponent(document.TimelineDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
@@ -672,7 +687,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
             for elt in allMatchingElements:
                 if elt.delegate.state in document.State.STOP_NEEDED:
                     componentIds.append(elt.delegate.getId())
-            self.scheduleActionMulti("update", componentIds, parameters=parameters)
+            self.scheduleActionMulti("update", self.getStartTime(), componentIds, parameters=parameters)
         else:
             # xxxjack should this recording always be done???
             targetElt = self.document.getElementById(self.componentId)
@@ -688,22 +703,21 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                     parameters[attrName] = attrValue
             else:
                 self.logger.error('tim:update: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
-            self.scheduleAction("update", parameters=parameters)
+            self.scheduleAction("update", self.getStartTime(), parameters=parameters)
         
-    def scheduleActionMulti(self, verb, componentIds, config=None, parameters=None):
+    def scheduleActionMulti(self, verb, timestamp, componentIds, config=None, parameters=None):
         extraLogArgs = ()
         self._fix2immerseTimeParameters(parameters)
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
-        startTime = self.getStartTime()
         newConstraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
         for cid in componentIds:
             if newConstraintId:
-                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, 'constraintId=%s' % newConstraintId, *extraLogArgs, extra=self.getLogExtra())
-                self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters, constraintId=newConstraintId)
+                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, timestamp, 'constraintId=%s' % newConstraintId, *extraLogArgs, extra=self.getLogExtra())
+                self.layoutService.scheduleAction(self._getTime(timestamp), cid, verb, config=config, parameters=parameters, constraintId=newConstraintId)
             else:
-                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, *extraLogArgs, extra=self.getLogExtra())
-                self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters)
+                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, timestamp, *extraLogArgs, extra=self.getLogExtra())
+                self.layoutService.scheduleAction(self._getTime(timestamp), cid, verb, config=config, parameters=parameters)
 
 
 

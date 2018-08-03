@@ -49,6 +49,7 @@ COMPAT_V1=True # Set to True to allow tim:dmappcid to be used in lieu of xml:id
 NS_TIMELINE = NameSpace("tl", "http://jackjansen.nl/timelines")
 NS_TIMELINE_INTERNAL = NameSpace("tls", "http://jackjansen.nl/timelines/internal")
 NS_TIMELINE_CHECK = NameSpace("tlcheck", "http://jackjansen.nl/timelines/check")
+NS_TIMELINE_DEFAULTS = NameSpace("tldefaults", "http://jackjansen.nl/timelines/defaults")
 NS_2IMMERSE = NameSpace("tim", "http://jackjansen.nl/2immerse")
 NS_2IMMERSE_COMPONENT = NameSpace("tic", "http://jackjansen.nl/2immerse/component")
 NS_XML = NameSpace("xml", "http://www.w3.org/XML/1998/namespace")
@@ -105,6 +106,7 @@ class DummyDelegate:
         self.state = State.idle
         self.clock = clock
         self.startTime = None
+        self.startTimeFixed = False
         self.conformTargetDelegate = None
         self.mediaClockSeek = None # If set this is how far the media clock should be seeked ahead.
         
@@ -178,8 +180,9 @@ class DummyDelegate:
             if self.startTime == None:
                 self.startTime = self.clock.now()
         else:
-            # The element is no longer running, so forget the start time.
-            self.startTime = None
+            if not self.startTimeFixed:
+                # The element is no longer running, so forget the start time.
+                self.startTime = None
             
         parentElement = self.document.getParent(self.elt)
         if parentElement is not None:
@@ -328,12 +331,38 @@ class DummyDelegate:
         # xxxjack this does not yet handle seeking during playback, for elements which only
         # need to be repositioned (because they were running before the seek and are still running
         # after the seek)
+        if self.startTimeFixed:
+            return self.startTime
         if self.conformTargetDelegate != None:
             if self.conformTargetDelegate.state in {State.started, State.finished}:
                 assert self.conformTargetDelegate.startTime != None
                 self.logger.debug("Element %s should have started at t=%f", self.document.getXPath(self.elt), self.conformTargetDelegate.startTime)
                 return self.conformTargetDelegate.startTime
         return self.clock.now()
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        """Return the predicted stop time of this element using the given prediction mode, or None if no valid prediction can be made."""
+        if startTimeOverride is not None:
+            return startTimeOverride
+        if self.startTimeFixed or mode != "deterministic":
+            return self.startTime
+        else:
+            return None
+
+    def getStopTime(self):
+        """Return the time at which this element should stop, or now."""
+        stopTime = self.clock.now()
+        parentElement = self.document.getParent(self.elt)
+        if parentElement is not None:
+            stopTime = parentElement.delegate.clipStopTime(stopTime)
+        return stopTime
+
+    def clipStopTime(self, stopTime):
+        """Clip stop time to be within the bounds of the parent, as necessary"""
+        parentElement = self.document.getParent(self.elt)
+        if parentElement is not None:
+            stopTime = parentElement.delegate.clipStopTime(stopTime)
+        return stopTime
         
     def attributesChanged(self, attrs):
         """Called after an edit operation has changed attributes on this element."""
@@ -388,6 +417,10 @@ class SingleChildDelegate(TimelineDelegate):
     
     EXACT_CHILD_COUNT=1
 
+    def __init__(self, elt, document, clock):
+        self.timingModel = "floating"
+        TimelineDelegate.__init__(self, elt, document, clock)
+
     def reportChildState(self, child, childState):
         assert child == self.elt[0]
         if self.state == State.idle:
@@ -424,12 +457,18 @@ class SingleChildDelegate(TimelineDelegate):
         self.assertState('SingleChildDelegate.initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
         self.setState(State.initing)
+        if self.timingModel == "deterministic" and self.startTime is not None:
+            self.elt[0].delegate.startTime = self.startTime
+            self.elt[0].delegate.startTimeFixed = True
         self.document.schedule(self.elt[0].delegate.initTimelineElement)
         
     def startTimelineElement(self):
         self.assertState('SingleChildDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.inited, State.idle)
         self.setState(State.starting)
+        if self.timingModel == "deterministic" and self.startTime is not None:
+            self.elt[0].delegate.startTime = self.startTime
+            self.elt[0].delegate.startTimeFixed = True
         self.document.schedule(self.elt[0].delegate.startTimelineElement)
         
     def stopTimelineElement(self):
@@ -445,6 +484,9 @@ class SingleChildDelegate(TimelineDelegate):
         if not waitNeeded:
             self.setState(State.idle)
 
+    def predictStopTime(self, mode, startTimeOverride = None):
+        return self.elt[0].delegate.predictStopTime(mode, startTimeOverride)
+
 class DocumentDelegate(SingleChildDelegate):
     """<tl:document> element."""
     ALLOWED_CHILDREN={
@@ -452,13 +494,30 @@ class DocumentDelegate(SingleChildDelegate):
         NS_TIMELINE("seq"),
         }
 
+    def __init__(self, elt, document, clock):
+        document.defaultTimingModel = elt.get(NS_TIMELINE_DEFAULTS("timingModel"), document.defaultTimingModel)
+        SingleChildDelegate.__init__(self, elt, document, clock)
+        self.startTime = 0
+        self.startTimeFixed = True
+        self.timingModel = "deterministic"
+
+    def initTimelineElement(self):
+        self.startTime = -self.document.startTime # handle document seek at init
+        SingleChildDelegate.initTimelineElement(self)
+
 class TimeElementDelegate(TimelineDelegate):
     """Baseclass for elements that have a clock, and therefore a prio attribute."""
     
     ALLOWED_ATTRIBUTES = {
-        NS_TIMELINE("prio")
+        NS_TIMELINE("prio"),
+        NS_TIMELINE("timingModel"),
         }
-        
+
+    def __init__(self, elt, document, clock):
+        TimelineDelegate.__init__(self, elt, document, clock)
+        self.timingModel = self.elt.get(NS_TIMELINE("timingModel"), document.defaultTimingModel)
+        assert self.timingModel in {"floating", "deterministic"}, "%s: unknown timing model name: '%s'" % (self, self.timingModel)
+
     def getCurrentPriority(self):
         val = self.elt.get(NS_TIMELINE("prio"), "normal")
 #         if self.state == State.started:
@@ -485,6 +544,7 @@ class FFWDTimeElementDelegate(TimeElementDelegate):
     
     def startTimelineElement(self):
         """Called by parent or outer control to start the element"""
+        expectedDuration = float(self.elt.get(NS_TIMELINE_CHECK("dur"), 0))
         if not self.isCurrentTimingMaster(future=True):
             return TimeElementDelegate.startTimelineElement(self)
         self.assertState('startTimelineElement()', State.inited)
@@ -492,7 +552,7 @@ class FFWDTimeElementDelegate(TimeElementDelegate):
         self.setState(State.started)
         # Quick hack: tim:update elements don't finish (because they have a side effect)
         # For other media see if we can determine their expected duration
-        expectedDuration = float(self.elt.get(NS_TIMELINE_CHECK("dur"), 0))
+
         if expectedDuration == 0:
             self.logger.warning("%s: syncMode=master element without tlcheck:dur. Guessing at 10 hours." % self.getXPath())
             expectedDuration = 36000
@@ -503,7 +563,14 @@ class FFWDTimeElementDelegate(TimeElementDelegate):
             # Do nothing if we aren't in the started state anymore (probably because we've been stopped)
             self.document.report(logging.INFO, '<', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
             self.setState(State.finished)
-            
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        if startTimeOverride is None:
+            startTimeOverride = self.startTime
+        if mode == "deterministic":
+            return None
+        else:
+            return startTimeOverride + float(self.elt.get(NS_TIMELINE_CHECK("dur"), 0))
 
 class FFWDSideEffectTimeElementDelegate(TimeElementDelegate):
     """Timed element with side effect (tim:update) fast-forward handling."""
@@ -540,6 +607,9 @@ class ParDelegate(TimeElementDelegate):
         #
         if child in self.childrenToAutoStart and childState == State.inited:
             self.logger.debug("%s: autostarting child %s" % (self.getXPath(), self.document.getXPath(child)))
+            if self.timingModel == "deterministic" and self.startTime is not None:
+                child.delegate.startTime = self.startTime
+                child.delegate.startTimeFixed = True
             self.document.schedule(child.delegate.startTimelineElement)
         if self.state == State.inited and childState in {State.initing, State.inited}:
             # This can happen after fast-forward. Ignore.
@@ -618,7 +688,44 @@ class ParDelegate(TimeElementDelegate):
             return []
         self.logger.error('par[%s]: unknown value in end=%s' % (self.document.getXPath(self.elt), childSelector), extra=self.getLogExtra())
         return list(self.elt)
-        
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        if len(self.elt) == 0:
+            return TimeElementDelegate.predictStopTime(self, mode, startTimeOverride)
+
+        if mode == "deterministic" and self.timingModel != "deterministic": return None
+        if mode != "deterministic": startTimeOverride = None
+        childSelector = self.elt.get(NS_TIMELINE("end"), "all")
+        stopTime = None
+        if childSelector == "all":
+            for ch in self.elt:
+                chStopTime = ch.delegate.predictStopTime(mode, startTimeOverride)
+                if chStopTime is not None and (stopTime is None or chStopTime > stopTime):
+                    stopTime = chStopTime
+                elif chStopTime is None and mode in ["deterministic", "complete"]:
+                    return None
+        elif childSelector == "master":
+            child = self._getMasterChild()
+            if child is not None:
+                stopTime = child.delegate.predictStopTime(mode, startTimeOverride)
+        elif childSelector == "first":
+            for ch in self.elt:
+                chStopTime = ch.delegate.predictStopTime(mode, startTimeOverride)
+                if chStopTime is not None and (stopTime is None or chStopTime < stopTime):
+                    stopTime = chStopTime
+                elif chStopTime is None and mode in ["deterministic", "complete"]:
+                    return None
+        else:
+            self.logger.error('par[%s]: unknown value in end=%s' % (self.document.getXPath(self.elt), childSelector), extra=self.getLogExtra())
+            return None
+        return stopTime
+
+    def clipStopTime(self, stopTime):
+        clipTime = self.predictStopTime("complete")
+        if clipTime is not None and stopTime > clipTime:
+            stopTime = clipTime
+        return TimeElementDelegate.clipStopTime(self, stopTime)
+
     def _getMasterChild(self):
         prioritiesAndChildren = []
         for ch in self.elt:
@@ -637,6 +744,9 @@ class ParDelegate(TimeElementDelegate):
         if self.mediaClockSeek != None:
             self.logger.debug("ParDelegate(%s): forwarding mediaClockSeek %s" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
         for child in self.elt:
+            if self.timingModel == "deterministic" and self.startTime is not None:
+                child.delegate.startTime = self.startTime
+                child.delegate.startTimeFixed = True
             if self.mediaClockSeek:
                 child.delegate.setMediaClockSeek(self.mediaClockSeek)
             self.document.schedule(child.delegate.initTimelineElement)
@@ -647,7 +757,10 @@ class ParDelegate(TimeElementDelegate):
         self.assertState('ParDelegate.startTimelineElement()', State.inited)
         self.assertDescendentState('startTimelineElement()', State.idle, State.inited)
         self.setState(State.starting)
-        for child in self.elt: 
+        for child in self.elt:
+            if self.timingModel == "deterministic" and self.startTime is not None:
+                child.delegate.startTime = self.startTime
+                child.delegate.startTimeFixed = True
             self.document.schedule(child.delegate.startTimelineElement)
         # xxxjack: should we go to finished if we have no children?
         
@@ -751,6 +864,11 @@ class SeqDelegate(TimeElementDelegate):
             elif nextChild.delegate.state in {State.inited}:
                 # Next child is ready to run. Start it, and initialize the one after that, then stop old one.
                 self._currentChild = nextChild
+                if self.timingModel == "deterministic":
+                    prevStopTime = prevChild.delegate.predictStopTime("deterministic")
+                    if prevStopTime is not None:
+                        self._currentChild.delegate.startTime = prevStopTime
+                        self._currentChild.delegate.startTimeFixed = True
                 self.document.schedule(self._currentChild.delegate.startTimelineElement)
                 nextChild = self._nextChild()
                 if nextChild is not None:
@@ -804,6 +922,9 @@ class SeqDelegate(TimeElementDelegate):
             self.setState(State.finished)
             return
         self._currentChild = self.elt[0]
+        if self.timingModel == "deterministic" and self.startTime is not None:
+            self._currentChild.delegate.startTime = self.startTime
+            self._currentChild.delegate.startTimeFixed = True
         self.document.schedule(self._currentChild.delegate.startTimelineElement)
         nextChild = self._nextChild()
         if nextChild is not None:
@@ -827,6 +948,28 @@ class SeqDelegate(TimeElementDelegate):
             if foundCurrent: return ch
             foundCurrent = (ch == self._currentChild)
         return None
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        if len(self.elt) == 0:
+            return TimeElementDelegate.predictStopTime(self, mode, startTimeOverride)
+
+        if mode == "deterministic":
+            if self.timingModel != "deterministic": return None
+            if startTimeOverride is not None:
+                endTime = startTimeOverride
+            elif self.startTimeFixed:
+                endTime = self.startTime
+            else:
+                return None
+            for ch in self.elt:
+                endTime = ch.delegate.predictStopTime(mode, endTime)
+                if endTime is None:
+                    return None
+            return endTime
+        elif mode == "complete":
+            return self.elt[-1].delegate.predictStopTime(mode)
+        else:
+            return None
     
 class RepeatDelegate(SingleChildDelegate):
     """<tl:repeat> element. Runs it child if the condition is true."""
@@ -879,6 +1022,9 @@ class RepeatDelegate(SingleChildDelegate):
             SingleChildDelegate.startTimelineElement(self)
         else:
             self.setState(State.finished)
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        return None
             
 class RefDelegate(TimeElementDelegate):
     """<tl:ref> element. Handles actual media playback. Usually subclassed to actually do something."""
@@ -904,9 +1050,9 @@ class RefDelegate(TimeElementDelegate):
         else:
             dft_dur = 42.345
         dur = float(self.elt.get(NS_TIMELINE_CHECK("dur"), dft_dur))
-        if self.mediaClockSeek != None:
+        if not self.startTimeFixed and self.mediaClockSeek != None:
             dur += self.mediaClockSeek
-        self.clock.schedule(dur, self._done)
+        self.clock.scheduleAt(self.startTime + dur, self._done)
                
     def _done(self):
         if self.state == State.started:
@@ -931,7 +1077,10 @@ class RefDelegate(TimeElementDelegate):
             if k in NS_2IMMERSE_COMPONENT:
                 rv[NS_2IMMERSE_COMPONENT.localTag(k)] = self.elt.attrib[k]
         return rv
-        
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        return None
+
 class RefDelegate2Immerse(RefDelegate):
     """2-Immerse specific RefDelegate that checks the attributes"""
     allowedConstraints = None # May be set by main program to enable checking that all refs have a layout
@@ -1004,7 +1153,7 @@ class SleepDelegate(TimeElementDelegate):
         self.document.report(logging.DEBUG, 'SLEEP0', self.elt.get(NS_TIMELINE("dur")), self.document.getXPath(self.elt), extra=self.getLogExtra())
         dur = self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
         assert self.startTime != None
-        if self.mediaClockSeek != None:
+        if not self.startTimeFixed and self.mediaClockSeek != None:
             self.document.logger.debug("SleepDelegate(%s): adjusted mediaClockSeek %s" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
             dur += self.mediaClockSeek
             self.mediaClockSeek = None
@@ -1049,7 +1198,14 @@ class SleepDelegate(TimeElementDelegate):
         if dur < 0:
             return dur
         return 0
-        
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        startTime = TimeElementDelegate.predictStopTime(self, mode, startTimeOverride)
+        if startTime is not None:
+            return startTime + self.parseDuration(self.elt.get(NS_TIMELINE("dur")))
+        else:
+            return None
+
 class WaitDelegate(TimeElementDelegate):
     """<tl:wait> element. Waits for an incoming event."""
     
@@ -1078,6 +1234,13 @@ class WaitDelegate(TimeElementDelegate):
     	eventId = self.elt.get(NS_TIMELINE("event"))
     	self.document.unregisterEvent(eventId, self._done)
         TimelineDelegate.stopTimelineElement(self)
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        if self.elt.get(NS_TIMELINE("event")) is None:
+            # this wait will never end as there is no event ID, so return infinity
+            return float("inf")
+        else:
+            return None
 
 DELEGATE_CLASSES = {
     NS_TIMELINE("document") : DocumentDelegate,
@@ -1506,6 +1669,7 @@ class Document(DocumentModificationMixin):
         self.delegateClasses.update(DELEGATE_CLASSES)
         self.terminating = False
         self.logger = logging.getLogger(__name__)
+        self.defaultTimingModel = "floating"
         if extraLoggerArgs:
             self.logger = MyLoggerAdapter(self.logger, extraLoggerArgs)
         self.events = []
