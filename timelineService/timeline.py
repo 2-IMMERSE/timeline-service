@@ -234,6 +234,8 @@ class BaseTimeline:
         self.document.clockChanged()
         self.logger.debug("Timeline(%s): after clockChanged clockService=%f, document=%f", self.contextId, self.clockService.now(), self.documentClock.now())
         self._updateTimeline()
+        if delta < -MAX_CLOCK_DISCREPANCY:
+            self.document.root.delegate.notifyNegativeClockChange(self.documentClock.now())
         return None
 
     def _populateTimeline(self):

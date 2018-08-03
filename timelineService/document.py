@@ -246,6 +246,11 @@ class DummyDelegate:
         #self.setState(State.initing)
         self.setState(State.inited)
         
+    def initTimelineElementIfNotInited(self):
+        """Called by parent or outer control to initialize the element. This variant is to handle the case where the init may be asynchronously queued more than once."""
+        if self.state == State.idle:
+            self.initTimelineElement()
+
     def startTimelineElement(self):
         """Called by parent or outer control to start the element"""
         self.assertState('startTimelineElement()', State.inited)
@@ -377,6 +382,10 @@ class DummyDelegate:
         """Tell item to seek this amount when started (negative number for forward in the media). Returns how much of this it will _not_ use."""
         return mediaClockSeek
         
+    def notifyNegativeClockChange(self, newTime):
+        """Notify element that clock has made a step change in the negative direction."""
+        pass
+
 class ErrorDelegate(DummyDelegate):
     """<tl:...> element of unknown type. Prints an error and handles the rest as a non-tl: element."""
     
@@ -487,6 +496,9 @@ class SingleChildDelegate(TimelineDelegate):
 
     def predictStopTime(self, mode, startTimeOverride = None):
         return self.elt[0].delegate.predictStopTime(mode, startTimeOverride)
+
+    def notifyNegativeClockChange(self, newTime):
+        self.elt[0].delegate.notifyNegativeClockChange(newTime)
 
 class DocumentDelegate(SingleChildDelegate):
     """<tl:document> element."""
@@ -839,7 +851,12 @@ class ParDelegate(TimeElementDelegate):
             self.childrenToAutoStart.append(child)
         else:
             assert 0
-        
+
+    def notifyNegativeClockChange(self, newTime):
+        if self.timingModel == "deterministic" and self.state != State.idle:
+            for ch in self.elt:
+                ch.delegate.notifyNegativeClockChange(newTime)
+
 
 class SeqDelegate(TimeElementDelegate):
     """<tl:seq> element. Runs its children in succession."""
@@ -855,7 +872,7 @@ class SeqDelegate(TimeElementDelegate):
                 prevStopTime = childEndTime
                 childEndTime = ch.delegate.predictStopTime("deterministic", childEndTime)
                 if childEndTime is None:
-                    break
+                    return nextChild, None, False
                 if ch == nextChild:
                     # found the current child, check if it should be skipped entirely
                     if self.clock.now() >= childEndTime:
@@ -880,14 +897,14 @@ class SeqDelegate(TimeElementDelegate):
 
     def _preInitNextChild(self):
         nextChild = self._nextChild()
-        if nextChild is not None:
+        if nextChild is not None and nextChild.delegate.state == State.idle:
             if self.timingModel != "deterministic" and self.mediaClockSeek != None:
                 self.logger.debug("SeqDelegate(%s): forward mediaClockSeek %s to next child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
                 self.mediaClockSeek = nextChild.delegate.setMediaClockSeek(self.mediaClockSeek)
                 self.logger.debug("SeqDelegate(%s): leftover mediaClockSeek %s from next child" % (self.document.getXPath(self.elt), self.mediaClockSeek), extra=self.getLogExtra())
                 if self.mediaClockSeek >= 0:
                     self.mediaClockSeek = None
-            self.document.schedule(nextChild.delegate.initTimelineElement)
+            self.document.schedule(nextChild.delegate.initTimelineElementIfNotInited)
 
     def _advanceState(self):
         assert len(self.elt)
@@ -900,7 +917,7 @@ class SeqDelegate(TimeElementDelegate):
             if tryAgainLater: return
             if nextChild is not None:
                 if nextChild.delegate.state in {State.idle}:
-                    self.document.schedule(nextChild.delegate.initTimelineElement)
+                    self.document.schedule(nextChild.delegate.initTimelineElementIfNotInited)
                     return
                 elif nextChild.delegate.state not in {State.inited}:
                     return
@@ -914,7 +931,7 @@ class SeqDelegate(TimeElementDelegate):
                 self.setState(State.finished)
                 return
             if nextChild.delegate.state in {State.idle}:
-                self.document.schedule(nextChild.delegate.initTimelineElement)
+                self.document.schedule(nextChild.delegate.initTimelineElementIfNotInited)
                 return
             elif nextChild.delegate.state in {State.inited}:
                 self._currentChild = nextChild
@@ -932,15 +949,33 @@ class SeqDelegate(TimeElementDelegate):
                 self.setState(State.started)
             # Note that we fall through into the next "if" straight away.
         if self.state == State.started:
-            # Started. Check whether our current child is still active.
-            if self._currentChild.delegate.state in State.NOT_DONE:
-                return
-            # Our current child is no longer active, advance to the next (if any)
-            prevChild = self._currentChild
-            if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
-                self.document.schedule(prevChild.delegate.stopTimelineElement)
-            nextChild, prevStopTime, tryAgainLater = self._checkSkipChildren(self._nextChild())
-            if tryAgainLater: return
+            if self.reselectChild:
+                # Wait for all children to be idle
+                for ch in self.elt:
+                    if ch.delegate.state != State.idle:
+                        return
+                # Pick a new child
+                nextChild, prevStopTime, tryAgainLater = self._checkSkipChildren(self.elt[0])
+                if tryAgainLater: return
+                self.reselectChild = False
+                if nextChild is not None:
+                    self.logger.debug("SeqDelegate(%s): selecting child %s after negative clock step change" % (self.document.getXPath(self.elt), self.document.getXPath(nextChild)), extra=self.getLogExtra())
+            elif self._currentChild is None:
+                # No currently running child, pick a new one
+                # This is generally the one inited previously by the reselectChild block
+                nextChild, prevStopTime, tryAgainLater = self._checkSkipChildren(self.elt[0])
+                if tryAgainLater: return
+            else:
+                # Started. Check whether our current child is still active.
+                if self._currentChild.delegate.state in State.NOT_DONE:
+                    return
+                # Our current child is no longer active, advance to the next (if any)
+                prevChild = self._currentChild
+                if prevChild is not None and prevChild.delegate.state in State.STOP_NEEDED:
+                    self.document.schedule(prevChild.delegate.stopTimelineElement)
+                nextChild, prevStopTime, tryAgainLater = self._checkSkipChildren(self._nextChild())
+                if tryAgainLater: return
+
             if nextChild is None:
                  #That was the last child. We are done.
                 self.setState(State.finished)
@@ -961,7 +996,7 @@ class SeqDelegate(TimeElementDelegate):
                 # Normally the init for the next child has already been issued, but
                 # if the current child had a DummyDelegate it can happen that it hasn't.
                 # Issue it now.
-                self.document.schedule(nextChild.delegate.initTimelineElement)
+                self.document.schedule(nextChild.delegate.initTimelineElementIfNotInited)
             else:
                 # Next child not yet ready to run.
                 nextChild.delegate.assertState('seq-parent-reportChildState()', State.initing)
@@ -975,6 +1010,7 @@ class SeqDelegate(TimeElementDelegate):
     def initTimelineElement(self):
         self.assertState('SeqDelegate.initTimelineElement()', State.idle)
         self.assertDescendentState('initTimelineElement()', State.idle)
+        self.reselectChild = False
         self.setState(State.initing)
         if not len(self.elt):
             self.setState(State.inited)
@@ -1038,7 +1074,44 @@ class SeqDelegate(TimeElementDelegate):
             return self.elt[-1].delegate.predictStopTime(mode)
         else:
             return None
-    
+
+    def _reselectChild(self, newTime):
+        self.reselectChild = True
+        self._currentChild = None
+        self.logger.debug("SeqDelegate(%s): reselecting child due to negative clock step change: %d" % (self.document.getXPath(self.elt), newTime), extra=self.getLogExtra())
+        if self.state == State.finished:
+            self.setState(State.started)
+        self._advanceState()
+
+    def notifyNegativeClockChange(self, newTime):
+        if self.timingModel == "deterministic" and self.state != State.idle:
+            endTime = self.startTime
+            elements = iter(self.elt)
+            for ch in elements:
+                if endTime is None:
+                    return
+                startTime = endTime
+                endTime = ch.delegate.predictStopTime("deterministic", startTime)
+                if ch.delegate.state != State.idle:
+                    # first non-idle child
+                    if newTime < startTime:
+                        # We have seeked to before the start point of the first non-idle child.
+                        # Stop it and select a new child.
+                        # Stop all subsequent children.
+                        if ch.delegate.state in State.STOP_NEEDED:
+                            self.document.schedule(ch.delegate.stopTimelineElement)
+                        for afterch in elements:
+                            if afterch.delegate.state in State.STOP_NEEDED:
+                                self.document.schedule(afterch.delegate.stopTimelineElement)
+                        self._reselectChild(newTime)
+                    elif endTime is None or newTime < endTime:
+                        # seek is within this child, forward it the message if it's not idle
+                        if ch.delegate.state != State.idle:
+                            ch.delegate.notifyNegativeClockChange(newTime)
+                    return
+            # All children are idle
+            self._reselectChild(newTime)
+
 class RepeatDelegate(SingleChildDelegate):
     """<tl:repeat> element. Runs it child if the condition is true."""
     
