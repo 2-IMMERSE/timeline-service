@@ -58,8 +58,7 @@ class BaseTimeline:
         self.documentInitialSeek = None
         self.dmappComponents = {}
         self.clockService = clocks.PausableClock(clocks.SystemClock())
-        self.documentClock = clocks.CallbackPausableClock(self.clockService)
-        self.documentClock.start()
+        self.documentClock = clocks.CallbackPausableClock(self.clockService, True)
         self.documentClock.setQueueChangedCallback(self._updateTimeline)
         self.document = document.Document(self.documentClock, idAttribute=document.NS_XML("id"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
@@ -478,8 +477,7 @@ class ProxyMixin:
     	
     def _getTime(self, timestamp):
         """Convert document time to the time used by the external agents (clients, layout)"""
-        deltaDocToUnderlying = self.clock.now() - self.clock.underlyingClock.now()
-        return timestamp - deltaDocToUnderlying
+        return timestamp - self.clock.offsetFromUnderlyingClock()
 
     def scheduleAction(self, verb, config=None, parameters=None):
         self._fix2immerseTimeParameters(parameters)

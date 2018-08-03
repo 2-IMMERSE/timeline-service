@@ -47,9 +47,9 @@ def synchronized(method):
             
 class PausableClock:
     """A clock (based on another clock) that can be pasued and resumed"""
-    def __init__(self, underlyingClock):
+    def __init__(self, underlyingClock, startRunning = False):
         self.epoch = 0
-        self.running = False
+        self.running = startRunning
         self.underlyingClock = underlyingClock
         self.originalUnderlyingClock = underlyingClock
         self.replacementTime = None
@@ -64,7 +64,15 @@ class PausableClock:
         if not self.running:
             return self.epoch
         return self.underlyingClock.now() - self.epoch
-        
+
+    @synchronized
+    def offsetFromUnderlyingClock(self):
+        """Return offset by which the current time of the clock is greater than the current time of the underlying clock"""
+        if self.running:
+            return -self.epoch
+        else:
+            return self.now() - self.underlyingClock.now()
+
     def dumps(self):
         return None
 
@@ -132,8 +140,8 @@ class PausableClock:
 class CallbackPausableClock(PausableClock):
     """A pausable clock that also stores callbacks with certain times"""
     
-    def __init__(self, underlyingClock):
-        PausableClock.__init__(self, underlyingClock)
+    def __init__(self, underlyingClock, startRunning = False):
+        PausableClock.__init__(self, underlyingClock, startRunning)
         self.queue = Queue.PriorityQueue()
         self.queueChanged = None
 
