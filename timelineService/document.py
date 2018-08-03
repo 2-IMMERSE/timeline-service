@@ -98,6 +98,7 @@ class State:
 class DummyDelegate:
     """Baseclass for delegates, also used for non-timeline elements."""
     DEFAULT_PRIO="low"
+    IS_REF_TYPE=False
     
     def __init__(self, elt, document, clock):
         self.elt = elt
@@ -671,12 +672,23 @@ class ParDelegate(TimeElementDelegate):
                 return
         # If we get here we got an unexpected state change from a child. Report.
         self.logger.warning('par[%s].reportChildState(%s,%s) but self is %s' % (self.document.getXPath(self.elt), self.document.getXPath(child), childState, self.state), extra=self.getLogExtra())
-    
+
+    def _getEndMode(self):
+        childSelector = self.elt.get(NS_TIMELINE("end"))
+        if childSelector:
+            return childSelector
+        elif self.timingModel == "deterministic":
+            return "allNonRef"
+        else:
+            return "all"
+
     def _getRelevantChildren(self):
         if len(self.elt) == 0: return []
-        childSelector = self.elt.get(NS_TIMELINE("end"), "all")
+        childSelector = self._getEndMode()
         if childSelector == "all":
             return list(self.elt)
+        elif childSelector == "allNonRef":
+            return [ch for ch in self.elt if not ch.delegate.IS_REF_TYPE]
         elif childSelector == "master":
             child = self._getMasterChild()
             return [child]
@@ -695,10 +707,12 @@ class ParDelegate(TimeElementDelegate):
 
         if mode == "deterministic" and self.timingModel != "deterministic": return None
         if mode != "deterministic": startTimeOverride = None
-        childSelector = self.elt.get(NS_TIMELINE("end"), "all")
+        childSelector = self._getEndMode()
         stopTime = None
-        if childSelector == "all":
+        if childSelector == "all" or childSelector == "allNonRef":
             for ch in self.elt:
+                if ch.delegate.IS_REF_TYPE and childSelector == "allNonRef":
+                    continue
                 chStopTime = ch.delegate.predictStopTime(mode, startTimeOverride)
                 if chStopTime is not None and (stopTime is None or chStopTime > stopTime):
                     stopTime = chStopTime
@@ -1084,6 +1098,7 @@ class RefDelegate(TimeElementDelegate):
     """<tl:ref> element. Handles actual media playback. Usually subclassed to actually do something."""
     
     EXACT_CHILD_COUNT=0
+    IS_REF_TYPE=True
     
     def initTimelineElement(self):
         TimeElementDelegate.initTimelineElement(self)

@@ -541,6 +541,8 @@ class ProxyMixin:
         return None
 
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
+    IS_REF_TYPE=True
+
     def __init__(self, elt, doc, timelineDocBaseUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
         ProxyMixin.__init__(self, timelineDocBaseUrl, layoutService, self.getId())
