@@ -63,6 +63,7 @@ class BaseTimeline:
         self.document = document.Document(self.documentClock, idAttribute=document.NS_XML("id"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         self.document.setDelegateFactory(self.updateDelegateFactory, tag=document.NS_2IMMERSE("update"))
+        self.document.setDelegateFactory(self.overlayDelegateFactory, tag=document.NS_2IMMERSE("overlay"))
         # Initialize clock values used to synchronize concurrent live viewing
         self.masterEpoch = None
         self.ourEpoch = None
@@ -110,6 +111,10 @@ class BaseTimeline:
 
     def updateDelegateFactory(self, elt, document, clock):
         rv = UpdateComponent(elt, document, self.timelineDocBaseUrl, clock, self.layoutService)
+        return rv
+
+    def overlayDelegateFactory(self, elt, document, clock):
+        rv = OverlayComponent(elt, document, self.timelineDocBaseUrl, clock, self.layoutService)
         return rv
 
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
@@ -486,10 +491,8 @@ class ProxyMixin:
         extraLogArgs = ()
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
-        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, timestamp, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
-        constraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
-        if not constraintId:
-            constraintId = self.componentId
+        constraintId = self._getConstraintId()
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, timestamp, 'constraintId=%s' % constraintId, *extraLogArgs, extra=self.getLogExtra())
         self.layoutService.scheduleAction(self._getTime(timestamp), self.componentId, verb, config=config, parameters=parameters, constraintId=constraintId)
 
     def _getParameters(self):
@@ -508,7 +511,13 @@ class ProxyMixin:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
         return rv
-        
+
+    def _getConstraintId(self):
+        constraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
+        if not constraintId:
+            constraintId = self.componentId
+        return constraintId
+
     def _fix2immerseTimeParameters(self, parameters):
         # Special case for communicating timestamps to Chyron Hego Prime graphics.
         # These are converted from document time to contextclock
@@ -551,6 +560,9 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         self.lastReceivedDuration = None
+        self.activeOverlays = []
+        self.seekParameters = {}
+        self.nullParameters = set()
         # Allow relative URLs by doing a basejoin to the timeline document URL.
         if self.url:
             self.url = urllib.basejoin(self.timelineDocBaseUrl, self.url)
@@ -564,15 +576,36 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         self.expectedDuration = None
         assert self.klass
 
+    def _getParameters(self):
+        parameters = ProxyMixin._getParameters(self)
+        for key in self.seekParameters:
+            parameters[key] = self.seekParameters[key]
+        for elt in self.activeOverlays:
+            for key in elt.delegate.parameters:
+                parameters[key] = elt.delegate.parameters[key]
+                self.nullParameters.add(key)
+        # This is to handle the case where an overlay previously added a new parameter, and now it needs to be removed in the layout service
+        for key in self.nullParameters:
+            if not key in parameters: parameters[key] = None
+        return parameters
+
+    def _getConstraintId(self):
+        constraintId = ProxyMixin._getConstraintId(self)
+        for elt in self.activeOverlays:
+            newConstraintId = elt.get(document.NS_2IMMERSE("constraintId"))
+            if newConstraintId: constraintId = newConstraintId
+        return constraintId
+
     def initTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.idle)
         self.setState(document.State.initing)
         config = {'class':self.klass, 'url':self.url}
-        parameters = self._getParameters()
-        expectedClockOffset = self._addSeekParameter(parameters)
+        self.seekParameters.clear()
+        self.nullParameters.clear()
+        expectedClockOffset = self._addSeekParameter(self.seekParameters)
         if expectedClockOffset:
             self.layoutService.recordExpectedClockOffset(-expectedClockOffset)
-        self.scheduleAction("init", self.clock.now(), config=config, parameters=parameters)
+        self.scheduleAction("init", self.clock.now(), config=config, parameters=self._getParameters())
 
     def startTimelineElement(self):
         self.assertState('ProxyDMAppComponent.startTimelineElement()', document.State.inited)
@@ -669,6 +702,10 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         else:
             return None
 
+    def applyOverlayUpdates(self, timestamp):
+        if self.state in document.State.STOP_NEEDED:
+            self.scheduleAction("update", timestamp, parameters=self._getParameters())
+
 class UpdateComponent(document.TimelineDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
         document.TimelineDelegate.__init__(self, elt, doc, clock)
@@ -723,5 +760,42 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                 self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, timestamp, *extraLogArgs, extra=self.getLogExtra())
                 self.layoutService.scheduleAction(self._getTime(timestamp), cid, verb, config=config, parameters=parameters)
 
+class OverlayComponent(document.TimelineDelegate, ProxyMixin):
+    def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
+        document.TimelineDelegate.__init__(self, elt, doc, clock)
+        componentId = self.elt.get(document.NS_2IMMERSE("target"))
+        self.targetXPath = self.elt.get(document.NS_2IMMERSE("targetXPath"))
+        ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
 
+    def _tryApplyToElement(self, elt):
+        overlayList = getattr(elt.delegate, 'activeOverlays', None)
+        if overlayList is not None:
+            overlayList.append(self.elt)
+            self.appliedTo.append(elt)
+            elt.delegate.applyOverlayUpdates(self.getStartTime())
 
+    def startTimelineElement(self):
+        self.assertState('OverlayComponent.startTimelineElement()', document.State.inited)
+        document.TimelineDelegate.startTimelineElement(self)
+        self.parameters = self._getParameters()
+        self.appliedTo = []
+        if self.targetXPath:
+            # Find all active elements in the group
+            allMatchingElements = self.document.root.findall(self.targetXPath, document.NAMESPACES)
+            for elt in allMatchingElements:
+                self._tryApplyToElement(elt)
+        else:
+            # xxxjack should this recording always be done???
+            targetElt = self.document.getElementById(self.componentId)
+            if targetElt != None:
+                self._tryApplyToElement(targetElt)
+            else:
+                self.logger.error('tim:overlay: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
+
+    def stopTimelineElement(self):
+        self.assertState('OverlayComponent.stopTimelineElement()', document.State.finished)
+        for elt in self.appliedTo:
+            elt.delegate.activeOverlays.remove(self.elt)
+            elt.delegate.applyOverlayUpdates(self.getStopTime())
+        del self.appliedTo
+        document.TimelineDelegate.stopTimelineElement(self)
