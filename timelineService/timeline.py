@@ -767,10 +767,22 @@ class OverlayComponent(document.TimelineDelegate, ProxyMixin):
         self.targetXPath = self.elt.get(document.NS_2IMMERSE("targetXPath"))
         ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
 
+    def _orderedOverlistInsert(self, overlayList, elt):
+        # Sort target's overlay list in ascending start time sorted order
+        key = elt.delegate.startTime
+        lo, hi = 0, len(overlayList)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if key < overlayList[mid].delegate.startTime:
+                hi = mid
+            else:
+                lo = mid + 1
+        overlayList.insert(lo, elt)
+
     def _tryApplyToElement(self, elt):
         overlayList = getattr(elt.delegate, 'activeOverlays', None)
         if overlayList is not None:
-            overlayList.append(self.elt)
+            self._orderedOverlistInsert(overlayList, self.elt)
             self.appliedTo.append(elt)
             elt.delegate.applyOverlayUpdates(self.getStartTime())
 
