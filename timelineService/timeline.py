@@ -487,7 +487,6 @@ class ProxyMixin:
         return timestamp - self.clock.offsetFromUnderlyingClock()
 
     def scheduleAction(self, verb, timestamp, config=None, parameters=None):
-        self._fix2immerseTimeParameters(parameters)
         extraLogArgs = ()
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
@@ -510,6 +509,7 @@ class ProxyMixin:
                 if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
+        self._fix2immerseTimeParameters(rv)
         return rv
 
     def _getConstraintId(self):
@@ -748,7 +748,6 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
         
     def scheduleActionMulti(self, verb, timestamp, componentIds, config=None, parameters=None):
         extraLogArgs = ()
-        self._fix2immerseTimeParameters(parameters)
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
         newConstraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
