@@ -102,7 +102,7 @@ again help with serializability and simplified semantics.
 Format
 ------
 
-`<tl:ref tl:prio="100" tl:fill="freeze|remove">`
+#### `<tl:ref tl:prio="100" tl:fill="freeze|remove">`
 
 Media element. Whether this is actually called `tl:ref` or something else (such
 as a `tl:video`, `tl:audio`, `tl:script` etc) remains to be seen. It could even be
@@ -113,13 +113,15 @@ determine clock priorities and select the master clock. `tl:fill` is used by
 the `tl:par` parent or ancestor to determine what to do when a non-master element
 ends while the master element clock is still running: either pause it or remove it.
 
-`<tl:par tl:end="first|all|master" tl:sync="true|false" tl:prio=... tl:fill=...>`
+#### `<tl:par tl:end="first|all|allNonRef|master" tl:sync="true|false" tl:prio=... tl:fill=... tl:timingModel="floating|deterministic">`
 
-Parallel composition. All children run in parallel. The end of the `tl:par`
-depends on the `tl:end` attribute: either when the first of its children has ended,
-the last of its children has ended or its timeline master child has ended. We may
-also want to specify a specific child (by xmlid) to determine when the `tl:par`
-ends.
+Parallel composition. All children run in parallel.
+
+The end of the `tl:par` depends on the `tl:end` attribute:
+* `first`: when the first of its children has ended
+* `all`: when all of its children have ended (this is the default in "floating" timing model)
+* `allNonRef`: when all of its children (except `<tl:ref />` elements) have ended (this is the default in "deterministic" timing model)
+* `master`: when its "master" child had ended (see below)
 
 > *Note* (20160805): `tl:end="master"` may not be such a good idea. The master needs to be
 computed dynamically (because it is used for clock synchronisation), but obviously
@@ -136,18 +138,28 @@ some are running on an independent timeline. Then we would get something like a
 `tl:independent="true|false"` attribute. But it would only be allowed inside a
 `tl:par` parent...
 
-`<tl:seq>`
+NOTE: `tl:sync`, `tl:fill`, and `tl:independent` are not implemented in any form.
+
+`tl:timingModel` determines the timing model of the `tl:par`. The default is `floating`. `deterministic` enables deterministic scheduling.
+The default for all `tl:par` and `tl:seq` elements can be overriden by adding a `tldefaults:timingModel` tag to the root `<tl:document />`.
+
+#### `<tl:seq>`
 
 Sequential composition. The children run one after the other. 
 
 > I think `tl:seq` should
 not have the `tl:prio` and `tl:fill` attributes, but I am not quite sure.
 
-`<tl:sleep tl:dur="10s" />`
+NOTE: `tl:fill` is not implemented in any form.
+
+`tl:timingModel` determines the timing model of the `tl:seq`. The default is `floating`. `deterministic` enables deterministic scheduling.
+The default for all `tl:par` and `tl:seq` elements can be overriden by adding a `tldefaults:timingModel` tag to the root `<tl:document />`.
+
+#### `<tl:sleep tl:dur="10s" />`
 
 Do nothing. Stop running after the given `tl:dur`.
 
-`<tl:wait tl:event="...." />`
+#### `<tl:wait tl:event="...." />`
 
 Do nothing. Stop running when the event happens. How this event is specified
 (and whether we need the `tl:event` parameter in the first place) remains to
@@ -159,15 +171,17 @@ the event listener is active:
 to treat it like a counting semaphore?), or
 - either, based on an optional argument.
 
-`<tl:conditional tl:expr="...">`
+#### `<tl:conditional tl:expr="...">`
 
 Conditionally run the single child, based on whether `tl:expr` evaluates to true
 or not. This may be better specified as an attribute (so we don't have this
-_single child_ requirement). 
+_single child_ requirement).
+
+NOTE: `<tl:conditional />` is not implemented, the child element is always executed.
 
 > Language for the expression is to be determined.
 
-`<tl:switch>`
+#### `<tl:switch>`
 
 We may want the equivalent of the SMIL `<switch>` element. It would select the first
 child (in document order) that is elegible and run that. So usually it would contain
@@ -175,18 +189,45 @@ a number of `<tl:conditional>` children followed by a single other child.
 
 This element is generally used to select one of a number of alternatives, for example
 based on language preference of the end user, or accessibility settings or something
-similar. 
+similar.
 
-`<tl:excl>`
+NOTE: `<tl:switch />` is not implemented in any form.
+
+#### `<tl:excl>`
 
 We may want some form of SMIL `<excl>` but this remains to be determined. The semantics
 would be some form of priority-based pausing, but in SMIL the semantics were already
 rather difficult to explain...
 
-`<tl:repeat ...>`
+NOTE: `<tl:excl />` is not implemented in any form.
+
+#### `<tl:repeat ...>`
 
 We probably want some way to repeat things. It probably needs an optional count (defaulting
 to infinite).
+
+#### `<tim:update>`
+
+Update parameters and/or constraint ID of 0 or more `<tl:ref>` elements. This is imperative and should not be used in deterministic timing mode, use `<tl:overlay>` instead.
+
+`tim:target`: target component ID
+`tim:targetXPath`: target xpath expression to select target elements
+`tim:append`: optional boolean to append to the existing parameter instead of replacing it
+`tic:...`: optional parameters
+`tim:constraintId`: optional constraint ID (NB: this must be specified, as otherwise the constraint ID on the target(s) will be removed)
+
+Exactly one of `tl:target` and `tl:targetXPath` must be specified
+
+#### `<tim:overlay>`
+
+Overlay parameters and/or constraint ID of 0 or more `<tl:ref>` elements, the overlay is in effect whilst the `<tl:overlay>` element is active.
+
+`tim:target`: target component ID
+`tim:targetXPath`: target xpath expression to select target elements
+`tic:...`: optional parameters
+`tim:constraintId`: optional constraint ID
+
+Exactly one of `tl:target` and `tl:targetXPath` must be specified
 
 Unknown XML elements
 --------------------
@@ -237,27 +278,10 @@ to specify which media item should be played back.
 
 The per-component attributes include:
 
-- `tic:syncMode` how this dmappc relates to the master clock, either `slave` (the default),
+- `tic:syncMode` (video/audio player components only) how this component relates to the master clock, either `slave` (the default),
   `master` or `none`. Note that this is used in place of `tl:prio` for the time being.
-- `tic:mediaUrl` media to play.
-- `tic:offset` media start position in seconds.
-- `tic:showControls` whether to show controls on a video element. Defaults to `true`
-  for dmappc with `tic:syncMode="master"` and `false` otherwise.
-- `tic:controlEndpoint` is a string, a magic cookie used to rendezvous with another
-  dmappc (or a set of dmappcs).
-- `tic:controlTarget` is a string, a magic cookie used to rendezvous with another
-  dmappc or set of dmappcs. The intended use of these two attributes is that for
-  example video players will have a `tic:controlEndpoint="main video"` attribute
-  and the controller UI for that video player will have `tic:controlTarget="main video"`,
-  allowing it to send start/stop/pause/etc commands to the video player.
-  
-It may be needed to modify a DMApp Component that is already running, due to an event
-or something like that. For this we could use a `<tim:set tim:dmappcid="...." ....>`
-call. From a timeline point of view, a set behaves like an infinitely fast `tl:ref`
-that does not need an `init()` call.
 
-For the time being, `<tl:conditional>`, `<tl:excl>`, `<tl:switch>` and `<tl:repeat>`
-have not been implemented.
+For more details see the documentation of the DMApp component in question.
 
 At the moment, `tl:prio` has not been implemented, and the most recently started
 dmappc with `tic:syncMode="master"` is used to drive the clock.
