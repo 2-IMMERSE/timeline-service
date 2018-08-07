@@ -1300,9 +1300,14 @@ class SleepDelegate(TimeElementDelegate):
             dur += self.mediaClockSeek
             self.mediaClockSeek = None
         self.sleepEndTime = self.startTime + dur
-        self.clock.scheduleAt(self.sleepEndTime, self._done)
+        if self.sleepEndTime != float('inf'):
+            self.clock.scheduleAt(self.sleepEndTime, self._done, self.sleepEndTime)
         
-    def _done(self):
+    def _done(self, expectedSleepEndTime):
+        if self.sleepEndTime != expectedSleepEndTime:
+            # Sleep end time was changed after _done was scheduled.
+            # This call to _done is therefore invalid and no action should be taken.
+            return
         if self.state != State.started:
             self.document.logger.debug("SleepDelegate(%s): spurious _done callback" % self.document.getXPath(self.elt), extra=self.getLogExtra())
             return
@@ -1329,7 +1334,8 @@ class SleepDelegate(TimeElementDelegate):
                 newSleepEndTime = self.startTime + dur
                 self.document.logger.debug("SleepDelegate(%s): sleepEndTime changed from %.3f to %.3f" % (self.document.getXPath(self.elt), self.sleepEndTime, newSleepEndTime), extra=self.getLogExtra())
                 self.sleepEndTime = newSleepEndTime
-                self.clock.scheduleAt(self.sleepEndTime, self._done)
+                if self.sleepEndTime != float('inf'):
+                    self.clock.scheduleAt(self.sleepEndTime, self._done, self.sleepEndTime)
             else:
                 self.document.logger.warning("SleepDelegate(%s): unexpected attribute changed: %s" % (self.document.getXPath(self.elt), k), extra=self.getLogExtra())
         
