@@ -804,9 +804,9 @@ class OverlayComponent(document.TimelineDelegate, ProxyMixin):
                 self.logger.error('tim:overlay: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
 
     def stopTimelineElement(self):
-        self.assertState('OverlayComponent.stopTimelineElement()', document.State.finished)
-        for elt in self.appliedTo:
-            elt.delegate.activeOverlays.remove(self.elt)
-            elt.delegate.applyOverlayUpdates(self.getStopTime())
-        del self.appliedTo
+        if self.state == document.State.finished:
+            for elt in self.appliedTo:
+                elt.delegate.activeOverlays.remove(self.elt)
+                elt.delegate.applyOverlayUpdates(self.getStopTime())
+            del self.appliedTo
         document.TimelineDelegate.stopTimelineElement(self)
