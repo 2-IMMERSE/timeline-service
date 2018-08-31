@@ -396,6 +396,7 @@ class ProxyLayoutService:
         self.contextId = contextId
         self.dmappId = dmappId
         self.actions = []
+        self.pendingTransactions = None
         self.actionsTimestamp = None
         # We need somewhere to record the delta we expect from the clock in the near future (because the
         # way we map document clock to playout clock). The ProxyLayoutService is the object that
@@ -428,15 +429,48 @@ class ProxyLayoutService:
             self.actions.append(action)
 
     def forwardActions(self):
+        shouldDequeue = False
         with self.actionsLock:
             if not self.actions: return
-            actions = self.actions
-            actionsTimestamp = self.actionsTimestamp
+            if self.pendingTransactions is None:
+                self.pendingTransactions = []
+                shouldDequeue = True
+                # This call instance now "owns" self.pendingTransactions.
+                # Any concurrent call instances will queue items onto our self.pendingTransactions, to be dequeued in this instance.
+            while len(self.actions) > 0:
+                self._filterActions()
             self.actionsTimestamp = None
             self.actions = []
-        self.logger.info("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(actions), actionsTimestamp, repr(actions)))
+        if shouldDequeue:
+            while True:
+                with self.actionsLock:
+                    if len(self.pendingTransactions) == 0:
+                        self.pendingTransactions = None
+                        return
+                    body = self.pendingTransactions.pop(0)
+                self._forwardTransaction(body)
+
+    def _filterActions(self):
+        blacklist = set()
+        send = []
+        keep = []
+        for action in self.actions:
+            assert(len(action["components"]) == 1)
+            componentId = action["components"][0]["componentId"]
+            if componentId in blacklist:
+                keep.append(action)
+            else:
+                send.append(action)
+                if action["action"] == "destroy":
+                    blacklist.add(componentId)
+                    # Once a component ID has been destroyed in a transaction, any subsequent re-init/etc. actions must be sent in a seperate transaction.
+                    # This is because the layout service executes transaction operations in verb order, nor array order.
+        self.logger.info("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(send), self.actionsTimestamp, repr(send)))
+        self.pendingTransactions.append(dict(time=self.actionsTimestamp, actions=send))
+        self.actions = keep
+
+    def _forwardTransaction(self, body):
         entryPoint = self.getContactInfo() + '/transaction'
-        body = dict(time=actionsTimestamp, actions=actions)
         try:
             r = requests.post(entryPoint, json=body)
         except requests.exceptions.RequestException as e:
