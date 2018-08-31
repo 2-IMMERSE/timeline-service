@@ -163,11 +163,11 @@ class BaseTimeline:
         self.documentHasFinished = False
         return None
 
-    def dmappcStatus(self, componentId, status, dmappId=None, fromLayout=False, duration=None):
-        self.logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout=%s, duration=%s)" % (self.contextId, dmappId, componentId, status, fromLayout, duration))
+    def dmappcStatus(self, componentId, status, dmappId=None, fromLayout=False, duration=None, revision=None):
+        self.logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout=%s, duration=%s, revision=%s)" % (self.contextId, dmappId, componentId, status, fromLayout, duration, revision))
         assert dmappId == None or dmappId == self.dmappId
         c = self.dmappComponents[componentId]
-        c.statusReport(status, duration, fromLayout)
+        c.statusReport(status, duration, fromLayout, revision)
         self._updateTimeline()
         return None
 
@@ -591,6 +591,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocBaseUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
         ProxyMixin.__init__(self, timelineDocBaseUrl, layoutService, self.getId())
+        self.revision = -1
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
         self.lastReceivedDuration = None
@@ -633,7 +634,8 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
     def initTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.idle)
         self.setState(document.State.initing)
-        config = {'class':self.klass, 'url':self.url}
+        self.revision += 1
+        config = {'class':self.klass, 'url':self.url, 'revision':self.revision}
         self.seekParameters.clear()
         self.nullParameters.clear()
         expectedClockOffset = self._addSeekParameter(self.seekParameters)
@@ -653,14 +655,18 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
     def destroyTimelineElement(self):
         self.scheduleAction("destroy", self.getStopTime())
 
-    def statusReport(self, state, duration, fromLayout):
+    def statusReport(self, state, duration, fromLayout, revision):
         durargs = ()
         if fromLayout:
             durargs = ('fromLayout',)
         if duration != None:
             durargs = ('duration=%s' % duration,)
             self.lastReceivedDuration = duration
-            
+        if revision != None:
+            if revision != self.revision:
+                self.logger.info('Ignoring stale "%s" (revision %s) state update for node %s (in state %s, revision %s)' % ( state, revision, self.document.getXPath(self.elt), self.state, self.revision), extra=self.getLogExtra())
+                return
+            durargs += ('revision=%s' % revision,)
         self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt), duration, *durargs, extra=self.getLogExtra())
 
         #
