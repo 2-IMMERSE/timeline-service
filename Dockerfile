@@ -20,7 +20,10 @@ RUN pip install -r /usr/src/app/requirements.txt
 COPY timelineService/ timelineService/
 COPY samples/ samples/
 
-COPY ./client-certs/ /usr/local/share/ca-certificates
+RUN mkdir /usr/share/ca-certificates/2immerse
+COPY ./client-certs/ /usr/share/ca-certificates/2immerse
+RUN ln -s /usr/share/ca-certificates/2immerse/* /etc/ssl/certs
+RUN echo 2immerse/2immerseCA.crt >> /etc/ca-certificates.conf
 RUN update-ca-certificates
 
 EXPOSE 8080
