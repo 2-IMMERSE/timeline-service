@@ -58,12 +58,12 @@ class BaseTimeline:
         self.documentInitialSeek = None
         self.dmappComponents = {}
         self.clockService = clocks.PausableClock(clocks.SystemClock())
-        self.documentClock = clocks.CallbackPausableClock(self.clockService)
-        self.documentClock.start()
+        self.documentClock = clocks.CallbackPausableClock(self.clockService, True)
         self.documentClock.setQueueChangedCallback(self._updateTimeline)
         self.document = document.Document(self.documentClock, idAttribute=document.NS_XML("id"), extraLoggerArgs=dict(contextID=contextId))
         self.document.setDelegateFactory(self.dmappComponentDelegateFactory)
         self.document.setDelegateFactory(self.updateDelegateFactory, tag=document.NS_2IMMERSE("update"))
+        self.document.setDelegateFactory(self.overlayDelegateFactory, tag=document.NS_2IMMERSE("overlay"))
         # Initialize clock values used to synchronize concurrent live viewing
         self.masterEpoch = None
         self.ourEpoch = None
@@ -113,6 +113,10 @@ class BaseTimeline:
         rv = UpdateComponent(elt, document, self.timelineDocBaseUrl, clock, self.layoutService)
         return rv
 
+    def overlayDelegateFactory(self, elt, document, clock):
+        rv = OverlayComponent(elt, document, self.timelineDocBaseUrl, clock, self.layoutService)
+        return rv
+
     def loadDMAppTimeline(self, timelineDocUrl, dmappId):
         logger.info("Timeline(%s): loadDMAppTimeline(%s)" % (self.contextId, timelineDocUrl))
         logger.info("Timeline(%s): layoutServiceUrl=%s" % (self.contextId, self.layoutServiceUrl))
@@ -159,11 +163,11 @@ class BaseTimeline:
         self.documentHasFinished = False
         return None
 
-    def dmappcStatus(self, componentId, status, dmappId=None, fromLayout=False, duration=None):
-        self.logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout=%s, duration=%s)" % (self.contextId, dmappId, componentId, status, fromLayout, duration))
+    def dmappcStatus(self, componentId, status, dmappId=None, fromLayout=False, duration=None, revision=None):
+        self.logger.debug("Timeline(%s): dmappcStatus(%s, %s, %s, fromLayout=%s, duration=%s, revision=%s)" % (self.contextId, dmappId, componentId, status, fromLayout, duration, revision))
         assert dmappId == None or dmappId == self.dmappId
         c = self.dmappComponents[componentId]
-        c.statusReport(status, duration, fromLayout)
+        c.statusReport(status, duration, fromLayout, revision)
         self._updateTimeline()
         return None
 
@@ -235,6 +239,8 @@ class BaseTimeline:
         self.document.clockChanged()
         self.logger.debug("Timeline(%s): after clockChanged clockService=%f, document=%f", self.contextId, self.clockService.now(), self.documentClock.now())
         self._updateTimeline()
+        if delta < -MAX_CLOCK_DISCREPANCY:
+            self.document.root.delegate.notifyNegativeClockChange(self.documentClock.now())
         return None
 
     def _populateTimeline(self):
@@ -390,6 +396,7 @@ class ProxyLayoutService:
         self.contextId = contextId
         self.dmappId = dmappId
         self.actions = []
+        self.pendingTransactions = None
         self.actionsTimestamp = None
         # We need somewhere to record the delta we expect from the clock in the near future (because the
         # way we map document clock to playout clock). The ProxyLayoutService is the object that
@@ -422,15 +429,48 @@ class ProxyLayoutService:
             self.actions.append(action)
 
     def forwardActions(self):
+        shouldDequeue = False
         with self.actionsLock:
             if not self.actions: return
-            actions = self.actions
-            actionsTimestamp = self.actionsTimestamp
+            if self.pendingTransactions is None:
+                self.pendingTransactions = []
+                shouldDequeue = True
+                # This call instance now "owns" self.pendingTransactions.
+                # Any concurrent call instances will queue items onto our self.pendingTransactions, to be dequeued in this instance.
+            while len(self.actions) > 0:
+                self._filterActions()
             self.actionsTimestamp = None
             self.actions = []
-        self.logger.info("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(actions), actionsTimestamp, repr(actions)))
+        if shouldDequeue:
+            while True:
+                with self.actionsLock:
+                    if len(self.pendingTransactions) == 0:
+                        self.pendingTransactions = None
+                        return
+                    body = self.pendingTransactions.pop(0)
+                self._forwardTransaction(body)
+
+    def _filterActions(self):
+        blacklist = set()
+        send = []
+        keep = []
+        for action in self.actions:
+            assert(len(action["components"]) == 1)
+            componentId = action["components"][0]["componentId"]
+            if componentId in blacklist:
+                keep.append(action)
+            else:
+                send.append(action)
+                if action["action"] == "destroy":
+                    blacklist.add(componentId)
+                    # Once a component ID has been destroyed in a transaction, any subsequent re-init/etc. actions must be sent in a seperate transaction.
+                    # This is because the layout service executes transaction operations in verb order, nor array order.
+        self.logger.info("ProxyLayoutService: forwarding %d actions (t=%f): %s" % (len(send), self.actionsTimestamp, repr(send)))
+        self.pendingTransactions.append(dict(time=self.actionsTimestamp, actions=send))
+        self.actions = keep
+
+    def _forwardTransaction(self, body):
         entryPoint = self.getContactInfo() + '/transaction'
-        body = dict(time=actionsTimestamp, actions=actions)
         try:
             r = requests.post(entryPoint, json=body)
         except requests.exceptions.RequestException as e:
@@ -478,20 +518,15 @@ class ProxyMixin:
     	
     def _getTime(self, timestamp):
         """Convert document time to the time used by the external agents (clients, layout)"""
-        deltaDocToUnderlying = self.clock.now() - self.clock.underlyingClock.now()
-        return timestamp - deltaDocToUnderlying
+        return timestamp - self.clock.offsetFromUnderlyingClock()
 
-    def scheduleAction(self, verb, config=None, parameters=None):
-        self._fix2immerseTimeParameters(parameters)
+    def scheduleAction(self, verb, timestamp, config=None, parameters=None):
         extraLogArgs = ()
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
-        startTime = self.getStartTime()
-        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, startTime, 'constraintId=%s' % self.elt.get(document.NS_2IMMERSE("constraintId")), *extraLogArgs, extra=self.getLogExtra())
-        constraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
-        if not constraintId:
-            constraintId = self.componentId
-        self.layoutService.scheduleAction(self._getTime(startTime), self.componentId, verb, config=config, parameters=parameters, constraintId=constraintId)
+        constraintId = self._getConstraintId()
+        self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), self.componentId, timestamp, 'constraintId=%s' % constraintId, *extraLogArgs, extra=self.getLogExtra())
+        self.layoutService.scheduleAction(self._getTime(timestamp), self.componentId, verb, config=config, parameters=parameters, constraintId=constraintId)
 
     def _getParameters(self):
         rv = {}
@@ -508,8 +543,15 @@ class ProxyMixin:
                 if 'url' in localName.lower() and value:
                     value = urllib.basejoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
+        self._fix2immerseTimeParameters(rv)
         return rv
-        
+
+    def _getConstraintId(self):
+        constraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
+        if not constraintId:
+            constraintId = self.componentId
+        return constraintId
+
     def _fix2immerseTimeParameters(self, parameters):
         # Special case for communicating timestamps to Chyron Hego Prime graphics.
         # These are converted from document time to contextclock
@@ -544,11 +586,18 @@ class ProxyMixin:
         return None
 
 class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
+    IS_REF_TYPE=True
+
     def __init__(self, elt, doc, timelineDocBaseUrl, clock, layoutService):
         document.TimeElementDelegate.__init__(self, elt, doc, clock)
         ProxyMixin.__init__(self, timelineDocBaseUrl, layoutService, self.getId())
+        self.revision = -1
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
         self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
+        self.lastReceivedDuration = None
+        self.activeOverlays = []
+        self.seekParameters = {}
+        self.nullParameters = set()
         # Allow relative URLs by doing a basejoin to the timeline document URL.
         if self.url:
             self.url = urllib.basejoin(self.timelineDocBaseUrl, self.url)
@@ -562,35 +611,62 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         self.expectedDuration = None
         assert self.klass
 
+    def _getParameters(self):
+        parameters = ProxyMixin._getParameters(self)
+        for key in self.seekParameters:
+            parameters[key] = self.seekParameters[key]
+        for elt in self.activeOverlays:
+            for key in elt.delegate.parameters:
+                parameters[key] = elt.delegate.parameters[key]
+                self.nullParameters.add(key)
+        # This is to handle the case where an overlay previously added a new parameter, and now it needs to be removed in the layout service
+        for key in self.nullParameters:
+            if not key in parameters: parameters[key] = None
+        return parameters
+
+    def _getConstraintId(self):
+        constraintId = ProxyMixin._getConstraintId(self)
+        for elt in self.activeOverlays:
+            newConstraintId = elt.get(document.NS_2IMMERSE("constraintId"))
+            if newConstraintId: constraintId = newConstraintId
+        return constraintId
+
     def initTimelineElement(self):
         self.assertState('ProxyDMAppComponent.initTimelineElement()', document.State.idle)
         self.setState(document.State.initing)
-        config = {'class':self.klass, 'url':self.url}
-        parameters = self._getParameters()
-        expectedClockOffset = self._addSeekParameter(parameters)
+        self.revision += 1
+        config = {'class':self.klass, 'url':self.url, 'revision':self.revision}
+        self.seekParameters.clear()
+        self.nullParameters.clear()
+        expectedClockOffset = self._addSeekParameter(self.seekParameters)
         if expectedClockOffset:
             self.layoutService.recordExpectedClockOffset(-expectedClockOffset)
-        self.scheduleAction("init", config=config, parameters=parameters)
+        self.scheduleAction("init", self.clock.now(), config=config, parameters=self._getParameters())
 
     def startTimelineElement(self):
         self.assertState('ProxyDMAppComponent.startTimelineElement()', document.State.inited)
         self.setState(document.State.starting)
-        self.scheduleAction("start")
+        self.scheduleAction("start", self.getStartTime())
 
     def stopTimelineElement(self):
         self.setState(document.State.stopping)
-        self.scheduleAction("stop")
+        self.scheduleAction("stop", self.getStopTime())
             
     def destroyTimelineElement(self):
-        self.scheduleAction("destroy")
+        self.scheduleAction("destroy", self.getStopTime())
 
-    def statusReport(self, state, duration, fromLayout):
+    def statusReport(self, state, duration, fromLayout, revision):
         durargs = ()
         if fromLayout:
             durargs = ('fromLayout',)
         if duration != None:
             durargs = ('duration=%s' % duration,)
-            
+            self.lastReceivedDuration = duration
+        if revision != None:
+            if revision != self.revision:
+                self.logger.info('Ignoring stale "%s" (revision %s) state update for node %s (in state %s, revision %s)' % ( state, revision, self.document.getXPath(self.elt), self.state, self.revision), extra=self.getLogExtra())
+                return
+            durargs += ('revision=%s' % revision,)
         self.document.report(logging.INFO, 'RECV', state, self.document.getXPath(self.elt), duration, *durargs, extra=self.getLogExtra())
 
         #
@@ -603,7 +679,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
                 pass # This is a second inited, probably because the layout service decided to place the dmappc on an appeared handheld
             elif self.state == document.State.idle:
                 self.logger.error('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-                self.scheduleAction('destroy')
+                self.scheduleAction('destroy', self.getStopTime())
             else:
                 self.logger.error('Unexpected "%s" state update for node %s (in state %s)' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
         elif state == document.State.started:
@@ -616,7 +692,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
                 pass # This is a second started, probably because the layout service decided to place the dmappc on an appeared handheld
             elif self.state == document.State.idle:
                 self.logger.info('Unexpected "%s" state update for node %s (in state %s), re-issuing destroy' % (state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
-                self.scheduleAction('destroy')
+                self.scheduleAction('destroy', self.getStopTime())
             else:
                 self.logger.info('Ignoring unexpected "%s" state update for node %s (in state %s)' % ( state, self.document.getXPath(self.elt), self.state), extra=self.getLogExtra())
         elif state == document.State.idle:
@@ -633,14 +709,14 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         # decided to send a quick "fromlayout" update we might terminate the document before it got actually started.
         # The current solution, not scheduling a synthesized finished, has the disadvantage that if there are no clients at all and they'll never appear
         # either the whole context will sit waiting infinitely long.
-        if state == document.State.started and duration != None:
+        if state == document.State.started and duration != None and self.startTime != None:
             self._scheduleFinished(duration)
 
     def _scheduleFinished(self, dur):
         if not dur: 
             dur = 0
         if self.expectedDuration is None or self.expectedDuration > dur:
-            self.clock.schedule(dur, self._emitFinished)
+            self.clock.scheduleAt(self.startTime + dur, self._emitFinished)
         if self.expectedDuration != None and self.expectedDuration != dur:
             self.logger.warning('Expected duration of %s changed from %s to %s' % (self.document.getXPath(self.elt), self.expectedDuration, dur), extra=self.getLogExtra())
             self.expectedDuration = dur 
@@ -651,6 +727,24 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
             self.setState(document.State.finished)
         else:
             self.document.report(logging.INFO, 'SYN-IGN', 'finished', self.document.getXPath(self.elt), extra=self.getLogExtra())
+
+    def predictStopTime(self, mode, startTimeOverride = None):
+        if mode == "deterministic":
+            return None
+        if startTimeOverride is not None:
+            startTime = startTimeOverride
+        elif self.startTime is not None:
+            startTime = self.startTime
+        else:
+            return None
+        if self.lastReceivedDuration is not None:
+            return startTime + self.lastReceivedDuration
+        else:
+            return None
+
+    def applyOverlayUpdates(self, timestamp):
+        if self.state in document.State.STOP_NEEDED:
+            self.scheduleAction("update", timestamp, parameters=self._getParameters())
 
 class UpdateComponent(document.TimelineDelegate, ProxyMixin):
     def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
@@ -674,7 +768,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
             for elt in allMatchingElements:
                 if elt.delegate.state in document.State.STOP_NEEDED:
                     componentIds.append(elt.delegate.getId())
-            self.scheduleActionMulti("update", componentIds, parameters=parameters)
+            self.scheduleActionMulti("update", self.getStartTime(), componentIds, parameters=parameters)
         else:
             # xxxjack should this recording always be done???
             targetElt = self.document.getElementById(self.componentId)
@@ -690,22 +784,69 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
                     parameters[attrName] = attrValue
             else:
                 self.logger.error('tim:update: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
-            self.scheduleAction("update", parameters=parameters)
+            self.scheduleAction("update", self.getStartTime(), parameters=parameters)
         
-    def scheduleActionMulti(self, verb, componentIds, config=None, parameters=None):
+    def scheduleActionMulti(self, verb, timestamp, componentIds, config=None, parameters=None):
         extraLogArgs = ()
-        self._fix2immerseTimeParameters(parameters)
         if config != None or parameters != None:
             extraLogArgs = (config, parameters)
-        startTime = self.getStartTime()
         newConstraintId = self.elt.get(document.NS_2IMMERSE("constraintId"))
         for cid in componentIds:
             if newConstraintId:
-                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, 'constraintId=%s' % newConstraintId, *extraLogArgs, extra=self.getLogExtra())
-                self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters, constraintId=newConstraintId)
+                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, timestamp, 'constraintId=%s' % newConstraintId, *extraLogArgs, extra=self.getLogExtra())
+                self.layoutService.scheduleAction(self._getTime(timestamp), cid, verb, config=config, parameters=parameters, constraintId=newConstraintId)
             else:
-                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, startTime, *extraLogArgs, extra=self.getLogExtra())
-                self.layoutService.scheduleAction(self._getTime(startTime), cid, verb, config=config, parameters=parameters)
+                self.document.report(logging.INFO, 'QUEUE', verb, self.document.getXPath(self.elt), cid, timestamp, *extraLogArgs, extra=self.getLogExtra())
+                self.layoutService.scheduleAction(self._getTime(timestamp), cid, verb, config=config, parameters=parameters)
 
+class OverlayComponent(document.TimelineDelegate, ProxyMixin):
+    def __init__(self, elt, doc, timelineDocUrl, clock, layoutService):
+        document.TimelineDelegate.__init__(self, elt, doc, clock)
+        componentId = self.elt.get(document.NS_2IMMERSE("target"))
+        self.targetXPath = self.elt.get(document.NS_2IMMERSE("targetXPath"))
+        ProxyMixin.__init__(self, timelineDocUrl, layoutService, componentId)
 
+    def _orderedOverlistInsert(self, overlayList, elt):
+        # Sort target's overlay list in ascending start time sorted order
+        key = elt.delegate.startTime
+        lo, hi = 0, len(overlayList)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if key < overlayList[mid].delegate.startTime:
+                hi = mid
+            else:
+                lo = mid + 1
+        overlayList.insert(lo, elt)
 
+    def _tryApplyToElement(self, elt):
+        overlayList = getattr(elt.delegate, 'activeOverlays', None)
+        if overlayList is not None:
+            self._orderedOverlistInsert(overlayList, self.elt)
+            self.appliedTo.append(elt)
+            elt.delegate.applyOverlayUpdates(self.getStartTime())
+
+    def startTimelineElement(self):
+        self.assertState('OverlayComponent.startTimelineElement()', document.State.inited)
+        document.TimelineDelegate.startTimelineElement(self)
+        self.parameters = self._getParameters()
+        self.appliedTo = []
+        if self.targetXPath:
+            # Find all active elements in the group
+            allMatchingElements = self.document.root.findall(self.targetXPath, document.NAMESPACES)
+            for elt in allMatchingElements:
+                self._tryApplyToElement(elt)
+        else:
+            # xxxjack should this recording always be done???
+            targetElt = self.document.getElementById(self.componentId)
+            if targetElt != None:
+                self._tryApplyToElement(targetElt)
+            else:
+                self.logger.error('tim:overlay: no component with xml:id="%s"' % self.componentId, extra=self.getLogExtra())
+
+    def stopTimelineElement(self):
+        if self.state == document.State.finished:
+            for elt in self.appliedTo:
+                elt.delegate.activeOverlays.remove(self.elt)
+                elt.delegate.applyOverlayUpdates(self.getStopTime())
+            del self.appliedTo
+        document.TimelineDelegate.stopTimelineElement(self)
