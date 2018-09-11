@@ -20,6 +20,9 @@ RUN pip install -r /usr/src/app/requirements.txt
 COPY timelineService/ timelineService/
 COPY samples/ samples/
 
+COPY ./client-certs/ /usr/local/share/ca-certificates
+RUN update-ca-certificates
+
 EXPOSE 8080
 
 ENTRYPOINT [ "/usr/bin/python" ]
