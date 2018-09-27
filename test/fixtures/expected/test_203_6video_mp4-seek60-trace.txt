@@ -1,0 +1,28 @@
+{'timestamp': 0, 'verb': 'goto', 'event': 'FFWD', 'args': '#t=60.000000 (underlyingClock=0.000000)'}
+{'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'reached', 'event': 'FFWD', 'args': '#t=0.000000 (underlyingClock=0.000000)'}
+{'timestamp': 60.0, 'verb': 'nudge', 'event': 'FFWD', 'args': '#t=60.000000 (underlyingClock=0.000000)'}
+{'timestamp': 60.0, 'verb': 'reposition', 'event': 'FFWD', 'args': 'delta-t=-60.000000 (underlyingClock=0.000000)'}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref {'class': 'video'} {'syncMode': 'master', 'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[2] {'class': 'video'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[3] {'class': 'video'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[4] {'class': 'video'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[5] {'class': 'video'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[6] {'class': 'video'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 60.0, 'verb': 'done', 'event': 'FFWD', 'args': '(underlyingClock=0.000000)'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[4]'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[6]'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[2]'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[3]'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[5]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[2]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[3]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[4]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[5]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[6]'}
+{'timestamp': 81.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
+{'timestamp': 81.0, 'verb': 'done', 'event': 'RUN', 'args': ''}

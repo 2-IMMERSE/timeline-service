@@ -1,0 +1,28 @@
+{'timestamp': 0, 'verb': 'goto', 'event': 'FFWD', 'args': '#t=60.000000 (underlyingClock=0.000000)'}
+{'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
+{'timestamp': 5.0, 'verb': 'reached', 'event': 'FFWD', 'args': '#t=5.000000 (underlyingClock=5.000000)'}
+{'timestamp': 60.0, 'verb': 'nudge', 'event': 'FFWD', 'args': '#t=60.000000 (underlyingClock=5.000000)'}
+{'timestamp': 60.0, 'verb': 'reposition', 'event': 'FFWD', 'args': 'delta-t=-60.000000 (underlyingClock=0.000000)'}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref {'constraintId': 'overlayTL', 'class': 'video'} {'syncMode': 'master', 'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 60.0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[2] {'url': '/dmapp-components/scroll-text/scroll-text.html', 'constraintId': 'stage', 'class': 'scroll-text'} {'scriptUrl': '../media/trailer-description.json'}"}
+{'timestamp': 60.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update main_video {}'}
+{'timestamp': 60.0, 'verb': 'done', 'event': 'FFWD', 'args': '(underlyingClock=0.000000)'}
+{'timestamp': 65.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[2] main_video {}'}
+{'timestamp': 70.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[3] main_video {}'}
+{'timestamp': 75.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[4] main_video {}'}
+{'timestamp': 80.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[5] main_video {}'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[2]'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 85.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[6] main_video {}'}
+{'timestamp': 90.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[7] main_video {}'}
+{'timestamp': 95.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[8] main_video {}'}
+{'timestamp': 100.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[9] main_video {}'}
+{'timestamp': 105.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[10] main_video {}'}
+{'timestamp': 110.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[11] main_video {}'}
+{'timestamp': 115.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/{http://jackjansen.nl/2immerse}update[12] main_video {}'}
+{'timestamp': 115.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
+{'timestamp': 115.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[2]'}
+{'timestamp': 115.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
+{'timestamp': 115.0, 'verb': 'done', 'event': 'RUN', 'args': ''}

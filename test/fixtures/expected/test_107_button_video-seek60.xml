@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf8'?>
+<tl:document xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" title="Test a single MP4 video" tls:slavedProgress="141.0">
+
+  <tl:par tls:slavedProgress="141.0" tl:end="master">
+
+
+      <tl:ref title="main video" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer.mp4" tic:syncMode="master" tim:class="video" tlcheck:dur="81" tl:prio="high" xml:id="main_video" />
+
+      <tl:par tl:end="master">
+          <tl:ref tic:eventId="start_button_press" tic:text="Press This Button" tim:class="PostTimelineEventButtonComponent" tim:url="/dmapp-components/post-timeline-event-button/post-timeline-event-button.html" xml:id="start_button" />
+          <tl:wait tl:event="start_button_press" tl:prio="high" />
+      </tl:par>
+              
+      <tl:seq>
+        <tl:wait tl:event="start_button_press" />
+        <tl:par>
+            <tl:ref tic:mediaUrl="../media/switch-image.png" tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img01" />
+            <tl:wait tl:event="stop_button_press" />
+            <tl:ref tic:eventId="stop_button_press" tic:text="Press to Remove" tim:class="PostTimelineEventButtonComponent" tim:url="/dmapp-components/post-timeline-event-button/post-timeline-event-button.html" xml:id="stop_button" />
+        </tl:par>
+      </tl:seq>
+
+  </tl:par>
+
+</tl:document>

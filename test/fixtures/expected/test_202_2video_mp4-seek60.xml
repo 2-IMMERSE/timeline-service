@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf8'?>
+<tl:document xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" title="Test a single MP4 video" tls:slavedProgress="141.0">
+
+  <tl:par tls:slavedProgress="141.0">
+
+
+      <tl:ref title="main video" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer.mp4" tic:syncMode="master" tim:class="video" tlcheck:dur="81" xml:id="main_video" />
+
+      <tl:ref title="second video" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer.mp4" tim:class="video" tlcheck:dur="81" xml:id="aux_video" />
+
+  </tl:par>
+
+</tl:document>
