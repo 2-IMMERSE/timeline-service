@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='utf8'?>
+<tl:document xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" title="Test a single MP4 video" tls:slavedProgress="81.0">
+
+  <tl:par tls:slavedProgress="81.0">
+
+    <tl:ref title="main video" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer.mp4" tic:syncMode="master" tim:class="video" tlcheck:dur="81" xml:id="main_video" />
+
+    <tl:ref tic:html="hamlet trailer" tim:class="HtmlSnippetDMAppComponent" tim:url="https://origin.platform.2immerse.eu/dmapp-components/html-snippet/html-snippet.html" xml:id="description" />
+
+
+    <tl:seq>
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="6" tl:prio="high" />
+            <tim:update tic:html="logo" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="4" tl:prio="high" />
+            <tim:update tic:html="coffin" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high" />
+            <tim:update tic:html="arm" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high" />
+            <tim:update tic:html="gun" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="6" tl:prio="high" />
+            <tim:update tic:html="couple" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high" />
+            <tim:update tic:html="hamlet" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="5" tl:prio="high" />
+            <tim:update tic:html="witching" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="9" tl:prio="high" />
+            <tim:update tic:html="churchyard" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high" />
+            <tim:update tic:html="party" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="2" tl:prio="high" />
+            <tim:update tic:html="skull" tim:append="true" tim:target="description" />
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="5" tl:prio="high" />
+            <tim:update tic:html="I couldn't be bothered about the rest..." tim:target="description" />
+        </tl:par>
+        
+        
+        
+        <tl:sleep tl:dur="1" />
+    </tl:seq>
+
+  </tl:par>
+
+</tl:document>

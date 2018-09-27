@@ -1,0 +1,16 @@
+{'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref {'class': 'video', 'dmappcid': 'main_video'} {'syncMode': 'master', 'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[2] {'class': 'video', 'dmappcid': 'pip1'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[3] {'class': 'video', 'dmappcid': 'pip2'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[4] {'class': 'video', 'dmappcid': 'pip3'} {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[2]'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[3]'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[4]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[2]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[3]'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[4]'}
+{'timestamp': 81.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
+{'timestamp': 81.0, 'verb': 'done', 'event': 'RUN', 'args': ''}

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf8'?>
+<tl:document xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" title="PiP Multi" tls:slavedProgress="81.0">
+
+  <tl:par tls:slavedProgress="81.0">
+
+      <tl:ref title="main video" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer.mp4" tic:syncMode="master" tim:class="video" tim:dmappcid="main_video" tlcheck:dur="81" />
+
+      <tl:ref title="picture-in-picture 1" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4" tim:class="video" tim:dmappcid="pip1" tlcheck:dur="81" />
+
+      <tl:ref title="picture-in-picture 2" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4" tim:class="video" tim:dmappcid="pip2" tlcheck:dur="81" />
+
+       <tl:ref title="picture-in-picture 3" tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4" tim:class="video" tim:dmappcid="pip3" tlcheck:dur="81" />
+
+  </tl:par>
+
+</tl:document>

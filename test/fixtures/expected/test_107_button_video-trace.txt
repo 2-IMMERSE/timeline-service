@@ -1,0 +1,12 @@
+{'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref {'class': 'video'} {'syncMode': 'master', 'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/par/ref {'url': '/dmapp-components/post-timeline-event-button/post-timeline-event-button.html', 'class': 'PostTimelineEventButtonComponent'} {'eventId': 'start_button_press', 'text': 'Press This Button'}"}
+{'timestamp': 42.345, 'verb': 'finished', 'event': '<', 'args': '/document/par/par/ref'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par/ref[2]'}
+{'timestamp': 81.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
+{'timestamp': 81.0, 'verb': 'done', 'event': 'RUN', 'args': ''}

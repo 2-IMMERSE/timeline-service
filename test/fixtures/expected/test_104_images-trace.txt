@@ -1,0 +1,70 @@
+{'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img01.png'}"}
+{'timestamp': 0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par/ref'}
+{'timestamp': 6.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par/ref'}
+{'timestamp': 6.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[2]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img02.png'}"}
+{'timestamp': 6.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[2]/ref'}
+{'timestamp': 10.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[2]/ref'}
+{'timestamp': 10.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[3]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img03.png'}"}
+{'timestamp': 10.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[3]/ref'}
+{'timestamp': 13.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[3]/ref'}
+{'timestamp': 13.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[4]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img04.png'}"}
+{'timestamp': 13.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[4]/ref'}
+{'timestamp': 16.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[4]/ref'}
+{'timestamp': 16.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[5]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img05.png'}"}
+{'timestamp': 16.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[5]/ref'}
+{'timestamp': 22.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[5]/ref'}
+{'timestamp': 22.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[6]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img06.png'}"}
+{'timestamp': 22.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[6]/ref'}
+{'timestamp': 25.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[6]/ref'}
+{'timestamp': 25.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[7]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img07.png'}"}
+{'timestamp': 25.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[7]/ref'}
+{'timestamp': 30.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[7]/ref'}
+{'timestamp': 30.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[8]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img08.png'}"}
+{'timestamp': 30.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[8]/ref'}
+{'timestamp': 39.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[8]/ref'}
+{'timestamp': 39.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[9]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img09.png'}"}
+{'timestamp': 39.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[9]/ref'}
+{'timestamp': 42.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[9]/ref'}
+{'timestamp': 42.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[10]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img10.png'}"}
+{'timestamp': 42.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[10]/ref'}
+{'timestamp': 44.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[10]/ref'}
+{'timestamp': 44.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[11]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img11.png'}"}
+{'timestamp': 44.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[11]/ref'}
+{'timestamp': 49.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[11]/ref'}
+{'timestamp': 49.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[12]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img12.png'}"}
+{'timestamp': 49.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[12]/ref'}
+{'timestamp': 51.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[12]/ref'}
+{'timestamp': 51.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[13]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img13.png'}"}
+{'timestamp': 51.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[13]/ref'}
+{'timestamp': 53.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[13]/ref'}
+{'timestamp': 53.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[14]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img14.png'}"}
+{'timestamp': 53.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[14]/ref'}
+{'timestamp': 55.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[14]/ref'}
+{'timestamp': 55.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[15]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img15.png'}"}
+{'timestamp': 55.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[15]/ref'}
+{'timestamp': 58.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[15]/ref'}
+{'timestamp': 58.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[16]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img16.png'}"}
+{'timestamp': 58.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[16]/ref'}
+{'timestamp': 61.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[16]/ref'}
+{'timestamp': 61.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[17]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img17.png'}"}
+{'timestamp': 61.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[17]/ref'}
+{'timestamp': 67.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[17]/ref'}
+{'timestamp': 67.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[18]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img18.png'}"}
+{'timestamp': 67.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[18]/ref'}
+{'timestamp': 71.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[18]/ref'}
+{'timestamp': 71.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[19]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img19.png'}"}
+{'timestamp': 71.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[19]/ref'}
+{'timestamp': 74.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[19]/ref'}
+{'timestamp': 74.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[20]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img20.png'}"}
+{'timestamp': 74.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[20]/ref'}
+{'timestamp': 77.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[20]/ref'}
+{'timestamp': 77.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[21]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img21.png'}"}
+{'timestamp': 77.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[21]/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[21]/ref'}
+{'timestamp': 81.0, 'verb': 'START', 'event': '>', 'args': "/document/par/seq/par[22]/ref {'url': '/dmapp-components/image/image.html', 'class': 'image'} {'mediaUrl': '../media/trailer-images/img22.png'}"}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/seq/par[22]/ref'}
+{'timestamp': 82.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/seq/par[22]/ref'}
+{'timestamp': 83.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
+{'timestamp': 83.0, 'verb': 'done', 'event': 'RUN', 'args': ''}

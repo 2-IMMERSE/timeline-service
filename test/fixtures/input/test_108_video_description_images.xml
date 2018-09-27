@@ -1,0 +1,141 @@
+<tl:document
+  xmlns:tl="http://jackjansen.nl/timelines"
+  xmlns:tim="http://jackjansen.nl/2immerse"
+  xmlns:tic="http://jackjansen.nl/2immerse/component"
+  xmlns:tlcheck="http://jackjansen.nl/timelines/check"
+  title="Test a single MP4 video">
+
+  <tl:par>
+
+      <tl:ref tim:class="video"
+              xml:id="main_video"
+              tic:syncMode="master"
+              tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer.mp4"
+              tlcheck:dur="81"
+              title="main video"/>
+
+      <tl:ref tim:class="scroll-text"
+              tim:url="/dmapp-components/scroll-text/scroll-text.html"
+              xml:id="description"
+              tic:scriptUrl="../media/trailer-description.json"
+              tlcheck:dur="81"
+              title="description of the video"/>
+
+    <tl:seq>
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="6" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img01" tic:mediaUrl="../media/trailer-images/img01.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="4" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img02" tic:mediaUrl="../media/trailer-images/img02.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img03" tic:mediaUrl="../media/trailer-images/img03.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img04" tic:mediaUrl="../media/trailer-images/img04.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="6" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img05" tic:mediaUrl="../media/trailer-images/img05.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img06" tic:mediaUrl="../media/trailer-images/img06.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="5" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img07" tic:mediaUrl="../media/trailer-images/img07.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="9" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img08" tic:mediaUrl="../media/trailer-images/img08.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img09" tic:mediaUrl="../media/trailer-images/img09.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="2" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img10" tic:mediaUrl="../media/trailer-images/img10.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="5" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img11" tic:mediaUrl="../media/trailer-images/img11.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="2" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img12" tic:mediaUrl="../media/trailer-images/img12.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="2" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img13" tic:mediaUrl="../media/trailer-images/img13.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="2" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img14" tic:mediaUrl="../media/trailer-images/img14.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img15" tic:mediaUrl="../media/trailer-images/img15.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img16" tic:mediaUrl="../media/trailer-images/img16.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="6" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img17" tic:mediaUrl="../media/trailer-images/img17.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="4" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img18" tic:mediaUrl="../media/trailer-images/img18.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img19" tic:mediaUrl="../media/trailer-images/img19.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="3" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img20" tic:mediaUrl="../media/trailer-images/img20.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="4" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img21" tic:mediaUrl="../media/trailer-images/img21.png"/>
+        </tl:par>
+        
+        <tl:par tl:end="master">
+            <tl:sleep tl:dur="1" tl:prio="high"/>
+            <tl:ref tim:class="image" tim:url="/dmapp-components/image/image.html" xml:id="img22" tic:mediaUrl="../media/trailer-images/img22.png"/>
+        </tl:par>
+        
+        <!-- Bug workaround -->
+        <tl:sleep tl:dur="1"/>
+    </tl:seq>
+
+  </tl:par>
+
+</tl:document>

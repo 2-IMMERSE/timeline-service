@@ -1,0 +1,21 @@
+{'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref {'class': 'video'} {'syncMode': 'master', 'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
+{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref[2] {'url': 'https://origin.platform.2immerse.eu/dmapp-components/html-snippet/html-snippet.html', 'class': 'HtmlSnippetDMAppComponent'} {'html': 'hamlet trailer'}"}
+{'timestamp': 0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par/{http://jackjansen.nl/2immerse}update description {'html': 'logo'}"}
+{'timestamp': 6.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[2]/{http://jackjansen.nl/2immerse}update description {'html': 'coffin'}"}
+{'timestamp': 10.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[3]/{http://jackjansen.nl/2immerse}update description {'html': 'arm'}"}
+{'timestamp': 13.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[4]/{http://jackjansen.nl/2immerse}update description {'html': 'gun'}"}
+{'timestamp': 16.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[5]/{http://jackjansen.nl/2immerse}update description {'html': 'couple'}"}
+{'timestamp': 22.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[6]/{http://jackjansen.nl/2immerse}update description {'html': 'hamlet'}"}
+{'timestamp': 25.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[7]/{http://jackjansen.nl/2immerse}update description {'html': 'witching'}"}
+{'timestamp': 30.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[8]/{http://jackjansen.nl/2immerse}update description {'html': 'churchyard'}"}
+{'timestamp': 39.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[9]/{http://jackjansen.nl/2immerse}update description {'html': 'party'}"}
+{'timestamp': 42.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[10]/{http://jackjansen.nl/2immerse}update description {'html': 'skull'}"}
+{'timestamp': 42.345, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref[2]'}
+{'timestamp': 44.0, 'verb': 'UPDATE', 'event': '>', 'args': '/document/par/seq/par[11]/{http://jackjansen.nl/2immerse}update description {\'html\': "I couldn\'t be bothered about the rest..."}'}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref[2]'}
+{'timestamp': 81.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
+{'timestamp': 81.0, 'verb': 'done', 'event': 'RUN', 'args': ''}

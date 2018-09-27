@@ -1,0 +1,90 @@
+<tl:document 
+        xmlns:tic="http://jackjansen.nl/2immerse/component" 
+        xmlns:tim="http://jackjansen.nl/2immerse" 
+        xmlns:tl="http://jackjansen.nl/timelines" 
+        xmlns:tt="http://jackjansen.nl/2immerse/livetrigger" 
+        xmlns:au="http://jackjansen.nl/2immerse/authoring" 
+        title="Test the live triggering tool">
+    <tl:par tl:end="master">
+        <tl:ref title="main video" tic:mediaUrl="//origin.platform.2immerse.eu/media/rsc/hamlet/videos/hamlet-trailer/manifest.mpd" tic:syncMode="master" tim:class="video" tl:prio="high" xml:id="main_video" />
+        <tl:par xml:id="eventPlayback">
+            <tt:events>
+                <tl:par tt:name="5 second splash" xml:id="event1" tt:previewUrl="previews/splash.jpg" tt:longdesc="Shows Pow! image for 5 seconds" tt:verb="Trigger Pow!">
+                    <tl:sleep tl:dur="5" tl:prio="high" />
+                    <tl:ref tic:mediaUrl="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/fivesecondsplash.png" tim:class="image" tim:url="//origin.platform.2immerse.eu/dmapp-components/image/image.html" />
+                </tl:par>
+                <tl:par tt:name="Selectable 5 second splash" xml:id="event4" tt:previewUrl="previews/splash.jpg" tt:longdesc="Shows Pow!/Wow! or Splat image for 5 seconds" tt:verb="Trigger Image">
+                    <tt:parameters>
+                        <tt:parameter tt:name="Type of splash" tt:parameter="tl:ref/@tic:mediaUrl" tt:type="selection" tt:required="true">
+                            <au:item au:label="Pow!" au:value="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/fivesecondsplash.png"/>
+                            <au:item au:label="Wow!" au:value="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/nsecondsplash.png"/>
+                            <au:item au:label="Paint splatter" au:value="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/stoppablesplash.png"/>
+                        </tt:parameter>
+                    </tt:parameters>
+                    <tl:sleep tl:dur="5" tl:prio="high" />
+                    <tl:ref tic:mediaUrl="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/fivesecondsplash.png" tim:class="image" tim:url="//origin.platform.2immerse.eu/dmapp-components/image/image.html" />
+                </tl:par>
+                <tl:par tt:name="Double selectable 5 second splash" xml:id="event5" tt:previewUrl="previews/splash.jpg" tt:longdesc="Shows 2 Pow!/Wow! or Splat images for 5 seconds" tt:verb="Trigger Image">
+                    <tt:parameters>
+                        <tt:parameter tt:name="Type of splash" tt:type="selection" tt:required="true">
+                            <au:item au:label="Pow!" au:value="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/fivesecondsplash.png"/>
+                            <au:item au:label="Wow!" au:value="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/nsecondsplash.png"/>
+                            <au:item au:label="Paint splatter" au:value="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/stoppablesplash.png"/>
+                            <tt:destination tt:parameter="tl:ref/@tic:mediaUrl" tt:value="{tt:value()}" />
+                            <tt:destination tt:parameter="tl:ref[2]/@tic:mediaUrl" tt:value="{tt:value()}" />
+                        </tt:parameter>
+                    </tt:parameters>
+                    <tl:sleep tl:dur="5" tl:prio="high" />
+                    <tl:ref tic:mediaUrl="" tim:class="image" tim:url="//origin.platform.2immerse.eu/dmapp-components/image/image.html" />
+                    <tl:ref tic:mediaUrl="" tim:class="image" tim:url="//origin.platform.2immerse.eu/dmapp-components/image/image.html" />
+                </tl:par>
+                <tl:par tt:name="Adjustable duration splash" xml:id="event2" tt:previewUrl="previews/adjustable-splash.jpg" tt:longdesc="Shows Wow! image with adjustable duration">
+                    <tt:parameters>
+                        <tt:parameter tt:name="duration" tt:parameter="tl:sleep/@tl:dur" tt:type="duration" tt:required="true"/>
+                    </tt:parameters>
+                    <tl:sleep tl:dur="5" tl:prio="high" />
+                    <tl:ref tic:mediaUrl="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/nsecondsplash.png" tim:class="image" tim:url="//origin.platform.2immerse.eu/dmapp-components/image/image.html" />
+                </tl:par>
+                <tl:par tt:name="Stoppable duration splash" xml:id="event3" tt:previewUrl="previews/stoppable-splash.jpg" tt:longdesc="Shows paint splat with adjustable duration which can be stopped prematurely by the operator" tt:modVerb="Remove splat">
+                    <tt:parameters>
+                        <tt:parameter tt:name="duration" tt:parameter="tl:sleep/@tl:dur" tt:type="duration" tt:required="true"/>
+                    </tt:parameters>
+                    <tt:modparameters>
+                        <tt:parameter tt:name="end now" tt:parameter="tl:sleep/@tl:dur" tt:type="set" tt:value="0" />
+                    </tt:modparameters>
+                    <tl:sleep tl:dur="999999" tl:prio="high" />
+                    <tl:ref tic:mediaUrl="//origin.platform.2immerse.eu/dmapps/technical-samples/media/300-images/stoppablesplash.png" tim:class="image" tim:url="//origin.platform.2immerse.eu/dmapp-components/image/image.html" />
+                </tl:par>
+            </tt:events>
+        </tl:par>
+		<au:rawLayout>{
+		"version": 4,
+		"dmapp": "200",
+		"constraints": [
+			{
+				"constraintId" : "main_video",
+				"personal" : {
+					"aspect": "16:9",
+					"minSize": {
+						"width": 640,
+						"height": 360
+					},
+					"priority": 0,
+					"audio": true
+				},
+				"communal" : {
+					"aspect": "16:9",
+					"minSize": {
+						"width": 640,
+						"height": 360
+					},
+					"priority": 1,
+					"audio": true
+				}
+			}
+		],
+		"layoutModel" : "packer"
+	}
+	</au:rawLayout>
+    </tl:par>
+</tl:document>
