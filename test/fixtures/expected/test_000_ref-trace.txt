@@ -1,7 +1,7 @@
 {'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
 {'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
 {'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref {'class': 'video'} {'syncMode': 'master', 'mediaUrl': '../media/bunny.mp4'}"}
-{'timestamp': 42.345, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
-{'timestamp': 42.345, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
-{'timestamp': 42.345, 'verb': 'stop', 'event': 'RUN', 'args': ''}
-{'timestamp': 42.345, 'verb': 'done', 'event': 'RUN', 'args': ''}
+{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
+{'timestamp': 81.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
+{'timestamp': 81.0, 'verb': 'done', 'event': 'RUN', 'args': ''}

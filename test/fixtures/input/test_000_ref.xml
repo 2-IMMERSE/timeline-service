@@ -1,8 +1,9 @@
-<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tic="http://jackjansen.nl/2immerse/component" title="Hello World document, similar to previously hardcoded timelineServer example">
+<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tlcheck="http://jackjansen.nl/timelines/check">
     <tl:par tl:end="master">
         <tl:ref tim:class="video"
                 xml:id="masterVideo"
                 tic:syncMode="master"
+                tlcheck:dur="81"
                 tic:mediaUrl="../media/bunny.mp4"
                 />
     </tl:par>

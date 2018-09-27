@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf8'?>
-<tl:document xmlns:au="http://jackjansen.nl/2immerse/authoring" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tls="http://jackjansen.nl/timelines/internal" xmlns:tt="http://jackjansen.nl/2immerse/livetrigger" title="Test the live triggering tool" tls:slavedProgress="42.345">
-    <tl:par tls:slavedProgress="42.345" tl:end="master">
-        <tl:ref title="main video" tic:mediaUrl="//origin.platform.2immerse.eu/media/rsc/hamlet/videos/hamlet-trailer/manifest.mpd" tic:syncMode="master" tim:class="video" tl:prio="high" xml:id="main_video" />
+<tl:document xmlns:au="http://jackjansen.nl/2immerse/authoring" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" xmlns:tt="http://jackjansen.nl/2immerse/livetrigger" title="Test the live triggering tool" tls:slavedProgress="81.0">
+    <tl:par tls:slavedProgress="81.0" tl:end="master">
+        <tl:ref title="main video" tic:mediaUrl="//origin.platform.2immerse.eu/media/rsc/hamlet/videos/hamlet-trailer/manifest.mpd" tic:syncMode="master" tim:class="video" tlcheck:dur="81" tl:prio="high" xml:id="main_video" />
         <tl:par xml:id="eventPlayback">
             <tt:events>
                 <tl:par tt:longdesc="Shows Pow! image for 5 seconds" tt:name="5 second splash" tt:previewUrl="previews/splash.jpg" tt:verb="Trigger Pow!" xml:id="event1">

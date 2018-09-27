@@ -4,9 +4,10 @@
         xmlns:tl="http://jackjansen.nl/timelines" 
         xmlns:tt="http://jackjansen.nl/2immerse/livetrigger" 
         xmlns:au="http://jackjansen.nl/2immerse/authoring" 
+        xmlns:tlcheck="http://jackjansen.nl/timelines/check"
         title="Test the live triggering tool">
     <tl:par tl:end="master">
-        <tl:ref title="main video" tic:mediaUrl="//origin.platform.2immerse.eu/media/rsc/hamlet/videos/hamlet-trailer/manifest.mpd" tic:syncMode="master" tim:class="video" tl:prio="high" xml:id="main_video" />
+        <tl:ref title="main video" tic:mediaUrl="//origin.platform.2immerse.eu/media/rsc/hamlet/videos/hamlet-trailer/manifest.mpd" tic:syncMode="master" tim:class="video" tl:prio="high" xml:id="main_video" tlcheck:dur="81" />
         <tl:par xml:id="eventPlayback">
             <tt:events>
                 <tl:par tt:name="5 second splash" xml:id="event1" tt:previewUrl="previews/splash.jpg" tt:longdesc="Shows Pow! image for 5 seconds" tt:verb="Trigger Pow!">
