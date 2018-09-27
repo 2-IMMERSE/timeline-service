@@ -53,7 +53,7 @@ There are a number of helper scripts in the `bin` directory:
 		
 ## Other files and directories
 
-- _client_ is a Python client for the timeline service. It uses the REST API of the service to run documents. It does not play media, but it goes through the whole motion.
-- _test_ has the test files for acceptance testing.
+- _client_ is a Python client for the timeline service. It uses the REST API of the service to run documents. It does not play media, but it goes through the whole motion. It does not work at the moment.
+- _test_ has the test files for acceptance testing. Run with `cd test ; python -m unittest discover`.
 - _samples_ has some old sample documents which may no longer work.
 - _api_ has some documentation on the REST api, but it may be outdated.
