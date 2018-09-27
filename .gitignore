@@ -1,5 +1,6 @@
 *.pyc
 test/fixtures/output/*.xml
 test/fixtures/output/*-trace.txt
+test/fixtures/output/server-output.txt
 .coverage
 htmlcov

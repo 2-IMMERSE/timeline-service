@@ -7,6 +7,8 @@ import requests
 
 COVERAGE=False
 KEEP_SERVER=False
+BASEDIR=os.path.dirname(os.path.abspath(__file__))
+FIXTURES=os.path.join(BASEDIR, 'fixtures')
 
 class TestAPI(unittest.TestCase):
 
@@ -14,12 +16,13 @@ class TestAPI(unittest.TestCase):
     def setUpClass(cls):
         homedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         server = os.path.join(homedir, 'timelineService')
+        stdout = open(os.path.join(FIXTURES, 'output', 'server-output.txt'), 'w')
         cmd = [sys.executable]
         if COVERAGE:
             # untested
             cmd += ['-m', 'coverage', 'run', '--parallel-mode']
         cmd += [server, '--noKibana', '--logLevel', 'ERROR']
-        cls.serverProcess = subprocess.Popen(cmd, cwd=homedir)
+        cls.serverProcess = subprocess.Popen(cmd, cwd=homedir, stdout=stdout, stderr=subprocess.STDOUT)
         cls.serverUrl = 'http://localhost:8080/timeline/v1/context'
         time.sleep(2)
         
