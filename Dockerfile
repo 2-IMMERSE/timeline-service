@@ -19,6 +19,7 @@ RUN pip install -r /usr/src/app/requirements.txt
 
 COPY timelineService/ timelineService/
 COPY samples/ samples/
+COPY test/ test/
 
 RUN mkdir /usr/share/ca-certificates/2immerse
 COPY ./client-certs/ /usr/share/ca-certificates/2immerse
