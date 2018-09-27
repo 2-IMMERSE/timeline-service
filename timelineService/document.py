@@ -1821,6 +1821,7 @@ class Document(DocumentModificationMixin):
         if extraLoggerArgs:
             self.logger = MyLoggerAdapter(self.logger, extraLoggerArgs)
         self.events = []
+        self.tracefile = None
         
     def setExtraLoggerArgs(self, extraLoggerArgs):
             self.logger = MyLoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
@@ -2083,14 +2084,27 @@ class Document(DocumentModificationMixin):
         else:
             args = ''
         self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args, **kwargs)
+        if self.tracefile and level >= logging.INFO:
+            record = dict(timestamp=self.clock.now(), event=event, verb=verb, args=args)
+            self.tracefile.write(repr(record)+'\n')
+            
              
+    def setTracefile(self, filename):
+        if self.tracefile:
+            self.tracefile.close()
+        self.tracefile = None
+        if filename:
+            self.tracefile = open(filename, 'w')
+        
 def main():
     global DEBUG
     parser = argparse.ArgumentParser(description="Test runner for timeline documents")
     parser.add_argument("document", help="The XML timeline document to parse and run")
     parser.add_argument("--debug", action="store_true", help="Print detailed state machine progression output")
     parser.add_argument("--trace", action="store_true", help="Print less detailed externally visible progression output")
+    parser.add_argument("--tracefile", metavar="FILE", help="Write less detailed externally visible progression output to a parseable FILE")
     parser.add_argument("--dump", action="store_true", help="Dump document to stdout on exceptions and succesful termination")
+    parser.add_argument("--dumpfile", metavar="FILE", help="Dump document to FILE on exceptions and succesful termination")
     parser.add_argument("--realtime", action="store_true", help="Use realtime clock in stead of fast-forward clock")
     parser.add_argument("--recursive", action="store_true", help="Debugging: use recursion for callbacks, not queueing")
     parser.add_argument("--attributes", action="store_true", help="Check 2immerse tim: and tic: atributes")
@@ -2103,7 +2117,15 @@ def main():
     elif args.trace:
         logger.setLevel(logging.INFO)
     if args.recursive: Document.RECURSIVE=True
+    run(args)
     
+class MakeArgs:
+    def __init__(self, **kwargs):
+        args = dict(debug=False, trace=False, tracefile=False, dump=False, dumpfile=None, realtime=False, recursive=False, attributes=False, layout=None)
+        args.update(kwargs)
+        self.__dict__.update(args)
+        
+def run(args):
     if args.layout:
         import json
         args.attributes = True
@@ -2123,6 +2145,8 @@ def main():
         clock = clocks.CallbackPausableClock(clocks.SystemClock())
     
     d = Document(clock, idAttribute=NS_XML("id"))
+    if args.tracefile:
+        d.setTracefile(args.tracefile)
     if args.attributes:
         d.setDelegateFactory(RefDelegate2Immerse)
     d.setDelegateFactory(UpdateDelegate2Immerse, tag=NS_2IMMERSE("update"))
@@ -2140,6 +2164,11 @@ def main():
             print '--------------------'
             #d.dump(sys.stdout)
             print d.dumps()
+        if args.dumpfile:
+            fp = open(args.dumpfile, 'w')
+            fp.write(d.dumps())
+            fp.close()
+        d.setTracefile(None)
     
 if __name__ == '__main__':
     main()
