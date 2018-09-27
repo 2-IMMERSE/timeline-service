@@ -2,3 +2,4 @@ web.py
 requests
 socketIO-client-2
 pydvbcss
+xmldiff

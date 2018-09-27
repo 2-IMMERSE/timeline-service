@@ -1,0 +1,20 @@
+<tl:document
+  xmlns:tl="http://jackjansen.nl/timelines"
+  xmlns:tim="http://jackjansen.nl/2immerse"
+  xmlns:tic="http://jackjansen.nl/2immerse/component"
+  xmlns:tlcheck="http://jackjansen.nl/timelines/check"
+  title="Test a single MP4 video">
+
+  <tl:par>
+
+
+      <tl:ref tim:class="video"
+              xml:id="main_video"
+              tic:syncMode="master"
+              tic:mediaUrl="../../../media/rsc/hamlet/videos/hamlet-trailer.mp4"
+              tlcheck:dur="81"
+              title="main video"/>
+
+  </tl:par>
+
+</tl:document>
