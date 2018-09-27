@@ -1,1 +1,3 @@
 *.pyc
+test/fixtures/output/*.xml
+test/fixtures/output/*-trace.txt
