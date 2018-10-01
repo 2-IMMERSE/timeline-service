@@ -1,8 +1,14 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import map
+from builtins import str
+from builtins import object
 import sys
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 import argparse
 import time
 import xml.etree.ElementTree as ET
@@ -27,7 +33,7 @@ DEBUG=True
 class TimelineParseError(ValueError):
     pass
     
-class NameSpace:
+class NameSpace(object):
     def __init__(self, namespace, url):
         self.namespace = namespace
         self.url = url
@@ -67,7 +73,7 @@ NAMESPACES.update(NS_2IMMERSE.ns())
 NAMESPACES.update(NS_2IMMERSE_COMPONENT.ns())
 NAMESPACES.update(NS_TRIGGER.ns())
 NAMESPACES.update(NS_AUTH.ns())
-for k, v in NAMESPACES.items():
+for k, v in list(NAMESPACES.items()):
     ET.register_namespace(k, v)
 
 # For attribute checking for 2immerse documents:
@@ -80,7 +86,7 @@ attributeChecker.NS_2IMMERSE_COMPONENT = NS_2IMMERSE_COMPONENT
 
 PRIO_TO_INT = dict(low=0, normal=50, high=100)
 
-class State:
+class State(object):
     idle = "idle"
     initing = "initing"
     inited = "inited"
@@ -98,7 +104,7 @@ class State:
     TRIGGER_IMPORTANT_STATES = {idle, started, finished}
     TRIGGER_PROGRESS_IMPORTANT_STATES = {started, finished}
     
-class DummyDelegate:
+class DummyDelegate(object):
     """Baseclass for delegates, also used for non-timeline elements."""
     DEFAULT_PRIO="low"
     IS_REF_TYPE=False
@@ -404,7 +410,7 @@ class TimelineDelegate(DummyDelegate):
     EXACT_CHILD_COUNT = None
     
     def checkAttributes(self):
-        for attrName in self.elt.keys():
+        for attrName in list(self.elt.keys()):
             if attrName in NS_TIMELINE:
                 if not attrName in self.ALLOWED_ATTRIBUTES:
                     print("* Error: element", self.getXPath(), "has unknown attribute", attrName, file=sys.stderr)
@@ -1420,7 +1426,7 @@ DELEGATE_CLASSES_FASTFORWARD = {
 # Adapters
 #
 
-class DelegateAdapter:
+class DelegateAdapter(object):
     """Baseclass for delegate adapters, transparent."""
     
     def __init__(self, delegate):
@@ -1438,7 +1444,7 @@ class SeekToElementAdapter(DelegateAdapter):
         self._adapter_delegate.startTimelineElement()
         self.seekPositionReached = True
         
-class DocumentState:
+class DocumentState(object):
     def __init__(self, document):
         self.document = document
         document.report(logging.DEBUG, 'DOCSTATE', self.__class__.__name__)
@@ -1663,7 +1669,7 @@ class DocumentStateStopDocument(DocumentState):
         self.document.report(logging.INFO, 'RUN', 'done')
         return None
 
-class DocumentModificationMixin:
+class DocumentModificationMixin(object):
 
     def __init__(self):
         self.stateUpdateCallback = None
@@ -1757,7 +1763,7 @@ class DocumentModificationMixin:
         # Replace/delete attributes, and remember the keys
         #
         attrsChanged = set()
-        for k, v in attrs.items():
+        for k, v in list(attrs.items()):
             if v == None:
                 if k in element.attrib:
                     attrsChanged.add(k)
@@ -1857,7 +1863,7 @@ class Document(DocumentModificationMixin):
         #
         # Open and load the document
         #
-        fp = urllib2.urlopen(url)
+        fp = urllib.request.urlopen(url)
         self.tree = ET.parse(fp)
         #
         # Remember the root, and the parent of each node
@@ -1891,7 +1897,7 @@ class Document(DocumentModificationMixin):
         #
         # Check to see whether we have a #dmappcid or #t=time
         #
-        up = urlparse.urlparse(url)
+        up = urllib.parse.urlparse(url)
         if up.fragment and up.fragment[:2] == 't=':
             self.startTime = float(up.fragment[2:])
         elif up.fragment:
@@ -2122,7 +2128,7 @@ def main():
     if args.recursive: Document.RECURSIVE=True
     run(args)
     
-class MakeArgs:
+class MakeArgs(object):
     def __init__(self, **kwargs):
         args = dict(debug=False, trace=False, tracefile=False, dump=False, dumpfile=None, realtime=False, recursive=False, attributes=False, layout=None)
         args.update(kwargs)
@@ -2136,10 +2142,10 @@ def run(args):
         layout = args.layout
         if not ':' in layout:
             layout = 'file:' + layout
-        timelineDoc = urllib2.urlopen(layout)
+        timelineDoc = urllib.request.urlopen(layout)
         timelineData = json.load(timelineDoc)
         # Get all componentIds mentioned in the constraints
-        layoutComponentIds = map((lambda constraint: constraint['constraintId']), timelineData['constraints'])
+        layoutComponentIds = list(map((lambda constraint: constraint['constraintId']), timelineData['constraints']))
         # Store a set of these into the ref-checker class
         RefDelegate2Immerse.constraintIds = set(layoutComponentIds)
     if not args.realtime:

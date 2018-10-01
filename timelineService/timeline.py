@@ -1,10 +1,15 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 import requests
 from . import clocks
 from . import document
 import logging
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import os
 import threading
 import time
@@ -16,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 THREADED=True
 
-class BaseTimeline:
+class BaseTimeline(object):
     ALL_CONTEXTS = {}
     timelineServiceUrl = None
 
@@ -42,7 +47,7 @@ class BaseTimeline:
 
     @classmethod
     def getAll(cls):
-        return cls.ALL_CONTEXTS.keys()
+        return list(cls.ALL_CONTEXTS.keys())
 
     def __init__(self, contextId, layoutServiceUrl):
         """Initializer, creates a new context and stores it for global reference"""
@@ -100,7 +105,7 @@ class BaseTimeline:
             dmappId=self.dmappId,
             layoutService=repr(self.layoutService),
             layoutServiceUrl=self.layoutServiceUrl,
-            dmappComponents=self.dmappComponents.keys(),
+            dmappComponents=list(self.dmappComponents.keys()),
             document=self.document.dumps(),
             )
         return rv
@@ -272,7 +277,7 @@ class BaseTimeline:
         
     def checkForAsyncUpdates(self):
         """Check to see whether we are running under control of an editor backend"""
-        backendEndpoint = urlparse.urljoin(self.timelineDocUrl, 'getliveinfo')
+        backendEndpoint = urllib.parse.urljoin(self.timelineDocUrl, 'getliveinfo')
         self.logger.debug("checkForAsyncUpdates: attempt to contact %s" % backendEndpoint)
         r = requests.get(backendEndpoint, params={'contextID' : self.contextId})
         if r.status_code != requests.codes.ok:
@@ -344,7 +349,7 @@ class BaseTimeline:
             self.logger.warning("_fixEpochs: resultant seek time is negative: %f" % self.documentInitialSeek)
         self.prepareDMAppTimeline()
         
-class TimelinePollingRunnerMixin:
+class TimelinePollingRunnerMixin(object):
     def __init__(self):
         pass
         
@@ -354,7 +359,7 @@ class TimelinePollingRunnerMixin:
     def _updateTimeline(self):
         self._stepTimeline()
         
-class TimelineThreadedRunnerMixin:
+class TimelineThreadedRunnerMixin(object):
     def __init__(self):
         self.timelineCondition = threading.Condition()
         self.timelineThread = threading.Thread(target=self._runTimeline)
@@ -390,7 +395,7 @@ else:
             TimelinePollingRunnerMixin.__init__(self)
         
         
-class ProxyLayoutService:
+class ProxyLayoutService(object):
     def __init__(self, contactInfo, contextId, dmappId, logger):
         self.logger = logger
         self.contactInfo = contactInfo
@@ -507,7 +512,7 @@ class ProxyLayoutService:
             self.expectedClockOffset = None
         return rv
         
-class ProxyMixin:
+class ProxyMixin(object):
     def __init__(self, timelineDocBaseUrl, layoutService, componentId):
         self.componentId = componentId
         self.logger = layoutService.logger
@@ -774,7 +779,7 @@ class UpdateComponent(document.TimelineDelegate, ProxyMixin):
             # xxxjack should this recording always be done???
             targetElt = self.document.getElementById(self.componentId)
             if targetElt != None:
-                for attrName, attrValue in parameters.items():
+                for attrName, attrValue in list(parameters.items()):
                     if self.append:
                         # New value should be appended (comma-separated) to current value
                         # and recorded in the document.

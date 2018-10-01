@@ -1,7 +1,11 @@
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
 import unittest
 import sys
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import xmldiff.main
 
 BASEDIR=os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +28,7 @@ class TestDocuments(unittest.TestCase):
         if not os.path.exists(inputLayout):
             inputLayout = None
             
-        inputUrl = urllib.pathname2url(input)
+        inputUrl = urllib.request.pathname2url(input)
         
         args = document.MakeArgs(document=inputUrl + urlsuffix, layout=inputLayout, tracefile=outputTrace, dumpfile=outputDocument, fast=True)
         document.run(args)

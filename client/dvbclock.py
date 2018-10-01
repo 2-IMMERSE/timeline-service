@@ -1,4 +1,8 @@
 from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from builtins import object
+from past.utils import old_div
 import time
 import sys
 import logging
@@ -9,7 +13,7 @@ import dvbcss.protocol.server.ts
 import cherrypy
 import ws4py.server.cherrypyserver
 
-class DvbClock:
+class DvbClock(object):
     """Baseclass for DvbClientClock and DvbServerClock"""
     def __init__(self):
         timelineFreq = 1000 # Ticks-per-second we want for the clock we expose.
@@ -26,7 +30,7 @@ class DvbClock:
         self.timelineClock.speed = 0
 
     def now(self):
-        return self.timelineClock.ticks/self.timelineClock.tickRate
+        return old_div(self.timelineClock.ticks,self.timelineClock.tickRate)
         
     def start(self):
         if self.timelineClock.speed == 1.0: return

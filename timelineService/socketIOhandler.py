@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from socketIO_client import SocketIO, SocketIONamespace
 from . import document
 import logging

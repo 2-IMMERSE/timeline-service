@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import urllib
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+import urllib.request, urllib.parse, urllib.error
 import json
 import time
 import argparse
@@ -11,7 +14,7 @@ TSURL_EDGE="https://timeline-service.edge.platform.2immerse.eu/timeline/v1"
 TSURL_TEST="https://timeline-service.test.platform.2immerse.eu/timeline/v1"
 
 def restGet(url):
-    f = urllib.urlopen(url)
+    f = urllib.request.urlopen(url)
     data = f.read()
     return json.loads(data)
     
@@ -63,7 +66,7 @@ def main():
         if 'creationTime' in dump:
             print('Created:\t', time.ctime(dump['creationTime']))
             del dump['creationTime']
-        keys = dump.keys()
+        keys = list(dump.keys())
         keys.sort()
         for k in keys:
             print('%s:\t%s' % (k, dump[k]))

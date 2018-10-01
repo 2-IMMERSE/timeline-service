@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import object
 import requests
 import requests
 import time
@@ -7,7 +9,7 @@ import logging
 
 logLevel = None
 
-class Context:
+class Context(object):
     def __init__(self, deviceId, caps):
         self.deviceId = deviceId
         self.logger = logging.getLogger(deviceId)
@@ -78,7 +80,7 @@ class Context:
         dmappId = reply[0]
         return Application(self, dmappId, False)
         
-class Application:
+class Application(object):
     def __init__(self, context, dmappId, isMaster, clockParams={}):
         self.context = context
         self.logger = self.context.logger
@@ -122,7 +124,7 @@ class Application:
             self._doLayoutInstruction(inst)
             if self.clock.status() != oldClockStatus:
                 self.clock.report()
-            for component in self.components.values():
+            for component in list(self.components.values()):
                 component.tick()
             time.sleep(1)
             
@@ -158,9 +160,9 @@ class Application:
         for componentId in oldComponents:
             self.components[componentId].destroy()
             del self.components[componentId]
-        self.logger.info("%f: active %d: %s" % (self.clock.now(), len(self.components), ','.join(map(lambda x: x['componentId'], inst['components']))))
+        self.logger.info("%f: active %d: %s" % (self.clock.now(), len(self.components), ','.join([x['componentId'] for x in inst['components']])))
 
-class debugSkipComponent:
+class debugSkipComponent(object):
     def __init__(self, application, componentId, componentInfo):
         self.logger = application.logger
         self.logger.info("%f: component %s: skipped" % (self.application.clock.now(), componentId))
@@ -181,7 +183,7 @@ class debugSkipComponent:
     def tick(self):
         pass
         
-class Component:
+class Component(object):
     def __init__(self, application, componentId, componentInfo):
         self.application = application
         self.logger = application.logger
@@ -247,7 +249,7 @@ class Component:
             r.raise_for_status()
         
         
-class GlobalClock:
+class GlobalClock(object):
     def __init__(self):
         self.epoch = 0
         self.running = False
@@ -288,7 +290,7 @@ class GlobalClock:
     def status(self):
         return self.epoch, self.running
         
-class MasterClockMixin:
+class MasterClockMixin(object):
     def __init__(self, application):
         self.application = application
         self.logger = self.application.logger

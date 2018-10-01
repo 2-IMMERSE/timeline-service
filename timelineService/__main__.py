@@ -1,5 +1,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from builtins import object
 import sys
 import web
 import time
@@ -87,7 +90,7 @@ def appendCorsHeaders():
     web.ctx.headers.append(('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'))
     web.ctx.headers.append(('Access-Control-Allow-Origin', '*'))
 
-class timelineServerServer:
+class timelineServerServer(object):
     """Toplevel REST interface: create new timeline servers and get the identity of existing ones"""
     # Note this is hack-y: post/get work with both /timelineServer and /timelineServer/createTimeline
     # and do the same. To be fixed.
@@ -119,7 +122,7 @@ class timelineServerServer:
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
-class timelineServer:
+class timelineServer(object):
     """Per-timeline service. Need to work out which verbs allow get/put/post and how to encode that."""
 
     def OPTIONS(self, *args):

@@ -1,10 +1,13 @@
 from __future__ import print_function
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
 import sys
 import os
 import argparse
 import application
 import webbrowser
-import urlparse
+import urllib.parse
 import logging
 import subprocess
 
@@ -115,20 +118,20 @@ def main():
             print("Must specify --layoutDoc")
             sys.exit(1)
         # Sanity check that all URLs are correct
-        up = urlparse.urlparse(args.layoutServer)
+        up = urllib.parse.urlparse(args.layoutServer)
         if not up.scheme in {'http', 'https'}:
             print('Only absolute http/https URL allowed:', args.layoutServer)
             sys.exit(1)
-        up = urlparse.urlparse(args.timelineServer)
+        up = urllib.parse.urlparse(args.timelineServer)
         if not up.scheme in {'http', 'https'}:
             print('Only absolute http/https URL allowed:', args.timelineServer)
             sys.exit(1)
-        up = urlparse.urlparse(args.layoutDoc)
+        up = urllib.parse.urlparse(args.layoutDoc)
         if not up.scheme in {'http', 'https'}:
             print('Only absolute http/https URL allowed:', args.layoutDoc)
             sys.exit(1)
         if args.timelineDoc:
-            up = urlparse.urlparse(args.timelineDoc)
+            up = urllib.parse.urlparse(args.timelineDoc)
             if not up.scheme in {'http', 'https'}:
                 print('Only absolute http/https URL allowed:', args.timelineDoc)
                 sys.exit(1)
