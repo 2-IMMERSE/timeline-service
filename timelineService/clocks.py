@@ -165,6 +165,7 @@ class CallbackPausableClock(PausableClock):
     def __init__(self, underlyingClock, startRunning = False):
         PausableClock.__init__(self, underlyingClock, startRunning)
         self.queue = queue.PriorityQueue()
+        self.generation = 0 # Total ordered number of insertion into queue. Used to forestall py3 comparing methods.
         self.queueChanged = None
 
     def setQueueChangedCallback(self, callback):
@@ -178,7 +179,7 @@ class CallbackPausableClock(PausableClock):
         except queue.Empty:
             return default
         self.queue.put(peek)
-        t, callback, args, kwargs = peek
+        t, _, callback, args, kwargs = peek
         return t-self._now()
         
     def sleepUntilNextEvent(self):
@@ -189,7 +190,7 @@ class CallbackPausableClock(PausableClock):
             assert 0, "No events are forthcoming"
         assert peek, "No events are forthcoming"
         self.queue.put(peek)
-        t, callback, args, kwargs = peek
+        t, _, callback, args, kwargs = peek
         delta = t-self.now()
         if delta > 0:
             self.underlyingClock.sleep(delta)
@@ -203,7 +204,8 @@ class CallbackPausableClock(PausableClock):
     def scheduleAt(self, timestamp, callback, *args, **kwargs):
         """Schedule a callback"""
         assert not self.queue.full()
-        self.queue.put((timestamp, callback, args, kwargs))
+        self.queue.put((timestamp, self.generation, callback, args, kwargs))
+        self.generation += 1
         if self.queueChanged:
             self.queueChanged()
 
@@ -228,10 +230,10 @@ class CallbackPausableClock(PausableClock):
                 return
             if not peek:
                 return
-            t, callback, args, kwargs = peek
+            t, _, callback, args, kwargs = peek
             if self._now() >= t:
                 if self._now() > t + 0.1:
-                    pass # print('xxxjack scheduling', self.now() - t, 'seconds too late...')
+                    print('xxxjack scheduling', self.now() - t, 'seconds too late...')
                 handler.schedule(callback, *args, **kwargs)
             else:
                 assert not self.queue.full()
@@ -246,7 +248,7 @@ class CallbackPausableClock(PausableClock):
         except queue.Empty:
             peek = None
         if peek:
-            t, callback, args, kwargs = peek
+            t, _, callback, args, kwargs = peek
             rv += ", next in %f seconds" % (t-self._now())
             self.queue.put(peek)
         return rv
@@ -262,9 +264,9 @@ class CallbackPausableClock(PausableClock):
         # Now adjust the clock itself
         PausableClock._adjust(self, adjustment)
         # Now re-insert all events with adjusted times
-        for t, callback, args, kwargs in qContents:
+        for t, generation, callback, args, kwargs in qContents:
             t += adjustment
-            self.queue.put((t, callback, args, kwargs))
+            self.queue.put((t, generation, callback, args, kwargs))
         
 class FastClock(object):
     def __init__(self):
