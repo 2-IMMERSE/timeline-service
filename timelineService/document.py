@@ -52,7 +52,17 @@ class NameSpace(object):
             return str[len(self.url)+2:]
         return str
 
+class ElementWithDelegate(ET.Element):
+    """Subclass of ET.Element where each element has a delegate attribute"""
 
+    def __init__(self, *args, **kwargs):
+        ET.Element.__init__(self, *args, **kwargs)
+        self.delegate = None
+
+def parserWithDelegate():
+    """ET XML parserer that stores tree in ElementWithDelegate instances"""
+    return ET.XMLParser(target=ET.TreeBuilder(element_factory=ElementWithDelegate))
+    
 COMPAT_V1=True # Set to True to allow tim:dmappcid to be used in lieu of xml:id
 
 NS_TIMELINE = NameSpace("tl", "http://jackjansen.nl/timelines")
@@ -1699,7 +1709,7 @@ class DocumentModificationMixin(object):
                 path = command['path']
                 where = command['where']
                 dataXml = command['data']
-                newElement = ET.fromstring(dataXml)
+                newElement = ET.fromstring(dataXml, parser=parserWithDelegate())
                 ucb = self._paste(path, where, newElement)
                 if ucb:
                     updateCallbacks.append(ucb)
@@ -1870,7 +1880,7 @@ class Document(DocumentModificationMixin):
         # Open and load the document
         #
         fp = urllib.request.urlopen(url)
-        self.tree = ET.parse(fp)
+        self.tree = ET.parse(fp, parser=parserWithDelegate())
         #
         # Remember the root, and the parent of each node
         #
@@ -1879,7 +1889,7 @@ class Document(DocumentModificationMixin):
         #
         # Invent a document-element for easier xpath implementation
         #
-        self.documentElement = ET.Element('')
+        self.documentElement = ElementWithDelegate('')
         self.documentElement.append(self.tree.getroot())
 
         #
@@ -2000,7 +2010,7 @@ class Document(DocumentModificationMixin):
         if root == None: root = self.root
         assert root is not None
         for elt in root.iter():
-            if not hasattr(elt, 'delegate'):
+            if not hasattr(elt, 'delegate') or not elt.delegate:
                 klass = self._getDelegateFactory(elt.tag, delegateClasses)
                 elt.delegate = klass(elt, self, self.clock)
                 elt.delegate.checkAttributes()
@@ -2010,6 +2020,7 @@ class Document(DocumentModificationMixin):
         assert self.root is not None
         for elt in self.tree.iter():
             assert hasattr(elt, 'delegate')
+            assert elt.delegate
             # Remember old delegate
             oldDelegate = elt.delegate
             # Create new delegate
