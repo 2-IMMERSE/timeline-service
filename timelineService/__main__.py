@@ -86,9 +86,9 @@ urls = (
 app = web.application(urls, globals())
 
 def appendCorsHeaders():
-    web.ctx.headers.append(('Allow', 'GET,PUT,POST,DELETE'))
-    web.ctx.headers.append(('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'))
-    web.ctx.headers.append(('Access-Control-Allow-Origin', '*'))
+    web.ctx.headers.append(('Allow'.encode('ascii'), 'GET,PUT,POST,DELETE'.encode('ascii')))
+    web.ctx.headers.append(('Access-Control-Allow-Methods'.encode('ascii'), 'GET,PUT,POST,DELETE'.encode('ascii')))
+    web.ctx.headers.append(('Access-Control-Allow-Origin'.encode('ascii'), '*'.encode('ascii')))
 
 class timelineServerServer(object):
     """Toplevel REST interface: create new timeline servers and get the identity of existing ones"""
