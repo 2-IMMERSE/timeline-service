@@ -159,10 +159,16 @@ class DummyDelegate(object):
         if self.state != State.idle:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
         if self.startTime != None:
+            arg = str(self.clock.now()-self.startTime)
+            # following code to ensure the argument is always unicode (py2 and py3)
+            try:
+                arg = unicode(arg)
+            except NameError:
+                pass
             if self.isCurrentTimingMaster():
-                self.elt.set(NS_TIMELINE_INTERNAL("progress"), str(self.clock.now()-self.startTime))
+                self.elt.set(NS_TIMELINE_INTERNAL("progress"), arg)
             else:
-                self.elt.set(NS_TIMELINE_INTERNAL("slavedProgress"), str(self.clock.now()-self.startTime))
+                self.elt.set(NS_TIMELINE_INTERNAL("slavedProgress"), arg)
             
     def setState(self, state):
         """Advance element state to a new one. Subclasses will add side effects (such as actually playing media)"""
