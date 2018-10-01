@@ -33,8 +33,12 @@ class TestDocuments(unittest.TestCase):
         args = document.MakeArgs(document=inputUrl + urlsuffix, layout=inputLayout, tracefile=outputTrace, dumpfile=outputDocument, fast=True)
         document.run(args)
         
-        outputDocumentData = open(outputDocument).read()
-        outputTraceData = open(outputTrace).read()
+        fp = open(outputDocument)
+        outputDocumentData = fp.read()
+        fp.close()
+        fp = open(outputTrace)
+        outputTraceData = fp.read()
+        fp.close()
         
         self.assertTrue(os.path.exists(expectedDocument))
         self.assertTrue(os.path.exists(expectedTrace))
@@ -46,11 +50,13 @@ class TestDocuments(unittest.TestCase):
         # Compare emitted events
         outputTraceLines = outputTraceData.splitlines()
         outputTraceRecords = [eval(x) for x in outputTraceLines]
-        outputTraceRecords.sort()
-        expectedTraceData = open(expectedTrace).read()
+        outputTraceRecords.sort(key=lambda x:(x['timestamp'], x['event'], x['verb'], x['args']))
+        fp = open(expectedTrace)
+        expectedTraceData = fp.read()
+        fp.close()
         expectedTraceLines = expectedTraceData.splitlines()
         expectedTraceRecords = [eval(x) for x in expectedTraceLines]
-        expectedTraceRecords.sort()
+        expectedTraceRecords.sort(key=lambda x:(x['timestamp'], x['event'], x['verb'], x['args']))
         for o, e in zip(outputTraceRecords, expectedTraceRecords):
             self.assertEqual(e, o)
         
