@@ -1,28 +1,28 @@
-{'timestamp': 0, 'verb': 'init', 'event': 'RUN', 'args': ''}
-{'timestamp': 0, 'verb': 'start', 'event': 'RUN', 'args': ''}
-{'timestamp': 0, 'verb': 'START', 'event': '>', 'args': "/document/par/ref {'class': 'video'} {'syncMode': 'master', 'preserveMediaTime': 'true', 'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 6.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[2]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 10.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[3]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 13.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[4]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 16.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[5]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 22.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[6]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 25.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[7]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 30.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[8]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 39.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[9]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 42.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[10]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 44.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[11]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 49.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[12]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 51.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[13]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 53.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[14]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 55.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[15]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 58.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[16]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 61.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[17]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 67.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[18]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 71.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[19]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 74.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[20]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 77.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[21]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'}"}
-{'timestamp': 81.0, 'verb': 'finished', 'event': '<', 'args': '/document/par/ref'}
-{'timestamp': 81.0, 'verb': 'UPDATE', 'event': '>', 'args': "/document/par/seq/par[22]/{http://jackjansen.nl/2immerse}update main_video {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'}"}
-{'timestamp': 83.0, 'verb': 'STOP', 'event': '>', 'args': '/document/par/ref'}
-{'timestamp': 83.0, 'verb': 'stop', 'event': 'RUN', 'args': ''}
-{'timestamp': 83.0, 'verb': 'done', 'event': 'RUN', 'args': ''}
+{'timestamp': 0, 'verb': u'init', 'event': u'RUN', 'args': ()}
+{'timestamp': 0, 'verb': u'start', 'event': u'RUN', 'args': ()}
+{'timestamp': 0, 'verb': u'START', 'event': u'>', 'args': (u'/document/par/ref', {'class': 'video'}, {'syncMode': 'master', 'preserveMediaTime': 'true', 'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 6.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[2]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 10.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[3]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 13.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[4]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 16.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[5]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 22.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[6]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 25.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[7]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 30.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[8]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 39.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[9]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 42.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[10]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 44.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[11]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 49.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[12]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 51.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[13]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 53.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[14]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 55.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[15]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 58.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[16]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 61.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[17]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 67.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[18]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 71.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[19]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 74.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[20]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 77.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[21]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer-rotgrid.mp4'})}
+{'timestamp': 81.0, 'verb': u'finished', 'event': u'<', 'args': (u'/document/par/ref',)}
+{'timestamp': 81.0, 'verb': u'UPDATE', 'event': u'>', 'args': (u'/document/par/seq/par[22]/{http://jackjansen.nl/2immerse}update', 'main_video', {'mediaUrl': '../../../media/rsc/hamlet/videos/hamlet-trailer.mp4'})}
+{'timestamp': 83.0, 'verb': u'STOP', 'event': u'>', 'args': (u'/document/par/ref',)}
+{'timestamp': 83.0, 'verb': u'stop', 'event': u'RUN', 'args': ()}
+{'timestamp': 83.0, 'verb': u'done', 'event': u'RUN', 'args': ()}

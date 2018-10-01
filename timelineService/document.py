@@ -787,7 +787,7 @@ class ParDelegate(TimeElementDelegate):
         for ch in self.elt:
             prio = ch.delegate.getCurrentPriority()
             prioritiesAndChildren.append((prio, ch))
-        prioritiesAndChildren.sort()
+        prioritiesAndChildren.sort(key=lambda x:x[0])
         return prioritiesAndChildren[-1][1]
         
         
@@ -2111,12 +2111,12 @@ class Document(DocumentModificationMixin):
         
     def report(self, level, event, verb, *args, **kwargs):
         if args:
-            args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
+            prargs = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
         else:
-            args = ''
-        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, args, **kwargs)
+            prargs = ''
+        self.logger.log(level, '%8.3f %-8s %-22s %s', self.clock.now(), event, verb, prargs, **kwargs)
         if self.tracefile and level >= logging.INFO:
-            record = dict(timestamp=self.clock.now(), event=event, verb=verb, args=args)
+            record = dict(timestamp=self.clock.now(), verb=verb, event=event, args=args)
             self.tracefile.write(repr(record)+'\n')
             
              
