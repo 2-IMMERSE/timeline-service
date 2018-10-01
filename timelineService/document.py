@@ -17,6 +17,11 @@ from . import clocks
 import json
 from functools import reduce
 
+if sys.version_info[0] < 3:
+    XML_ENCODING="utf8"
+else:
+    XML_ENCODING="unicode"
+    
 logging.basicConfig()
 
 class MyLoggerAdapter(logging.LoggerAdapter):
@@ -2002,7 +2007,7 @@ class Document(DocumentModificationMixin):
             return ''
         for elt in self.tree.iter():
             elt.delegate.storeStateForSave()
-        xmlstr = ET.tostring(self.root, encoding='utf8', method='xml')
+        xmlstr = ET.tostring(self.root, encoding=XML_ENCODING, method='xml')
         self.logger.info("created XML document dump")
         return xmlstr
     
