@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import urllib2
 import urlparse
@@ -5,8 +7,9 @@ import argparse
 import time
 import xml.etree.ElementTree as ET
 import logging
-import clocks
+from . import clocks
 import json
+from functools import reduce
 
 logging.basicConfig()
 
@@ -68,7 +71,7 @@ for k, v in NAMESPACES.items():
     ET.register_namespace(k, v)
 
 # For attribute checking for 2immerse documents:
-import attributeChecker
+from . import attributeChecker
 attributeChecker.NS_XML = NS_XML
 attributeChecker.NS_TIMELINE = NS_TIMELINE
 attributeChecker.NS_TIMELINE_CHECK = NS_TIMELINE_CHECK
@@ -391,7 +394,7 @@ class ErrorDelegate(DummyDelegate):
     
     def __init__(self, elt, document, clock):
         DummyDelegate.__init__(self, elt, document, clock)
-        print >>sys.stderr, "* Error: unknown tag", elt.tag
+        print("* Error: unknown tag", elt.tag, file=sys.stderr)
 
 class TimelineDelegate(DummyDelegate):
     """Baseclass for all <tl:...> elements."""
@@ -404,18 +407,18 @@ class TimelineDelegate(DummyDelegate):
         for attrName in self.elt.keys():
             if attrName in NS_TIMELINE:
                 if not attrName in self.ALLOWED_ATTRIBUTES:
-                    print >>sys.stderr, "* Error: element", self.getXPath(), "has unknown attribute", attrName
+                    print("* Error: element", self.getXPath(), "has unknown attribute", attrName, file=sys.stderr)
             # Remove state attributes
             if attrName in NS_TIMELINE_INTERNAL:
                 del self.elt.attrib[attrName]
                     
     def checkChildren(self):
         if not self.EXACT_CHILD_COUNT is None and len(self.elt) != self.EXACT_CHILD_COUNT:
-            print >>sys.stderr, "* Error: element", self.getXPath(), "expects", self.EXACT_CHILD_COUNT, "children but has", len(self.elt)
+            print("* Error: element", self.getXPath(), "expects", self.EXACT_CHILD_COUNT, "children but has", len(self.elt), file=sys.stderr)
         if not self.ALLOWED_CHILDREN is None:
             for child in self.elt:
                 if child.tag in NS_2IMMERSE and not child.tag in self.ALLOWED_CHILDREN:
-                    print >>sys.stderr, "* Error: element", self.getXPath(), "cannot have child of type", child.tag
+                    print("* Error: element", self.getXPath(), "cannot have child of type", child.tag, file=sys.stderr)
          
     def setMediaClockSeek(self, mediaClockSeek):
         """Tell item to seek this amount when started (negative number for forward in the media). Returns how much of this it will _not_ use."""
@@ -1235,7 +1238,7 @@ class RefDelegate2Immerse(RefDelegate):
             if not constraintId:
                 constraintId = self.getId()
             if constraintId and constraintId not in self.allowedConstraints:
-                print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:constraintId (or xml:id)="'+constraintId+'" but this does not exist in the layout document'
+                print("* Warning: element", self.getXPath(), 'has tim:constraintId (or xml:id)="'+constraintId+'" but this does not exist in the layout document', file=sys.stderr)
         
 class UpdateDelegate2Immerse(TimelineDelegate):
     """2-Immerse specific delegate for tim:update that checks the attributes and reports actions"""
@@ -1249,9 +1252,9 @@ class UpdateDelegate2Immerse(TimelineDelegate):
         uniqId = self.elt.get(NS_2IMMERSE("target"))
         if not uniqId:
             if not self.elt.get(NS_2IMMERSE("targetXPath")):
-                print >> sys.stderr, "* element", self.getXPath(), 'misses required tim:target attribute'
+                print("* element", self.getXPath(), 'misses required tim:target attribute', file=sys.stderr)
         if uniqId and not uniqId in self.document.idMap:
-            print >>sys.stderr, "* Warning: element", self.getXPath(), 'has tim:target="'+uniqId+'" but this xml:id does not exist in the document'
+            print("* Warning: element", self.getXPath(), 'has tim:target="'+uniqId+'" but this xml:id does not exist in the document', file=sys.stderr)
                 
     def startTimelineElement(self):
         uniqId = self.elt.get(NS_2IMMERSE("target"))
@@ -2026,7 +2029,7 @@ class Document(DocumentModificationMixin):
             
     def schedule(self, callback, *args, **kwargs):
         assert self.root is not None
-        self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.im_self.elt), extra=callback.im_self.elt.delegate.getLogExtra())
+        self.report(logging.DEBUG, 'EMIT', callback.__name__, self.getXPath(callback.__self__.elt), extra=callback.__self__.elt.delegate.getLogExtra())
         if self.RECURSIVE or self.terminating:
             callback(*args, **kwargs)
         else:
@@ -2161,9 +2164,9 @@ def run(args):
         assert d.isDocumentDone()
     finally:
         if args.dump:
-            print '--------------------'
+            print('--------------------')
             #d.dump(sys.stdout)
-            print d.dumps()
+            print(d.dumps())
         if args.dumpfile:
             fp = open(args.dumpfile, 'w')
             fp.write(d.dumps())

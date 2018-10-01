@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from socketIO_client import SocketIO, SocketIONamespace
-import document
+from . import document
 import logging
 import threading
 

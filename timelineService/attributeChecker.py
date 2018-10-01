@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import urllib
 
@@ -86,12 +87,12 @@ ALLOWED_TIC_ATTRIBUTES={
 def checkAttributes(self):
     className = self.elt.get(NS_2IMMERSE("class"))
     if not NS_2IMMERSE("class") in self.elt.keys():
-        print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:class attribute"
+        print("* Warning: element", self.getXPath(), "misses expected tim:class attribute", file=sys.stderr)
     if not NS_XML("id") in self.elt.keys():
-        print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected xml:id attribute"
+        print("* Warning: element", self.getXPath(), "misses expected xml:id attribute", file=sys.stderr)
     if not NS_2IMMERSE("url") in self.elt.keys():
         if className not in ("video", "audio"):   # Video is the only one that doesn't need a tim:url
-            print >>sys.stderr, "* Warning: element", self.getXPath(), "misses expected tim:url attribute"
+            print("* Warning: element", self.getXPath(), "misses expected tim:url attribute", file=sys.stderr)
     else:
         url = self.elt.get(NS_2IMMERSE("url"))
         url = urllib.basejoin(self.document.url, url)
@@ -100,17 +101,17 @@ def checkAttributes(self):
                 fp = urllib.urlopen(url)
                 del fp
             except IOError:
-                print >>sys.stderr, "* Warning: element", self.getXPath(), "has tim:url", url, "which may not exist"
+                print("* Warning: element", self.getXPath(), "has tim:url", url, "which may not exist", file=sys.stderr)
         
     if not className in REQUIRED_TIC_ATTRIBUTES:
-        print >>sys.stderr, "* Warning: element", self.getXPath(), "has unknown tim:class", className
+        print("* Warning: element", self.getXPath(), "has unknown tim:class", className, file=sys.stderr)
         return
     requiredAttributes = REQUIRED_TIC_ATTRIBUTES[className]
     allowedAttributes = ALLOWED_TIC_ATTRIBUTES[className]
     for attrName in requiredAttributes:
         if not NS_2IMMERSE_COMPONENT(attrName) in self.elt.keys():
-            print >>sys.stderr, "* Warning: element", self.getXPath(), "of tim:class", className, "misses expected attribute tic:"+attrName
+            print("* Warning: element", self.getXPath(), "of tim:class", className, "misses expected attribute tic:"+attrName, file=sys.stderr)
     for attrName in self.elt.keys():
         if attrName in NS_2IMMERSE_COMPONENT:
             if not NS_2IMMERSE_COMPONENT.localTag(attrName) in allowedAttributes:
-                print >>sys.stderr, "* Warning: element", self.getXPath(), "of tim:class", className, "has unexpected attribute tic:"+NS_2IMMERSE_COMPONENT.localTag(attrName)
+                print("* Warning: element", self.getXPath(), "of tim:class", className, "has unexpected attribute tic:"+NS_2IMMERSE_COMPONENT.localTag(attrName), file=sys.stderr)

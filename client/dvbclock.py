@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time
 import sys
 import logging
@@ -83,19 +84,19 @@ class DvbClientClock(DvbClock):
         self.controller.connect()
             
     def onConnected(self, *args, **kwargs):
-        print 'xxxjack: DvbClientClock.onConnected args=%s kwargs=%s' % (args, kwargs)
+        print('xxxjack: DvbClientClock.onConnected args=%s kwargs=%s' % (args, kwargs))
         
     def onDisconnected(self, *args, **kwargs):
-        print 'xxxjack: DvbClientClock.onDisconnected args=%s kwargs=%s' % (args, kwargs)
+        print('xxxjack: DvbClientClock.onDisconnected args=%s kwargs=%s' % (args, kwargs))
         
     def onTimelineAvailable(self, *args, **kwargs):
-        print 'xxxjack: DvbClientClock.onTimelineAvailable args=%s kwargs=%s' % (args, kwargs)
+        print('xxxjack: DvbClientClock.onTimelineAvailable args=%s kwargs=%s' % (args, kwargs))
         
     def onTimelineUnavailable(self, *args, **kwargs):
-        print 'xxxjack: DvbClientClock.onTimelineUnavailable args=%s kwargs=%s' % (args, kwargs)
+        print('xxxjack: DvbClientClock.onTimelineUnavailable args=%s kwargs=%s' % (args, kwargs))
         
     def onTimingChange(self, *args, **kwargs):
-        print 'xxxjack: DvbClientClock.onTimingChange args=%s kwargs=%s' % (args, kwargs)
+        print('xxxjack: DvbClientClock.onTimingChange args=%s kwargs=%s' % (args, kwargs))
                 
 class DvbServerClock(DvbClock):
     def __init__(self, contentId, timelineSelector, host='127.0.0.1', port=7681):
@@ -154,8 +155,8 @@ if __name__ == '__main__':
         c.connect()
         while True:
             time.sleep(0.4)
-            print
-            print 'C', time.time(), c.now(),
+            print()
+            print('C', time.time(), c.now(), end=' ')
             sys.stdout.flush()
     elif sys.argv[1] == 'server':
         s = DvbServerClock('dvb://233a.1004.1044;363a~20130218T0915Z--PT00H45M', 'urn:dvb:css:timeline:pts', '127.0.0.1', 7681)
@@ -163,11 +164,11 @@ if __name__ == '__main__':
         try:
             while True:
                 time.sleep(1)
-                print
-                print 'S', time.time(), s.now(),
+                print()
+                print('S', time.time(), s.now(), end=' ')
                 sys.stdout.flush()
                 if toStart and time.time() > toStart:
-                    print '(start clock)'
+                    print('(start clock)')
                     toStart = None
                     s.start()
                 s.tsServer.updateAllClients()

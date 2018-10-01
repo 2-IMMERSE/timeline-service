@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import pysrt
 import json
 import sys
@@ -18,8 +19,8 @@ def srt2scrolltext(filename):
     
 def main():
     if len(sys.argv) != 3:
-        print >>sys.stderr, "Usage: %s subtitles.srt scrolltext.json" % sys.argv[0]
-        print >>sys.stderr, "Converts SRT subtitles to 2immerse scrolling text format"
+        print("Usage: %s subtitles.srt scrolltext.json" % sys.argv[0], file=sys.stderr)
+        print("Converts SRT subtitles to 2immerse scrolling text format", file=sys.stderr)
         sys.exit(1)
     subtitles = srt2scrolltext(sys.argv[1])
     json.dump(subtitles, open(sys.argv[2], 'w'))

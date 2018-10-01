@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import requests
-import clocks
-import document
+from . import clocks
+from . import document
 import logging
 import urllib
 import urlparse
@@ -9,7 +10,7 @@ import threading
 import time
 import traceback
 import sys
-import socketIOhandler
+from . import socketIOhandler
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +249,7 @@ class BaseTimeline:
         try:
             self.document.loadDocument(self.timelineDocUrl)
         except:
-            errorStr = '\n'.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            errorStr = '\n'.join(traceback.format_exception_only(sys.exc_info()[0], sys.exc_info()[1]))
             self.logger.error("Timeline(%s): %s: Error loading document: %s", self.contextId, self.timelineDocUrl, errorStr)
             raise
         self.document.report(logging.INFO, 'DOCUMENT', 'loaded', self.timelineDocUrl)

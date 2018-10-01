@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 import subprocess
 import sys
@@ -29,7 +30,7 @@ class TestAPI(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if KEEP_SERVER:
-            print 'Press control-c to terminate server -'
+            print('Press control-c to terminate server -')
             try:
                 time.sleep(99999)
             except KeyboardInterrupt:

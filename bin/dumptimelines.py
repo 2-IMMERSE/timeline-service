@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import urllib
 import json
 import time
@@ -38,35 +39,35 @@ def main():
     
     if args.document:
         if len(contextIds) != 1:
-            print >>sys.stderr, "%s: Use --document only for single context"
+            print("%s: Use --document only for single context", file=sys.stderr)
             sys.exit(1)
         dump = restGet(tsUrl + '/context/' + contextIds[0] + '/dump')
-        print dump['document'].encode('utf-8')
+        print(dump['document'].encode('utf-8'))
         sys.exit(0)
-    print 'Number of contextts active:', len(contextIds)
+    print('Number of contextts active:', len(contextIds))
     for c in contextIds:
-        print '------------- Context', c
+        print('------------- Context', c)
         try:
             dump = restGet(tsUrl + '/context/' + c + '/dump')
         except ValueError:
-            print '** Warning: dump did not return JSON data'
+            print('** Warning: dump did not return JSON data')
             continue
         if 'document' in dump:
             if not args.nodocument:
-                print '---------- Document and document state:'
-                print dump['document']
-                print '----------'
+                print('---------- Document and document state:')
+                print(dump['document'])
+                print('----------')
             del dump['document']
         else:
-            print '** Warning: no document in dump'
+            print('** Warning: no document in dump')
         if 'creationTime' in dump:
-            print 'Created:\t', time.ctime(dump['creationTime'])
+            print('Created:\t', time.ctime(dump['creationTime']))
             del dump['creationTime']
         keys = dump.keys()
         keys.sort()
         for k in keys:
-            print '%s:\t%s' % (k, dump[k])
-        print
+            print('%s:\t%s' % (k, dump[k]))
+        print()
         
 if __name__ == '__main__':
     main()

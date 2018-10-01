@@ -1,8 +1,10 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import web
 import time
 import datetime
-import timeline
+from . import timeline
 import json
 import argparse
 import logging
@@ -140,7 +142,7 @@ class timelineServer:
         except web.HTTPError:
             raise
         except:
-            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_info()[0], sys.exc_info()[1]))
             traceback.print_exc()
             return ''
         web.header("Content-Type", "application/json")
@@ -170,7 +172,7 @@ class timelineServer:
         except web.HTTPError:
             raise
         except:
-            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_info()[0], sys.exc_info()[1]))
             traceback.print_exc()
             return ''
         if rv == None or rv == '':
@@ -205,7 +207,7 @@ class timelineServer:
         except web.HTTPError:
             raise
         except:
-            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+            web.ctx.status = "500 Internal server error: %s" % ' '.join(traceback.format_exception_only(sys.exc_info()[0], sys.exc_info()[1]))
             traceback.print_exc()
             return ''
         if rv == None or rv == '':
@@ -254,8 +256,8 @@ def main():
     rootLogger.handlers[0].setFormatter(MyFormatter())
 
     rootLogger.log(logging.INFO, "Timeline service INFO log line")
-    print "Timeline service stdout print"
-    print >> sys.stderr, "Timeline service stderr print"
+    print("Timeline service stdout print")
+    print("Timeline service stderr print", file=sys.stderr)
     if True:
         # Temporary measure: the origin server certificate is untrusted on our docker containers.
         rootLogger.log(logging.WARN, "https verification disabled for now (Nov 2016)")

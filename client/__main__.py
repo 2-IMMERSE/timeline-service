@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import os
 import argparse
@@ -111,25 +112,25 @@ def main():
     else:
             
         if not args.layoutDoc:
-            print "Must specify --layoutDoc"
+            print("Must specify --layoutDoc")
             sys.exit(1)
         # Sanity check that all URLs are correct
         up = urlparse.urlparse(args.layoutServer)
         if not up.scheme in {'http', 'https'}:
-            print 'Only absolute http/https URL allowed:', args.layoutServer
+            print('Only absolute http/https URL allowed:', args.layoutServer)
             sys.exit(1)
         up = urlparse.urlparse(args.timelineServer)
         if not up.scheme in {'http', 'https'}:
-            print 'Only absolute http/https URL allowed:', args.timelineServer
+            print('Only absolute http/https URL allowed:', args.timelineServer)
             sys.exit(1)
         up = urlparse.urlparse(args.layoutDoc)
         if not up.scheme in {'http', 'https'}:
-            print 'Only absolute http/https URL allowed:', args.layoutDoc
+            print('Only absolute http/https URL allowed:', args.layoutDoc)
             sys.exit(1)
         if args.timelineDoc:
             up = urlparse.urlparse(args.timelineDoc)
             if not up.scheme in {'http', 'https'}:
-                print 'Only absolute http/https URL allowed:', args.timelineDoc
+                print('Only absolute http/https URL allowed:', args.timelineDoc)
                 sys.exit(1)
         context = context_for_tv(args.layoutServer, args.dev, width=args.width, height=args.height)
 
@@ -144,17 +145,17 @@ def main():
         tsargsforclient = ""
         if args.tsserver:
             tsargsforclient = "--tsclient ws://%s:7681/ts" % args.tsserver
-        print 'For handheld(s) run: %s %s --context %s' % (sys.argv[0], tsargsforclient, context.layoutServiceContextURL)
-        print
+        print('For handheld(s) run: %s %s --context %s' % (sys.argv[0], tsargsforclient, context.layoutServiceContextURL))
+        print()
         if args.start:
             for dev in args.start:
                 cmd = ["python", sys.argv[0], "--context", context.layoutServiceContextURL, "--dev", dev, "--logLevel", args.logLevel]
                 if args.tsserver:
                     cmd += ["--tsclient", "ws://%s:7681/ts" % args.tsserver]
-                print 'Starting:', ' '.join(cmd)
+                print('Starting:', ' '.join(cmd))
                 p = subprocess.Popen(cmd)
         if args.wait:
-            print 'Press return when done -',
+            print('Press return when done -', end=' ')
             _ = sys.stdin.readline()
         
         dmapp = dmapp_for_tv(context, args.layoutServer, args.timelineServer, args.tsserver, args.timelineDoc, args.layoutDoc)

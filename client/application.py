@@ -1,3 +1,4 @@
+from __future__ import print_function
 import requests
 import requests
 import time
@@ -201,10 +202,10 @@ class Component:
             self.componentInfo = componentInfo
         # Workaround (similar to client-api) for when the document starts without any clock:
         # we start a default clock
-        print 'xxxjack', self.status, self.componentId, self.application.currentMasterClockComponent
+        print('xxxjack', self.status, self.componentId, self.application.currentMasterClockComponent)
         if self.status == 'started' and not self.application.currentMasterClockComponent:
             self.canBeMasterClock = True
-            print 'xxxjack grabbed clock'
+            print('xxxjack grabbed clock')
         if self.canBeMasterClock and self.status == 'started':
             self.application.currentMasterClockComponent = self
         if self.application.currentMasterClockComponent == self:
