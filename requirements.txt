@@ -1,4 +1,6 @@
-web.py
+future
+web.py==0.40.dev1; python_version >= '3'
+web.py; python_version < '3'
 requests
 socketIO-client-2
 pydvbcss
