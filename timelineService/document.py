@@ -21,13 +21,13 @@ logging.basicConfig()
 
 class MyLoggerAdapter(logging.LoggerAdapter):
 
-	def process(self, msg, kwargs):
-		if 'extra' in kwargs:
-			kwargs['extra'].update(self.extra)
-		else:
-			kwargs['extra'] = self.extra
-		return msg, kwargs
-		
+    def process(self, msg, kwargs):
+        if 'extra' in kwargs:
+            kwargs['extra'].update(self.extra)
+        else:
+            kwargs['extra'] = self.extra
+        return msg, kwargs
+        
 DEBUG=True
 
 class TimelineParseError(ValueError):
@@ -134,14 +134,14 @@ class DummyDelegate(object):
         return self.document.getXPath(self.elt)
         
     def getLogExtra(self):
-    	rv = dict(xpath=self.getXPath())
-    	uid = self.getId()
-    	if uid:
-    		rv['dmappcID'] = uid
-    	elif hasattr(self, 'componentId'):
-    		rv['dmappcID'] = self.componentId
-    	return rv
-    	
+        rv = dict(xpath=self.getXPath())
+        uid = self.getId()
+        if uid:
+            rv['dmappcID'] = uid
+        elif hasattr(self, 'componentId'):
+            rv['dmappcID'] = self.componentId
+        return rv
+        
     def checkAttributes(self):
         """Check XML attributes for validity"""
         pass
@@ -1394,8 +1394,8 @@ class WaitDelegate(TimeElementDelegate):
         self.setState(State.finished)
     
     def stopTimelineElement(self):
-    	eventId = self.elt.get(NS_TIMELINE("event"))
-    	self.document.unregisterEvent(eventId, self._done)
+        eventId = self.elt.get(NS_TIMELINE("event"))
+        self.document.unregisterEvent(eventId, self._done)
         TimelineDelegate.stopTimelineElement(self)
 
     def predictStopTime(self, mode, startTimeOverride = None):
@@ -1456,8 +1456,8 @@ class DocumentState(object):
         document.report(logging.DEBUG, 'DOCSTATE', self.__class__.__name__)
         
     def nudgeClock(self):
-    	return False
-    	
+        return False
+        
     def stateFinished(self):
         return True
         
@@ -1536,13 +1536,13 @@ class DocumentStateSeekElementStart(DocumentStateStart):
         DocumentStateStart.__init__(self, document)
         self.startElement = startElement
         if document.clock.nextEventTime(None) != None:
-        	self.document.logger.warning("Events pending while starting seek. Could lead to problems later.")
+            self.document.logger.warning("Events pending while starting seek. Could lead to problems later.")
         document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
     def nudgeClock(self):
-    	return self.document.clock.sleepUntilNextEvent()
-    	
+        return self.document.clock.sleepUntilNextEvent()
+        
     def stateFinished(self):
         if self.document.root.delegate.state == State.finished:
             self.document.report(logging.ERROR, 'FFWD', 'end-of-document', '#t=%f' % self.document.clock.now(), '(underlyingClock=%f)' % self.document.clock.underlyingClock.now())
@@ -1561,13 +1561,13 @@ class DocumentStateSeekTimeStart(DocumentStateStart):
         self.document = document
         self.startTime = startTime
         if document.clock.nextEventTime(None) != None:
-        	self.document.logger.warning("Events pending while starting seek. Could lead to problems later.")
+            self.document.logger.warning("Events pending while starting seek. Could lead to problems later.")
         document.clock.replaceUnderlyingClock(clocks.FastClock())
         document.clock.start()
         
     def nudgeClock(self):
-    	return self.document.clock.sleepUntilNextEvent()
-    	
+        return self.document.clock.sleepUntilNextEvent()
+        
     def stateFinished(self):
         if self.document.root.delegate.state == State.finished:
             self.document.report(logging.ERROR, 'FFWD', 'end-of-document', '#t=%f' % self.document.clock.now())
@@ -1633,8 +1633,8 @@ class DocumentStateSeekFinish(DocumentState):
             # (done events for sleeps). Have to work out whether to restart the
             # sleeps and put in the flushEvents or sort through the events
             # to see which ones are needed.
-        	count = self.document.clock.flushEvents()
-        	self.document.logger.info("Flushed %d pending events while ending seek." % count)
+            count = self.document.clock.flushEvents()
+            self.document.logger.info("Flushed %d pending events while ending seek." % count)
 #        self.document.dump(open('seekend1.xml', 'w')) # xxxjack
         #
         # Now (re)issue the start calls
@@ -1846,23 +1846,23 @@ class Document(DocumentModificationMixin):
         self.delegateClasses[tag] = klass
         
     def registerEvent(self, eventId, callback):
-    	self.events.append((eventId, callback))
-    	
+        self.events.append((eventId, callback))
+        
     def unregisterEvent(self, eventId, callback):
-    	try:
-			self.events.remove((eventId, callback))
-    	except ValueError:
-    		pass
-    		
+        try:
+            self.events.remove((eventId, callback))
+        except ValueError:
+            pass
+            
     def triggerEvent(self, eventId):
-    	anyDone = False
-    	for eid, callback in self.events:
-    		if eid == eventId:
-    			callback()
-    			anyDone = True
-    	if not anyDone:
-    		self.logger.warning("Event %s did not trigger anything" % eventId)
-    			
+        anyDone = False
+        for eid, callback in self.events:
+            if eid == eventId:
+                callback()
+                anyDone = True
+        if not anyDone:
+            self.logger.warning("Event %s did not trigger anything" % eventId)
+                
     def loadDocument(self, url):
         assert not self.root
         self.url = url
@@ -2090,9 +2090,9 @@ class Document(DocumentModificationMixin):
                 self.clock.handleEvents(self)
                 if not self.toDo: break
 
-	def nextEventTime(self, *args, **kwargs):
-		return self.clock.nextEventTime(*args, **kwargs)
-		
+    def nextEventTime(self, *args, **kwargs):
+        return self.clock.nextEventTime(*args, **kwargs)
+        
     def report(self, level, event, verb, *args, **kwargs):
         if args:
             args = reduce((lambda h, t: str(h) + ' ' + str(t)), args)
