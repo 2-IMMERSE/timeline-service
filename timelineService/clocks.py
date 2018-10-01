@@ -233,7 +233,7 @@ class CallbackPausableClock(PausableClock):
             t, _, callback, args, kwargs = peek
             if self._now() >= t:
                 if self._now() > t + 0.1:
-                    print('xxxjack scheduling', self.now() - t, 'seconds too late...')
+                    pass # print('xxxjack scheduling', self.now() - t, 'seconds too late...')
                 handler.schedule(callback, *args, **kwargs)
             else:
                 assert not self.queue.full()
