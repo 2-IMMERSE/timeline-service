@@ -29,5 +29,6 @@ RUN update-ca-certificates
 
 EXPOSE 8080
 
-# CMD [ "python", "/usr/src/app/timelineService", "--noKibana", "--logLevel", "document:DEBUG,timeline:DEBUG,WARN" ]
-CMD [ "python", "/usr/src/app/timelineService"]
+WORKDIR /usr/src/app
+# CMD [ "python", "-m", "timelineService", "--noKibana", "--logLevel", "document:DEBUG,timeline:DEBUG,WARN" ]
+CMD [ "python", "-m", "timelineService"]
