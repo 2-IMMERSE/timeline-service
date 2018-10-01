@@ -1,3 +1,4 @@
+from __future__ import print_function
 from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
@@ -5,12 +6,27 @@ from builtins import object
 import time
 import queue
 import threading
+import functools
 
-class never(object):
+@functools.total_ordering
+class NeverSmaller(object):
     """This object is greater than any number"""
-    pass
+    def __le__(self, other):
+        return False
+        
+    def __eq__(self, other):
+        return type(other) == NeverSmaller
+
+    def __repr__(self):
+        return 'never'
     
+never = NeverSmaller()
 assert never > 1
+assert 1 < never
+assert never > 0
+assert 0 < never
+assert never > time.time()
+assert time.time() < never
 
 DEBUG_LOCKING=False
 #threading._VERBOSE=True
@@ -20,6 +36,7 @@ if DEBUG_LOCKING:
     import traceback
     clockLockLog = logging.getLogger("clocks.locks")
     clockLockLog.setLevel(logging.DEBUG)
+
     class ClockLock(object):
         def __init__(self):
             self._lock = threading.RLock()
@@ -37,6 +54,7 @@ if DEBUG_LOCKING:
             return self._lock.release()
 
         __enter__ = acquire
+
         def __exit__(self, *args):
             self.release()
 else:
@@ -208,12 +226,12 @@ class CallbackPausableClock(PausableClock):
                 peek = self.queue.get(False)
             except queue.Empty:
                 return
-            if not peek: return
+            if not peek:
+                return
             t, callback, args, kwargs = peek
             if self._now() >= t:
                 if self._now() > t + 0.1:
-                    pass
-#                    print 'xxxjack scheduling', self.now() - t, 'seconds too late...'
+                    pass # print('xxxjack scheduling', self.now() - t, 'seconds too late...')
                 handler.schedule(callback, *args, **kwargs)
             else:
                 assert not self.queue.full()
