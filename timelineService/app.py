@@ -34,14 +34,12 @@ API_ROOT = "/timeline/v1/context"
 
 @app.route(API_ROOT, methods=["GET", "POST"])
 def allContexts():
-    print('xxxjack allContext args', request.args, 'form', request.form, 'data', request.data)
     timelineServiceUrl = "http://example.com"
     if request.method == "POST" or request.args:
         if request.form:
             args = request.form.to_dict(flat=True)
         else:
             args = request.args.to_dict(flat=True)
-        print('xxxjack args', args)
         rv = timeline.Timeline.createTimeline(timelineServiceUrl=timelineServiceUrl, **args)
         return Response(json.dumps(rv), mimetype="application/json")
     else:
