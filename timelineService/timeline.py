@@ -56,6 +56,7 @@ class BaseTimeline(object):
         self.contextId = contextId
         self.timelineDocUrl = None
         self.timelineDocBaseUrl = None
+        self.layoutService = None
         self.layoutServiceUrl = layoutServiceUrl
         self.dmappTimeline = None
         self.dmappId = None
