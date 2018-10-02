@@ -1,5 +1,6 @@
 future
 flask
+gevent
 requests
 socketIO-client-2
 pydvbcss
