@@ -9,6 +9,10 @@ from . import timeline
 from . import app
 from . import mylogger
 
+if sys.version_info[0] < 3:
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+    
 def main():
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
