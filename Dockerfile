@@ -12,7 +12,7 @@ COPY test/ test/
 COPY ./client-certs/ /usr/local/share/ca-certificates
 
 # Install Python and certificate dependencies
-RUN apk add --no-cache python2 py2-pip py2-lxml ca-certificates
+RUN apk add --no-cache python2 py2-pip py-lxml py-gevent ca-certificates
 RUN update-ca-certificates
 RUN pip install --upgrade pip setuptools
 RUN pip install -r /usr/src/app/requirements.txt
