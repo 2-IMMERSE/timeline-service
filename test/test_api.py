@@ -8,7 +8,7 @@ import os
 import requests
 
 COVERAGE=False
-KEEP_SERVER=False
+KEEP_SERVER=not not os.environ.get("TEST_KEEP_SERVER", None)
 BASEDIR=os.path.dirname(os.path.abspath(__file__))
 FIXTURES=os.path.join(BASEDIR, 'fixtures')
 
@@ -30,9 +30,9 @@ class TestAPI(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if KEEP_SERVER:
-            print('Press control-c to terminate server -')
+            print('Press return to terminate server -')
             try:
-                time.sleep(99999)
+                sys.stdin.readline()
             except KeyboardInterrupt:
                 pass
         cls.serverProcess.terminate()
