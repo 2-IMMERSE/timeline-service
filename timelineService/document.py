@@ -18,8 +18,12 @@ import json
 from functools import reduce
 
 if sys.version_info[0] < 3:
+    def str23compat(item):
+        return unicode(str(item))
     XML_ENCODING="utf8"
 else:
+    def str23compat(item):
+        return str(item)
     XML_ENCODING="unicode"
     
 logging.basicConfig()
@@ -174,12 +178,7 @@ class DummyDelegate(object):
         if self.state != State.idle:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
         if self.startTime != None:
-            arg = str(self.clock.now()-self.startTime)
-            # following code to ensure the argument is always unicode (py2 and py3)
-            try:
-                arg = unicode(arg)
-            except NameError:
-                pass
+            arg = str23compat(self.clock.now()-self.startTime)
             if self.isCurrentTimingMaster():
                 self.elt.set(NS_TIMELINE_INTERNAL("progress"), arg)
             else:
@@ -239,7 +238,7 @@ class DummyDelegate(object):
     def getStateForTriggerTool(self):
         """Return relevant state information (for the trigger tool) for this element"""
         if self.state in State.TRIGGER_PROGRESS_IMPORTANT_STATES:
-            progressVal = str(self.clock.now()-self.startTime)
+            progressVal = str23compat(self.clock.now()-self.startTime)
         else:
             progressVal = None
         rv = {NS_TIMELINE_INTERNAL("state"): self.state, NS_TIMELINE_INTERNAL("progress"): progressVal}
@@ -1177,7 +1176,7 @@ class RepeatDelegate(SingleChildDelegate):
             # See whether we need another run:
             remainingCount = self.elt.get(NS_TIMELINE("count"), "indefinite")
             if remainingCount != "indefinite":
-                remainingCount = str(int(remainingCount)-1)
+                remainingCount = str23compat(int(remainingCount)-1)
                 self.elt.set(NS_TIMELINE("count"), remainingCount)
             if remainingCount == "indefinite" or int(remainingCount) > 0:
                 # More repeats to do. Restart child.
@@ -1704,7 +1703,7 @@ class DocumentModificationMixin(object):
         myGeneration = self.root.get(NS_AUTH("generation"), "0")
         if int(generation) != int(myGeneration)+1:
             self.logger.warning("modifyDocument: current generation=%s new generation=%s" % (myGeneration, generation))
-        self.root.attrib[NS_AUTH("generation")] = str(generation)
+        self.root.attrib[NS_AUTH("generation")] = str23compat(generation)
         
         updateCallbacks = []
         for command in commands:
