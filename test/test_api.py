@@ -50,6 +50,10 @@ class TestAPI(unittest.TestCase):
         rv = r.json()
         self.assertEqual(type(rv), type([]))
         self.assertIn('000', rv)
+        r = requests.get(self.serverUrl + '/000/dump')
+        rv = r.json()
+        self.assertIn('layoutServiceUrl', rv)
+        self.assertEqual(rv['layoutServiceUrl'], 'http://localhost:9999/')
         
 if __name__ == '__main__':
     unittest.main()
