@@ -11,14 +11,23 @@ COPY test/ test/
 
 COPY ./client-certs/ /usr/local/share/ca-certificates
 
-# Install Python and certificate dependencies
-RUN apk add --no-cache python2 py2-pip py-lxml py-gevent ca-certificates
+# Install certificate dependencies
+RUN apk add --no-cache ca-certificates
 RUN update-ca-certificates
-RUN pip install --upgrade pip setuptools
-RUN pip install -r /usr/src/app/requirements.txt
+
+# Install Python2 dependencies
+RUN apk add --no-cache python2 py2-pip py-lxml py-gevent
+RUN pip2 install --upgrade pip setuptools
+RUN pip2 install -r /usr/src/app/requirements.txt
+
+# Install Python3 dependencies
+RUN apk add --no-cache python3 py3-pip py-lxml py-gevent
+RUN pip3 install --upgrade pip setuptools
+RUN pip3 install -r /usr/src/app/requirements.txt
 
 EXPOSE 8080
 
 WORKDIR /usr/src/app
-# CMD [ "python", "-m", "timelineService", "--noKibana", "--logLevel", "document:DEBUG,timeline:DEBUG,WARN" ]
-CMD [ "python", "-m", "timelineService"]
+# CMD [ "python2", "-m", "timelineService", "--noKibana", "--logLevel", "document:DEBUG,timeline:DEBUG,WARN" ]
+# CMD [ "python3", "-m", "timelineService"]
+CMD [ "python2", "-m", "timelineService"]
