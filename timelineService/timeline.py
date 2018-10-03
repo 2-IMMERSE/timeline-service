@@ -9,7 +9,6 @@ from . import clocks
 from . import document
 import logging
 import urllib.request, urllib.parse, urllib.error
-import urllib.parse
 import os
 import threading
 import time
@@ -542,13 +541,13 @@ class ProxyMixin(object):
                 localName = document.NS_2IMMERSE_COMPONENT.localTag(k)
                 value = self.elt.attrib[k]
                 if 'url' in localName.lower() and value:
-                    value = urllib.basejoin(self.timelineDocBaseUrl, value)
+                    value = urllib.parse.urljoin(self.timelineDocBaseUrl, value)
                 rv[localName] = value
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)
                 value = self.elt.attrib[k]
                 if 'url' in localName.lower() and value:
-                    value = urllib.basejoin(self.timelineDocBaseUrl, value)
+                    value = urllib.parse.urljoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
         self._fix2immerseTimeParameters(rv)
         return rv
@@ -607,7 +606,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         self.nullParameters = set()
         # Allow relative URLs by doing a basejoin to the timeline document URL.
         if self.url:
-            self.url = urllib.basejoin(self.timelineDocBaseUrl, self.url)
+            self.url = urllib.parse.urljoin(self.timelineDocBaseUrl, self.url)
         if not self.componentId:
             self.componentId = "unknown%d" % id(self)
             self.logger.error("Element %s: missing xml:id attribute, invented %s", self.document.getXPath(self.elt), self.componentId, extra=self.getLogExtra())
