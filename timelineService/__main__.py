@@ -15,7 +15,9 @@ if sys.version_info[0] < 3:
     reload(sys)
     sys.setdefaultencoding('utf-8')
     
+_real_stderr = sys.stderr
 def _dump_app_stacks(*args):
+    _dump_app_stacks_to(_real_stderr)
     _dump_app_stacks_to(sys.stderr)
 def _dump_app_stacks_to(file):
     print("timelineService: QUIT received, dumping all stacks, %d threads:" % len(sys._current_frames()), file=file)
