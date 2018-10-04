@@ -61,6 +61,7 @@ class SocketIOHandler(threading.Thread):
         self.running = True
         self.logger.debug('SocketIOHandler: thread listener running')
         while self.running and self.socket:
+            self.logger.debug('SocketIOHandler: calling socket.wait()')
             try:
                 self.socket.wait(5)
             except:

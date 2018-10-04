@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 from builtins import str
 from builtins import object
 import sys
+import signal
+import traceback
 import argparse
 from . import timeline
 from . import app
@@ -13,7 +15,18 @@ if sys.version_info[0] < 3:
     reload(sys)
     sys.setdefaultencoding('utf-8')
     
+def _dump_app_stacks(*args):
+    _dump_app_stacks_to(sys.stderr)
+def _dump_app_stacks_to(file):
+    print("timelineService: QUIT received, dumping all stacks, %d threads:" % len(sys._current_frames()), file=file)
+    for threadId, stack in list(sys._current_frames().items()):
+        print("\nThreadID:", threadId, file=file)
+        traceback.print_stack(stack, file=file)
+        print(file=file)
+    print("timelineService: End of stack dumps", file=file)
+
 def main():
+    signal.signal(signal.SIGQUIT, _dump_app_stacks)
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
     parser.add_argument('--port', type=int, help="Set port to listen on")

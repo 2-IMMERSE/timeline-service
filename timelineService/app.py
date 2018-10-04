@@ -118,7 +118,7 @@ class Server:
         self.server = WSGIServer(("0.0.0.0", self.port), app)
         
     def run(self):
-        print("timelineServicer: running on port %d" % self.port)
+        print("timelineService: running on port %d" % self.port)
         self.server.serve_forever()
         
 _singleton = None
