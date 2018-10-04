@@ -27,6 +27,7 @@ def _dump_app_stacks_to(file):
 
 def main():
     signal.signal(signal.SIGQUIT, _dump_app_stacks)
+    signal.signal(signal.SIGUSR1, _dump_app_stacks)
     parser = argparse.ArgumentParser(description='Run 2immerse Timeline Service')
     parser.add_argument('--layoutService', metavar="URL", help="Override URL for contacting layout service")
     parser.add_argument('--port', type=int, help="Set port to listen on")
