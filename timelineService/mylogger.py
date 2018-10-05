@@ -74,6 +74,7 @@ def install(noKibana, logLevel):
         global MyFormatter
         MyFormatter = logging.Formatter
         sys.stdout = Unbuffered(sys.stdout)
+        sys.stderr = Unbuffered(sys.stderr)
     else:
         sys.stdout = StreamToLogger(logging.getLogger('stdout'), logging.INFO)
         sys.stderr = StreamToLogger(logging.getLogger('stderr'), logging.INFO)
