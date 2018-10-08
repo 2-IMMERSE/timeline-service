@@ -16,6 +16,13 @@ import traceback
 import sys
 from . import socketIOhandler
 
+if sys.version_info[0] < 3:
+    def str23compat(item):
+        return unicode(str(item))
+else:
+    def str23compat(item):
+        return str(item)
+
 logger = logging.getLogger(__name__)
 
 THREADED=True
@@ -540,6 +547,7 @@ class ProxyMixin(object):
             if k in document.NS_2IMMERSE_COMPONENT:
                 localName = document.NS_2IMMERSE_COMPONENT.localTag(k)
                 value = self.elt.attrib[k]
+                value = str23compat(value)
                 if 'url' in localName.lower() and value:
                     value = urllib.parse.urljoin(self.timelineDocBaseUrl, value)
                 rv[localName] = value
