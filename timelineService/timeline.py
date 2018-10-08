@@ -607,7 +607,7 @@ class ProxyDMAppComponent(document.TimeElementDelegate, ProxyMixin):
         ProxyMixin.__init__(self, timelineDocBaseUrl, layoutService, self.getId())
         self.revision = -1
         self.klass = self.elt.get(document.NS_2IMMERSE("class"))
-        self.url = self.elt.get(document.NS_2IMMERSE("url"), "")
+        self.url = str23compat(self.elt.get(document.NS_2IMMERSE("url"), ""))
         self.lastReceivedDuration = None
         self.activeOverlays = []
         self.seekParameters = {}
