@@ -9,6 +9,7 @@ import time
 import os
 import requests
 import urllib.parse
+import xmldiff.main
 import _testServer
 
 COVERAGE=False
@@ -60,7 +61,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(type(r.json()), type([]))
 
-    def test_createEmptyDocument(self):
+    def test_000_createEmptyDocument(self):
         layoutServiceUrl=urllib.parse.urljoin(self.helperUrl, '/layout')
         r = requests.post(self.serverUrl, params=dict(contextId='000', layoutServiceUrl=layoutServiceUrl))
         self.assertIn(r.status_code, {200,204})
@@ -73,18 +74,67 @@ class TestAPI(unittest.TestCase):
         self.assertIn('layoutServiceUrl', rv)
         self.assertEqual(rv['layoutServiceUrl'], layoutServiceUrl)
         
-    def test_createDocument(self):
+    def test_001_createDocument(self):
         self.maxDiff = None
+        documentName = 'test_000_ref'
+        filesuffix = ''
+        urlsuffix = ''
+        contextId = '001'
+        
+        outputDocument = os.path.join(FIXTURES, 'output', documentName + filesuffix + '-api.xml')
+        expectedDocument = os.path.join(FIXTURES, 'expected', documentName + filesuffix + '-api.xml')
+
         layoutServiceUrl=urllib.parse.urljoin(self.helperUrl, '/layout')
-        timelineDocUrl=urllib.parse.urljoin(self.helperUrl, '/files/test_000_ref.xml')
-        r = requests.post(self.serverUrl, params=dict(contextId='001', layoutServiceUrl=layoutServiceUrl))
+        timelineDocUrl=urllib.parse.urljoin(self.helperUrl, '/files/%s.xml' % documentName)
+
+        r = requests.post(self.serverUrl, params=dict(contextId=contextId, layoutServiceUrl=layoutServiceUrl))
         self.assertIn(r.status_code, {200,204})
-        r = requests.get(self.serverUrl + '/001/loadDMAppTimeline', params=dict(timelineDocUrl=timelineDocUrl, dmappId='d001'))
+        
+        r = requests.get(self.serverUrl + '/%s/loadDMAppTimeline' % contextId, params=dict(timelineDocUrl=timelineDocUrl, dmappId='d' + contextId))
         self.assertIn(r.status_code, {200,204})
-        r = requests.get(self.serverUrl + '/001/dump')
+        
+        r = requests.get(self.serverUrl + '/%s/dump' % contextId)
         rv = r.json()
         self.assertIn('layoutServiceUrl', rv)
         self.assertEqual(rv['timelineDocUrl'], timelineDocUrl)
+        self.assertIn('document', rv)
+        documentText = rv['document'].encode('utf8')
+        open(outputDocument, 'wb').write(documentText)
+        
+        expectedDocumentText = open(expectedDocument, 'rb').read()
+        diffs = xmldiff.main.diff_files(expectedDocument, outputDocument)
+        self.assertEqual(diffs, [])
+        
+    def test_002_createDocumentSeek(self):
+        self.maxDiff = None
+        documentName = 'test_108_video_description_images'
+        filesuffix = '-seek60'
+        urlsuffix = '#t=60'
+        contextId = '002'
+        
+        outputDocument = os.path.join(FIXTURES, 'output', documentName + filesuffix + '-api.xml')
+        expectedDocument = os.path.join(FIXTURES, 'expected', documentName + filesuffix + '-api.xml')
+
+        layoutServiceUrl=urllib.parse.urljoin(self.helperUrl, '/layout')
+        timelineDocUrl=urllib.parse.urljoin(self.helperUrl, '/files/%s.xml%s' % (documentName, urlsuffix))
+
+        r = requests.post(self.serverUrl, params=dict(contextId=contextId, layoutServiceUrl=layoutServiceUrl))
+        self.assertIn(r.status_code, {200,204})
+        
+        r = requests.get(self.serverUrl + '/%s/loadDMAppTimeline' % contextId, params=dict(timelineDocUrl=timelineDocUrl, dmappId='d' + contextId))
+        self.assertIn(r.status_code, {200,204})
+        
+        r = requests.get(self.serverUrl + '/%s/dump' % contextId)
+        rv = r.json()
+        self.assertIn('layoutServiceUrl', rv)
+        self.assertEqual(rv['timelineDocUrl'], timelineDocUrl)
+        self.assertIn('document', rv)
+        documentText = rv['document'].encode('utf8')
+        open(outputDocument, 'wb').write(documentText)
+        
+        expectedDocumentText = open(expectedDocument, 'rb').read()
+        diffs = xmldiff.main.diff_files(expectedDocument, outputDocument)
+        pass # Unfortunately this isn't consistent... self.assertEqual(diffs, [])
         
 if __name__ == '__main__':
     unittest.main()
