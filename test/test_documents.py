@@ -67,6 +67,9 @@ class TestDocuments(unittest.TestCase):
     def test_000_ref_seek(self):
         self._runOne('test_000_ref', '#t=60', '-seek60')
 
+    def test_001_editable(self):
+        self._runOne('test_001_editable')
+
     def test_100_video(self):
         self._runOne('test_100_video')
 

@@ -1,0 +1,6 @@
+{'timestamp': 0, 'verb': u'init', 'event': u'RUN', 'args': ()}
+{'timestamp': 0, 'verb': u'start', 'event': u'RUN', 'args': ()}
+{'timestamp': 0, 'verb': u'START', 'event': u'>', 'args': (u'/document/par/ref', {'class': 'video'}, {'syncMode': 'master', 'mediaUrl': '../media/bunny.mp4'})}
+{'timestamp': 1.0, 'verb': u'STOP', 'event': u'>', 'args': (u'/document/par/ref',)}
+{'timestamp': 1.0, 'verb': u'stop', 'event': u'RUN', 'args': ()}
+{'timestamp': 1.0, 'verb': u'done', 'event': u'RUN', 'args': ()}

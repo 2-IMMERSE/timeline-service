@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf8'?>
+<tl:document xmlns:au="http://jackjansen.nl/2immerse/authoring" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" xmlns:tt="http://jackjansen.nl/2immerse/livetrigger" tls:slavedProgress="1.0">
+    <tl:par tls:slavedProgress="1.0" tl:end="master">
+        <tl:ref tic:mediaUrl="../media/bunny.mp4" tic:syncMode="master" tim:class="video" tlcheck:dur="81" xml:id="masterVideo" />
+        <tl:sleep tl:dur="1" />
+        <tt:completeEvents>
+            <tl:seq tt:modVerb="remove" tt:name="Event One" tt:productionId="event_one" tt:verb="show" xml:id="event_one">
+                <tt:readyparameters>
+                    <tt:parameter tt:name="begin time" tt:parameter="tl:sleep/@tl:dur" tt:type="set" tt:value="{tt:clock(..)}" />
+                </tt:readyparameters>
+                <tt:modparameters>
+                    <tt:parameter tt:name="duration" tt:parameter="tl:par/tl:sleep/@tl:dur" tt:type="set" tt:value="{tt:clock(.)}" />
+                </tt:modparameters>
+                <tl:sleep tl:dur="0" />
+                <tl:par>
+                    <tl:sleep tl:dur="9999" />
+                    <tl:ref au:updateGroup="channel-bug" tic:mediaUrl="../media/image.png" tim:class="image" tim:constraintId="channel-bug" tim:url="https://origin.platform.2immerse.eu/dmapp-components/image/image.html" xml:id="channel-bug" />
+                </tl:par>
+            </tl:seq>
+        </tt:completeEvents>
+        <tl:sleep tl:dur="1" />
+    </tl:par>
+</tl:document>
