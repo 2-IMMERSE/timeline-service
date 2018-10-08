@@ -1,4 +1,12 @@
-<tl:document xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:au="http://jackjansen.nl/2immerse/authoring" xmlns:tt="http://jackjansen.nl/2immerse/livetrigger">
+<tl:document 
+    xmlns:tl="http://jackjansen.nl/timelines" 
+    xmlns:tim="http://jackjansen.nl/2immerse" 
+    xmlns:tic="http://jackjansen.nl/2immerse/component" 
+    xmlns:tlcheck="http://jackjansen.nl/timelines/check" 
+    xmlns:au="http://jackjansen.nl/2immerse/authoring" 
+    xmlns:tt="http://jackjansen.nl/2immerse/livetrigger"
+    au:generation="1"
+    >
     <tl:par tl:end="master">
         <tl:ref tim:class="video"
                 xml:id="masterVideo"
@@ -6,7 +14,6 @@
                 tlcheck:dur="81"
                 tic:mediaUrl="../media/bunny.mp4"
                 />
-        <tl:sleep tl:dur="1"/>
         <tt:completeEvents>
             <tl:seq xml:id="event_one" tt:productionId="event_one" tt:name="Event One" tt:verb="show" tt:modVerb="remove">
                 <tt:readyparameters>
@@ -27,6 +34,7 @@
                 </tl:par>
             </tl:seq>
         </tt:completeEvents>
+        <!-- Placeholder, to ad new events: -->
         <tl:sleep tl:dur="1"/>
     </tl:par>
 </tl:document>

@@ -136,6 +136,48 @@ class TestAPI(unittest.TestCase):
         diffs = xmldiff.main.diff_files(expectedDocument, outputDocument)
         pass # Unfortunately this isn't consistent... self.assertEqual(diffs, [])
         
+    def test_003_insertEvent(self):
+        self.maxDiff = None
+        documentName = 'test_001_editable'
+        filesuffix = ''
+        urlsuffix = ''
+        contextId = '003'
+        
+        outputDocument = os.path.join(FIXTURES, 'output', documentName + filesuffix + '-api.xml')
+        expectedDocument = os.path.join(FIXTURES, 'expected', documentName + filesuffix + '-api.xml')
+
+        layoutServiceUrl=urllib.parse.urljoin(self.helperUrl, '/layout')
+        timelineDocUrl=urllib.parse.urljoin(self.helperUrl, '/files/%s.xml%s' % (documentName, urlsuffix))
+
+        r = requests.post(self.serverUrl, params=dict(contextId=contextId, layoutServiceUrl=layoutServiceUrl))
+        self.assertIn(r.status_code, {200,204})
+        
+        r = requests.get(self.serverUrl + '/%s/loadDMAppTimeline' % contextId, params=dict(timelineDocUrl=timelineDocUrl, dmappId='d' + contextId))
+        self.assertIn(r.status_code, {200,204})
+        
+        operations = [
+            dict(
+                verb='add',
+                path='/tl:document/tl:par[1]/tl:sleep[1]',
+                where='after',
+                data="""<tl:ref xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xml:id="new1" tim:class="unknown"/>"""
+                )
+            ]
+        r = requests.post(self.serverUrl + '/%s/updateDocument' % contextId, json=dict(generation=2, operations=operations))
+        self.assertIn(r.status_code, {200,204})
+
+        r = requests.get(self.serverUrl + '/%s/dump' % contextId)
+        rv = r.json()
+        self.assertIn('layoutServiceUrl', rv)
+        self.assertEqual(rv['timelineDocUrl'], timelineDocUrl)
+        self.assertIn('document', rv)
+        documentText = rv['document'].encode('utf8')
+        open(outputDocument, 'wb').write(documentText)
+        
+        expectedDocumentText = open(expectedDocument, 'rb').read()
+        diffs = xmldiff.main.diff_files(expectedDocument, outputDocument)
+        self.assertEqual(diffs, [])
+        
 if __name__ == '__main__':
     unittest.main()
     

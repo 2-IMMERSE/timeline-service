@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf8'?>
-<tl:document xmlns:au="http://jackjansen.nl/2immerse/authoring" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" xmlns:tt="http://jackjansen.nl/2immerse/livetrigger" au:generation="1" tls:slavedProgress="1.0">
-    <tl:par tls:slavedProgress="1.0" tl:end="master">
-        <tl:ref tic:mediaUrl="../media/bunny.mp4" tic:syncMode="master" tim:class="video" tlcheck:dur="81" xml:id="masterVideo" />
-        <tt:completeEvents>
+<tl:document xmlns:au="http://jackjansen.nl/2immerse/authoring" xmlns:tic="http://jackjansen.nl/2immerse/component" xmlns:tim="http://jackjansen.nl/2immerse" xmlns:tl="http://jackjansen.nl/timelines" xmlns:tlcheck="http://jackjansen.nl/timelines/check" xmlns:tls="http://jackjansen.nl/timelines/internal" xmlns:tt="http://jackjansen.nl/2immerse/livetrigger" au:generation="2" tls:slavedProgress="0" tls:state="initing">
+    <tl:par tls:slavedProgress="0" tls:state="initing" tl:end="master">
+        <tl:ref tic:mediaUrl="../media/bunny.mp4" tic:syncMode="master" tim:class="video" tlcheck:dur="81" tls:state="initing" xml:id="masterVideo" />
+        <tt:completeEvents tls:state="inited">
             <tl:seq tt:modVerb="remove" tt:name="Event One" tt:productionId="event_one" tt:verb="show" xml:id="event_one">
                 <tt:readyparameters>
                     <tt:parameter tt:name="begin time" tt:parameter="tl:sleep/@tl:dur" tt:type="set" tt:value="{tt:clock(..)}" />
@@ -18,6 +18,6 @@
             </tl:seq>
         </tt:completeEvents>
         
-        <tl:sleep tl:dur="1" />
-    </tl:par>
+        <tl:sleep tls:state="inited" tl:dur="1" />
+    <tl:ref tim:class="unknown" tls:state="initing" xml:id="new1" /></tl:par>
 </tl:document>

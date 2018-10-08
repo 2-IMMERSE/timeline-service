@@ -177,8 +177,9 @@ class DummyDelegate(object):
         """Store internal state in XML, prior to serialisation"""
         if self.state != State.idle:
             self.elt.set(NS_TIMELINE_INTERNAL("state"), self.state)
-        if self.startTime != None:
-            arg = str23compat(self.clock.now()-self.startTime)
+        now = self.clock.now()
+        if self.startTime != None and now != None:
+            arg = str23compat(now-self.startTime)
             if self.isCurrentTimingMaster():
                 self.elt.set(NS_TIMELINE_INTERNAL("progress"), arg)
             else:
