@@ -141,8 +141,8 @@ class BaseTimeline(object):
         assert self.timelineDocUrl is None
         assert self.dmappTimeline is None
         assert self.dmappId is None
-        self.timelineDocUrl = timelineDocUrl
-        self.timelineDocBaseUrl = timelineDocUrl
+        self.timelineDocUrl = str23compat(timelineDocUrl)
+        self.timelineDocBaseUrl = str23compat(timelineDocUrl)
         self.dmappId = dmappId
         self.logger = document.MyLoggerAdapter(logger, dict(contextID=self.contextId, dmappID=dmappId))
         assert self.document
@@ -270,7 +270,7 @@ class BaseTimeline(object):
         self.document.report(logging.INFO, 'DOCUMENT', 'loaded', self.timelineDocUrl)
         overrideBaseUrl = self.document.root.get(document.NS_2IMMERSE("base"))
         if overrideBaseUrl:
-            self.timelineDocBaseUrl = overrideBaseUrl
+            self.timelineDocBaseUrl = str23compat(overrideBaseUrl)
             self.document.report(logging.INFO, 'DOCUMENT', 'base', self.timelineDocBaseUrl)
         self.document.prepareDocument()
 
@@ -526,7 +526,7 @@ class ProxyMixin(object):
     def __init__(self, timelineDocBaseUrl, layoutService, componentId):
         self.componentId = componentId
         self.logger = layoutService.logger
-        self.timelineDocBaseUrl = timelineDocBaseUrl
+        self.timelineDocBaseUrl = str23compat(timelineDocBaseUrl)
         self.layoutService = layoutService
         
     def getLogExtra(self):
@@ -557,6 +557,7 @@ class ProxyMixin(object):
             elif k in document.NS_TIMELINE_CHECK:
                 localName = document.NS_TIMELINE_CHECK.localTag(k)
                 value = self.elt.attrib[k]
+                value = str23compat(value)
                 if 'url' in localName.lower() and value:
                     value = urllib.parse.urljoin(self.timelineDocBaseUrl, value)
                 rv['debug-2immerse-' + localName] = value
