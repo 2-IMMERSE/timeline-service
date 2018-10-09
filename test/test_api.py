@@ -158,7 +158,7 @@ class TestAPI(unittest.TestCase):
         operations = [
             dict(
                 verb='add',
-                path='/{http://jackjansen.nl/timelines}:document/{http://jackjansen.nl/timelines}:par[1]/{http://jackjansen.nl/timelines}:sleep[1]',
+                path='/{http://jackjansen.nl/timelines}document/{http://jackjansen.nl/timelines}par[1]/{http://jackjansen.nl/timelines}sleep[1]',
                 where='after',
                 data="""<tl:ref xmlns:tl="http://jackjansen.nl/timelines" xmlns:tim="http://jackjansen.nl/2immerse" xml:id="new1" tim:class="unknown"/>"""
                 )

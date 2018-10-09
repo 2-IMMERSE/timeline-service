@@ -117,6 +117,9 @@ class BaseTimeline(object):
             )
         return rv
 
+    def debugHelper(self, **kwargs):
+        return self.document.debugHelper(**kwargs)
+        
     def dmappComponentDelegateFactory(self, elt, document, clock):
         rv = ProxyDMAppComponent(elt, document, self.timelineDocBaseUrl, clock, self.layoutService)
         self.dmappComponents[rv.componentId] = rv

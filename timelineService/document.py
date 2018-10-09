@@ -12,6 +12,7 @@ import urllib.parse
 import argparse
 import time
 import xml.etree.ElementTree as ET
+import xml.etree.ElementPath
 import logging
 from . import clocks
 import json
@@ -67,7 +68,14 @@ class ElementWithDelegate(ET.Element):
     def __init__(self, *args, **kwargs):
         ET.Element.__init__(self, *args, **kwargs)
         self.delegate = None
-
+        
+    def findall(self, path, namespaces=None):
+        """Workaround for <https://bugs.python.org/issue34941>: in Python3
+        subclassing ET.Element will cause XPaths with indexing predicates to fail,
+        unless the subclass provides a findall() method.
+        """
+        return xml.etree.ElementPath.findall(self, path, namespaces)
+        
 def parserWithDelegate():
     """ET XML parserer that stores tree in ElementWithDelegate instances"""
     return ET.XMLParser(target=ET.TreeBuilder(element_factory=ElementWithDelegate))
@@ -83,7 +91,7 @@ NS_2IMMERSE_COMPONENT = NameSpace("tic", "http://jackjansen.nl/2immerse/componen
 NS_XML = NameSpace("xml", "http://www.w3.org/XML/1998/namespace")
 NS_TRIGGER = NameSpace("tt", "http://jackjansen.nl/2immerse/livetrigger")
 NS_AUTH = NameSpace("au", "http://jackjansen.nl/2immerse/authoring")
-NAMESPACES = {}
+NAMESPACES={}
 NAMESPACES.update(NS_XML.ns())
 NAMESPACES.update(NS_TIMELINE.ns())
 NAMESPACES.update(NS_TIMELINE_INTERNAL.ns())
@@ -1854,7 +1862,7 @@ class Document(DocumentModificationMixin):
         self.tracefile = None
         
     def setExtraLoggerArgs(self, extraLoggerArgs):
-            self.logger = MyLoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
+        self.logger = MyLoggerAdapter(logging.getLogger(__name__), extraLoggerArgs)
     
     def setDelegateFactory(self, klass, tag=NS_TIMELINE("ref")):
         assert not self.root
@@ -1956,7 +1964,7 @@ class Document(DocumentModificationMixin):
     def getXPath(self, elt, strict=False):
         assert self.root is not None
         # Our "own" tl: tags are non-namespaced
-        if elt.tag in NS_TIMELINE:
+        if elt.tag in NS_TIMELINE and not strict:
             tagname = NS_TIMELINE.localTag(elt.tag)
         else:
             tagname = elt.tag
@@ -1969,7 +1977,7 @@ class Document(DocumentModificationMixin):
                 break
             if ch.tag == elt.tag:
                 index += 1
-        rv = self.getXPath(parent) + '/'
+        rv = self.getXPath(parent, strict=strict) + '/'
         rv += tagname
         if strict or index:
             rv = rv + '[%d]' % (index+1)
@@ -2127,6 +2135,10 @@ class Document(DocumentModificationMixin):
         if filename:
             self.tracefile = open(filename, 'w')
         
+    def debugHelper(self, **kwargs):
+        self.logger.log(logging.DEBUG, 'debugHelper called, args=%s' % kwargs)
+        return ''
+        
 def main():
     global DEBUG
     parser = argparse.ArgumentParser(description="Test runner for timeline documents")
@@ -2193,7 +2205,6 @@ def run(args):
     finally:
         if args.dump:
             print('--------------------')
-            #d.dump(sys.stdout)
             print(d.dumps())
         if args.dumpfile:
             fp = open(args.dumpfile, 'w')
