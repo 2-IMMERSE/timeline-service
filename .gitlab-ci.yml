@@ -10,7 +10,7 @@ test_edge:
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:latest
-    - docker run --rm $CI_REGISTRY_IMAGE:latest /bin/sh -c 'cd test && python -m unittest discover --verbose'
+    - docker run --rm $CI_REGISTRY_IMAGE:latest /bin/sh -c 'python3 -m unittest discover --verbose test'
   tags:
     - 2immerse
     - docker
@@ -23,27 +23,12 @@ test:
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-    - docker run --rm $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME /bin/sh -c 'cd test && python -m unittest discover --verbose'
+    - docker run --rm $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME /bin/sh -c 'python3 -m unittest discover --verbose test'
   tags:
     - 2immerse
     - docker
   except:
     - develop
-    - exp-py3
-
-test_py3:
-  stage: test
-  image: docker:latest
-  script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-    - docker run --rm $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME /bin/sh -c 'python2 -m unittest discover --verbose test'
-    - docker run --rm $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME /bin/sh -c 'python3 -m unittest discover --verbose test'
-  tags:
-    - 2immerse
-    - docker
-  only:
-    - exp-py3
 
 edge:
   stage: build
