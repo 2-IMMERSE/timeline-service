@@ -17,5 +17,5 @@ esac
 cd $basedir
 set -x
 for dir in */; do
-	(cd $dir ; $cocmd ; git pull)
+	(cd $dir ; git fetch ; $cocmd ; git pull)
 done
