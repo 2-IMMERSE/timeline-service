@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from socketIO_client import SocketIO, SocketIONamespace
+from socketIO_client import SocketIO, SocketIONamespace, LoggingNamespace
 from . import document
 import logging
 import threading
 
 logger = logging.getLogger(__name__)
+
+UsedNamespace=LoggingNamespace
 
 class SocketIOHandler(threading.Thread):
     def __init__(self, timeline, toTimeline=None, fromTimeline=None):
@@ -25,8 +27,8 @@ class SocketIOHandler(threading.Thread):
             self.logger.error("SocketIOHandler: missing required argument in toTimeline: %s" % repr(toTimeline))
             return
         self.logger.debug("SocketIOHandler: connecting to %s" % toTimeline['server'])
-        self.socket = SocketIO(toTimeline['server'])
-        self.channel = self.socket.define(SocketIONamespace, toTimeline['channel'])
+        self.socket = SocketIO(toTimeline['server'], Namespace=UsedNamespace)
+        self.channel = self.socket.define(UsedNamespace, toTimeline['channel'])
         self.roomIncomingUpdates = toTimeline['room']
 
         if fromTimeline:
@@ -37,8 +39,10 @@ class SocketIOHandler(threading.Thread):
             self.roomOutgoingStatus = fromTimeline['room']
         self.logger.debug('SocketIOHandler: url=%s channel=%s roomIncoming=%s roomOutgoing=%s' % (toTimeline['server'], toTimeline['channel'], self.roomIncomingUpdates, self.roomOutgoingStatus))
         self._setup()
+        self.channel.on_connect = self._setup
         
     def _setup(self):
+        self.logger.debug('SocketIOHandler: JOIN and setup callbacks')
         self.channel.on('UPDATES', self._incomingUpdates)
         self.channel.emit('JOIN', self.roomIncomingUpdates)
 
@@ -53,6 +57,7 @@ class SocketIOHandler(threading.Thread):
             self.channel.emit('LEAVE', self.roomIncomingUpdates)
         self.running = False
         self.socket = None
+        self.channel = None
         
     def __del__(self):
         self.close()
@@ -68,6 +73,8 @@ class SocketIOHandler(threading.Thread):
                 # I hate bare except clauses, but I don't know what to do else...
                 import traceback
                 traceback.print_exc()
+            if self.channel:
+                self.channel.emit('PING')
         self.logger.debug('SocketIOHandler: thread listener finished')
 
     def _incomingUpdates(self, modifications):
