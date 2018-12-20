@@ -73,8 +73,6 @@ class SocketIOHandler(threading.Thread):
                 # I hate bare except clauses, but I don't know what to do else...
                 import traceback
                 traceback.print_exc()
-            if self.channel:
-                self.channel.emit('PING')
         self.logger.debug('SocketIOHandler: thread listener finished')
 
     def _incomingUpdates(self, modifications):
