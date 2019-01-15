@@ -2,6 +2,6 @@ future
 flask
 gevent
 requests
-socketIO-client
+socketIO-client-2
 pydvbcss
 xmldiff
