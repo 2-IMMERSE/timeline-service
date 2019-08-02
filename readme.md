@@ -5,7 +5,7 @@ This git repository contains the source of the 2immerse Timeline Server, some au
 Directory `timelineService` has all the code for the service itself. Run with 
 
 ```
-python timelineService
+python -m timelineService
 
 ```
 
@@ -25,13 +25,13 @@ Normally, however, you would run the timeline service together with all other se
 To do a quick check of playback of a timeline document you can use
 
 ```
-python timelineService/document.py mydocument.xml
+python -m timelineService.document mydocument.xml
 ```
 
 This test script has a `--help` option again. Usually you will probably run it with
 
 ```
-python timelineService/document.py --fast --dump --trace mydocument.xml
+python -m timelineService.document --fast --dump --trace mydocument.xml
 ```
  
 This does a  syntax check of your XML document and a quick simulation run of the document (with various assumptions, such that events happen immedeately, and all A/V files are 10 seconds long unless otherwise specified). During the run, trace messages are printed to show when elements are sarted and stopped. At the end, the document is printed on standard output, with all elements annotated with their current state.
